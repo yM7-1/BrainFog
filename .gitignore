@@ -8,6 +8,8 @@ obj/
 *.user
 *.suo
 .vs/
+TestResults/
+*.trx
 
 # 编辑器
 .idea/
