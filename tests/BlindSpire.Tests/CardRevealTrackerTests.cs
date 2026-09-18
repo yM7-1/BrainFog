@@ -60,4 +60,46 @@ public class CardRevealTrackerTests
         Assert.True(tracker.IsRevealed("BlindSpire.b"));
         Assert.Equal(2, tracker.RevealedCount);
     }
+
+    [Fact]
+    public void Load_NullInput_ClearsAndDoesNotThrow()
+    {
+        var tracker = new CardRevealTracker();
+        tracker.RevealByPlay("BlindSpire.a");
+        tracker.Load(null);
+        Assert.Equal(0, tracker.RevealedCount);
+    }
+
+    [Fact]
+    public void Load_Reset_Load_RoundTrips()
+    {
+        var tracker = new CardRevealTracker();
+        tracker.Load(new[] { "BlindSpire.a", "BlindSpire.b" });
+        tracker.Reset();
+        Assert.Equal(0, tracker.RevealedCount);
+        tracker.Load(new[] { "BlindSpire.b", "BlindSpire.c" });
+        Assert.False(tracker.IsRevealed("BlindSpire.a"));
+        Assert.True(tracker.IsRevealed("BlindSpire.b"));
+        Assert.True(tracker.IsRevealed("BlindSpire.c"));
+    }
+
+    [Fact]
+    public void RevealedIds_IsADefensiveCopy()
+    {
+        var tracker = new CardRevealTracker();
+        tracker.RevealByPlay("BlindSpire.a");
+        var ids = (ICollection<string>)tracker.RevealedIds;
+        Assert.Throws<NotSupportedException>(() => ids.Add("BlindSpire.hack"));
+        Assert.Equal(1, tracker.RevealedCount);
+    }
+
+    [Fact]
+    public void CrossReveal_PathsAgree()
+    {
+        var tracker = new CardRevealTracker();
+        Assert.True(tracker.RevealByPlay("BlindSpire.a"));
+        Assert.False(tracker.RevealByUpgrade("BlindSpire.a"));
+        Assert.True(tracker.RevealByUpgrade("BlindSpire.b"));
+        Assert.False(tracker.RevealByPlay("BlindSpire.b"));
+    }
 }

@@ -15,18 +15,22 @@ internal static class EnemyVisualMask
 
     public static void Apply(NCreature node)
     {
-        if (ModRuntime.Disabled || node.Entity is not { } entity)
+        if (!GodotObject.IsInstanceValid(node) || node.Entity is not { } entity)
         {
             return;
         }
 
         var isOurs = entity.IsPlayer || (entity.PetOwner != null && LocalContext.IsMe(entity.PetOwner));
-        if (isOurs)
+        if (ModRuntime.Disabled || isOurs)
         {
+            Restore(node);
             return;
         }
 
-        node.Body.Visible = false;
+        if (GodotObject.IsInstanceValid(node.Body))
+        {
+            node.Body.Visible = false;
+        }
 
         if (node.GetNodeOrNull<BreathingBox>(BoxName) is { } existing)
         {
@@ -44,5 +48,25 @@ internal static class EnemyVisualMask
         };
         node.AddChild(box);
         box.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+    }
+
+    /// <summary>Restores the real model (own creatures, disabled mod, cleanup).</summary>
+    public static void Restore(NCreature node)
+    {
+        if (!GodotObject.IsInstanceValid(node))
+        {
+            return;
+        }
+
+        if (node.Body != null && GodotObject.IsInstanceValid(node.Body))
+        {
+            node.Body.Visible = true;
+        }
+
+        var box = node.GetNodeOrNull<BreathingBox>(BoxName);
+        if (box != null && GodotObject.IsInstanceValid(box))
+        {
+            box.Visible = false;
+        }
     }
 }

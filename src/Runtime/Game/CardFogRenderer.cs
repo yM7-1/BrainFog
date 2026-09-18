@@ -17,7 +17,7 @@ namespace BlindSpire.Game;
 internal static class CardFogRenderer
 {
     private const string FogNodeName = "BlindSpireFog";
-    private const string HiddenMeta = "BlindSpireHiddenParts";
+    private const string HiddenPartMeta = "BlindSpireHiddenPart";
     private const string PlusNodeName = "BlindSpirePlusMarker";
 
     public static CardVisualRule ResolveRule(NCard card)
@@ -40,6 +40,13 @@ internal static class CardFogRenderer
         }
 
         var fog = GetOrCreateFog(card);
+        if (card.Model == null)
+        {
+            // Pooled card without a model: clear any leftover state.
+            RestoreFaceParts(card);
+            fog.Visible = false;
+            return;
+        }
         var rule = ResolveRule(card);
         var hide = rule != CardVisualRule.FullFace;
         if (hide)
@@ -49,12 +56,13 @@ internal static class CardFogRenderer
             var frameIndex = Mathf.Clamp(card._frame?.GetIndex() ?? 0, 0, Math.Max(0, card.GetChildCount() - 1));
             card.MoveChild(fog, frameIndex);
             fog.Visible = true;
-            var upgraded = rule == CardVisualRule.RarityOnly && card.Model?.IsUpgraded == true;
+            var upgraded = rule == CardVisualRule.RarityOnly
+                && RevealRules.ShowsUpgradeMarker(card.Model?.IsUpgraded == true);
             UpdatePlusMarker(fog, upgraded);
         }
         else
         {
-            RestoreFaceParts(card, fog);
+            RestoreFaceParts(card);
             fog.Visible = false;
         }
     }
@@ -134,37 +142,30 @@ internal static class CardFogRenderer
 
     private static void HideFaceParts(NCard card, ColorRect fog)
     {
-        var hidden = new Godot.Collections.Array();
         foreach (var part in FaceParts(card))
         {
             if (part != null && GodotObject.IsInstanceValid(part) && part.Visible)
             {
+                part.SetMeta(HiddenPartMeta, true);
                 part.Visible = false;
-                hidden.Add(part.GetPath());
             }
         }
-        fog.SetMeta(HiddenMeta, hidden);
     }
 
-    private static void RestoreFaceParts(NCard card, ColorRect fog)
+    private static void RestoreFaceParts(NCard card)
     {
-        if (!fog.HasMeta(HiddenMeta))
+        foreach (var part in FaceParts(card))
         {
-            return;
-        }
-
-        if (fog.GetMeta(HiddenMeta).AsGodotArray() is { } hidden)
-        {
-            foreach (var variant in hidden)
+            if (part == null || !GodotObject.IsInstanceValid(part))
             {
-                var path = variant.AsNodePath();
-                if (card.GetNodeOrNull<CanvasItem>(path) is { } node)
-                {
-                    node.Visible = true;
-                }
+                continue;
+            }
+            if (part.HasMeta(HiddenPartMeta))
+            {
+                part.Visible = true;
+                part.RemoveMeta(HiddenPartMeta);
             }
         }
-        fog.RemoveMeta(HiddenMeta);
     }
 
     private static IEnumerable<CanvasItem?> FaceParts(NCard card)

@@ -46,15 +46,19 @@ internal static class RevealPersistence
         }
 
         var deck = owner.Deck.Cards;
-        for (var i = 0; i < deck.Count && i < PendingDeckOrder.Count; i++)
+        for (var i = 0; i < deck.Count; i++)
         {
             if (!ReferenceEquals(deck[i], card))
             {
                 continue;
             }
 
-            CardInstanceRegistry.Bind(card, PendingDeckOrder[i]);
-            return true;
+            if (DeckOrderBinding.TryResolve(i, PendingDeckOrder, out var id, out _))
+            {
+                CardInstanceRegistry.Bind(card, id);
+                return true;
+            }
+            return false; // fail closed: keep the instance unknown rather than mis-bind
         }
         return false;
     }

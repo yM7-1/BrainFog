@@ -74,13 +74,6 @@ public static class RevealRules
             : CardVisualRule.BlackFog;
     }
 
-    /// <summary>Unknown cards reveal only their frame on hover/selection (0.03 b).</summary>
-    public static bool ShowsFrameOnHover(CardKnowledge knowledge) => true;
-
-    /// <summary>The true face is shown on hover only once revealed.</summary>
-    public static bool ShowsFaceOnHover(CardKnowledge knowledge) =>
-        knowledge == CardKnowledge.Revealed;
-
     /// <summary>Upgraded cards show the "+" marker on acquisition (0.03 h).</summary>
     public static bool ShowsUpgradeMarker(bool isUpgraded) => isUpgraded;
 }

@@ -38,15 +38,6 @@ public class RevealRulesTests
     }
 
     [Fact]
-    public void Hover_UnknownShowsFrameButNotFace()
-    {
-        Assert.True(RevealRules.ShowsFrameOnHover(CardKnowledge.Unknown));
-        Assert.False(RevealRules.ShowsFaceOnHover(CardKnowledge.Unknown));
-        Assert.True(RevealRules.ShowsFrameOnHover(CardKnowledge.Revealed));
-        Assert.True(RevealRules.ShowsFaceOnHover(CardKnowledge.Revealed));
-    }
-
-    [Fact]
     public void UpgradeMarker_OnlyWhenUpgraded()
     {
         Assert.True(RevealRules.ShowsUpgradeMarker(true));

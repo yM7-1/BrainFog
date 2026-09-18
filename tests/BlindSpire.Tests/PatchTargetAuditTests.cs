@@ -38,6 +38,7 @@ public class PatchTargetAuditTests
             new MemberTarget("_enchantmentLabel", Kind.Field),
             new MemberTarget("_enchantmentTab", Kind.Field),
             new MemberTarget("Reload", Kind.Method),
+            new MemberTarget("UpdateVisuals", Kind.Method),
         },
         ["MegaCrit.Sts2.Core.Models.CardModel"] = new[]
         {
@@ -125,6 +126,10 @@ public class PatchTargetAuditTests
         {
             new MemberTarget("_Ready", Kind.Method),
             new MemberTarget("CreatureNodes", Kind.Property),
+        },
+        ["MegaCrit.Sts2.Core.Nodes.Combat.NCreatureVisuals"] = new[]
+        {
+            new MemberTarget("UpdatePhobiaMode", Kind.Method),
         },
         ["MegaCrit.Sts2.Core.Map.MapCoord"] = Array.Empty<MemberTarget>(),
         ["MegaCrit.Sts2.Core.Map.MapPointState"] = Array.Empty<MemberTarget>(),

@@ -1,3 +1,4 @@
+using System.Text;
 using BlindSpire.Core.Text;
 using Xunit;
 
@@ -21,7 +22,7 @@ public class EventTextBlurrerTests
     }
 
     [Fact]
-    public void Blur_PreservesBbCodeTags()
+    public void Blur_PreservesRealBbCodeTags()
     {
         const string text = "[b]危险[/b]的[color=red]选择[/color]";
         var result = EventTextBlurrer.Blur(text);
@@ -31,13 +32,66 @@ public class EventTextBlurrerTests
         Assert.Contains("[/color]", result);
     }
 
+    [Theory]
+    [InlineData("[b]", true)]
+    [InlineData("[/b]", true)]
+    [InlineData("[color=red]", true)]
+    [InlineData("[shake rate=5]", true)]
+    [InlineData("[攻击]", false)]
+    [InlineData("[", false)]
+    [InlineData("[b", false)]
+    [InlineData("[=x]", false)]
+    [InlineData("[123]", false)]
+    public void TryReadBbCodeTag_DistinguishesTagsFromLiteralBrackets(string text, bool expected)
+    {
+        Assert.Equal(expected, EventTextBlurrer.TryReadBbCodeTag(text, 0, out _));
+    }
+
+    [Fact]
+    public void Blur_LiteralBracketedWords_AreStillBlurred()
+    {
+        const string text = "[攻击攻击攻击攻击攻击攻击攻击攻击]";
+        var result = EventTextBlurrer.Blur(text);
+        Assert.DoesNotContain("攻击攻击攻击攻击攻击攻击攻击攻击", result);
+    }
+
+    [Fact]
+    public void Blur_EmojiSurviveAsWholeRunes()
+    {
+        const string text = "😀😀😀😀😀😀😀😀😀😀";
+        var result = EventTextBlurrer.Blur(text);
+        Assert.True(IsWellFormedUtf16(result), "blur produced unpaired surrogates");
+    }
+
+    [Fact]
+    public void Blur_FamilyEmojiWithJoinersStaysWellFormed()
+    {
+        const string text = "👨‍👩‍👧‍👦 你好 👩‍💻";
+        var result = EventTextBlurrer.Blur(text);
+        Assert.True(IsWellFormedUtf16(result), "blur produced unpaired surrogates");
+    }
+
     [Fact]
     public void Blur_RoughlyMatchesConfiguredRatio()
     {
         var text = string.Concat(Enumerable.Repeat("这是一个用于测试模糊比例的中文句子。", 100));
         var result = EventTextBlurrer.Blur(text);
-        var total = text.Count(c => !char.IsWhiteSpace(c));
-        var changed = text.Where((c, i) => !char.IsWhiteSpace(c) && result[i] != c).Count();
+        var total = 0;
+        var changed = 0;
+        for (var i = 0; i < text.Length;)
+        {
+            var rune = Rune.GetRuneAt(text, i);
+            var size = rune.Utf16SequenceLength;
+            if (!Rune.IsWhiteSpace(rune))
+            {
+                total++;
+                if (result[i] != text[i])
+                {
+                    changed++;
+                }
+            }
+            i += size;
+        }
         var ratio = (double)changed / total;
         Assert.InRange(ratio, 0.65, 0.85);
     }
@@ -47,5 +101,25 @@ public class EventTextBlurrerTests
     {
         Assert.Equal(string.Empty, EventTextBlurrer.Blur(null));
         Assert.Equal(string.Empty, EventTextBlurrer.Blur(string.Empty));
+    }
+
+    private static bool IsWellFormedUtf16(string text)
+    {
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (char.IsHighSurrogate(text[i]))
+            {
+                if (i + 1 >= text.Length || !char.IsLowSurrogate(text[i + 1]))
+                {
+                    return false;
+                }
+                i++;
+            }
+            else if (char.IsLowSurrogate(text[i]))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 }

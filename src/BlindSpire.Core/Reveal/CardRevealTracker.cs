@@ -13,7 +13,7 @@ public sealed class CardRevealTracker
 
     public int RevealedCount => _revealed.Count;
 
-    public IReadOnlyCollection<string> RevealedIds => _revealed;
+    public IReadOnlyCollection<string> RevealedIds => _revealed.ToArray();
 
     public CardKnowledge GetKnowledge(string instanceId) =>
         _revealed.Contains(instanceId) ? CardKnowledge.Revealed : CardKnowledge.Unknown;
@@ -27,9 +27,13 @@ public sealed class CardRevealTracker
     public bool RevealByUpgrade(string instanceId) => _revealed.Add(instanceId);
 
     /// <summary>Restores persisted state (per-run scope).</summary>
-    public void Load(IEnumerable<string> instanceIds)
+    public void Load(IEnumerable<string>? instanceIds)
     {
         _revealed.Clear();
+        if (instanceIds == null)
+        {
+            return;
+        }
         foreach (var id in instanceIds)
         {
             if (InstanceIds.IsValid(id))

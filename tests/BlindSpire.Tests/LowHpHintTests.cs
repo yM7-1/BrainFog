@@ -22,6 +22,9 @@ public class LowHpHintTests
     {
         Assert.False(LowHpHint.IsLow(0, 80));
         Assert.False(LowHpHint.IsLow(5, 0));
+        Assert.False(LowHpHint.IsLow(-1, 80));
+        Assert.False(LowHpHint.IsLow(80, 80));
+        Assert.False(LowHpHint.IsLow(5, -80));
     }
 
     [Fact]

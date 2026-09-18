@@ -2,7 +2,7 @@
 
 杀戮尖塔 2（Slay the Spire 2）盲玩难度 mod：卡牌牌面初始黑雾，打出一张才揭示一张。
 
-- 状态：**Phase 1–3 功能已实现**（构建+45 单测+补丁目标审计全绿），游戏内行为待人工验收（见 `docs/IMPLEMENTATION-MAP.md` §3）
+- 状态：**Phase 1–3 功能已实现**（Release 构建 + 全部单测 + 补丁目标审计全绿，数量以 `tools/check.sh` 输出为准），游戏内行为待人工验收（见 `docs/IMPLEMENTATION-MAP.md` §3）
 - 目标游戏版本：**v0.111.0**（当前仅支持该版本）
 - 依赖：**RitsuLib 0.6.2**（Steam 创意工坊）；仅支持**单人**
 - 规格（冻结）：`docs/spec/SPEC-consolidated.md`（0.01~0.03 合并）
@@ -31,4 +31,4 @@ bash tools/check.sh
 
 ## 已知限制（摘要）
 
-战争迷雾近似与未覆盖项（黑雾层级、玩家视野半径、事件获得路径、Spine 呼吸相位、RitsuLib 读档时序）见 `docs/IMPLEMENTATION-MAP.md` §2。
+近似与未覆盖项（黑雾层级、事件获得路径、RitsuLib 读档时序等）见 `docs/IMPLEMENTATION-MAP.md` §2。
