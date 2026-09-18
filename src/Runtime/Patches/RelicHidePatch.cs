@@ -13,7 +13,7 @@ internal static class RelicHidePatch
     [HarmonyPostfix]
     private static void Postfix(NRelic __instance)
     {
-        if (ModRuntime.Disabled)
+        if (ModRuntime.Disabled || IsCompendiumEntry(__instance))
         {
             return;
         }
@@ -25,6 +25,19 @@ internal static class RelicHidePatch
         {
             __instance.Outline.Visible = false;
         }
+    }
+    private static bool IsCompendiumEntry(NRelic relic)
+    {
+        var node = relic.GetParent();
+        while (node != null)
+        {
+            if (node.GetType().Name.StartsWith("NRelicCollection", StringComparison.Ordinal))
+            {
+                return true;
+            }
+            node = node.GetParent();
+        }
+        return false;
     }
 }
 

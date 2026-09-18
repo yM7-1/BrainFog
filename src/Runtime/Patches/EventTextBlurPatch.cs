@@ -80,9 +80,15 @@ internal static class EventTextBlurHelper
         {
             return;
         }
-        if (button.Event is MegaCrit.Sts2.Core.Models.AncientEventModel)
+        if (Game.AncientChoiceRules.StaysVisible(button.Event))
         {
             return;
+        }
+
+        // Neow-style hidden choices also hide the relic icon texture.
+        if (button.GetNodeOrNull<Godot.TextureRect>("%RelicIcon") is { } relicIcon)
+        {
+            relicIcon.Visible = false;
         }
 
         var original = label.HasMeta(OriginalMeta)

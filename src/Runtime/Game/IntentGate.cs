@@ -9,7 +9,25 @@ namespace BlindSpire.Game;
 /// </summary>
 internal static class IntentGate
 {
-    private static readonly ConditionalWeakTable<Creature, IntentRevealGate> Map = new();
+    private sealed class Entry
+    {
+        public IntentRevealGate Gate { get; } = new();
+        public bool IsInitialCombatant;
+    }
+
+    private static readonly ConditionalWeakTable<Creature, Entry> Map = new();
+
+    /// <summary>Called at combat setup: only the opening roster may show intents.</summary>
+    public static void MarkInitialCombatants(IEnumerable<Creature> creatures)
+    {
+        foreach (var creature in creatures)
+        {
+            if (creature != null)
+            {
+                Map.GetOrCreateValue(creature).IsInitialCombatant = true;
+            }
+        }
+    }
 
     public static bool ShouldShow(Creature? owner, int roundNumber)
     {
@@ -17,6 +35,7 @@ internal static class IntentGate
         {
             return false;
         }
-        return Map.GetOrCreateValue(owner).ShouldShow(roundNumber);
+        var entry = Map.GetOrCreateValue(owner);
+        return entry.Gate.ShouldShow(roundNumber, entry.IsInitialCombatant);
     }
 }

@@ -173,11 +173,16 @@ public class PatchTargetAuditTests
         {
             new MemberTarget("_Ready", Kind.Method),
             new MemberTarget("CreatureNodes", Kind.Property),
+            new MemberTarget("OnCombatSetUp", Kind.Method),
         },
         ["MegaCrit.Sts2.Core.Nodes.Combat.NCreatureVisuals"] = new[]
         {
             new MemberTarget("UpdatePhobiaMode", Kind.Method),
             new MemberTarget("SetUpSkin", Kind.Method),
+        },
+        ["MegaCrit.Sts2.Core.Combat.CombatState"] = new[]
+        {
+            new MemberTarget("Creatures", Kind.Property),
         },
         ["MegaCrit.Sts2.Core.Map.MapCoord"] = Array.Empty<MemberTarget>(),
         ["MegaCrit.Sts2.Core.Map.MapPointState"] = Array.Empty<MemberTarget>(),

@@ -77,8 +77,7 @@ internal static class EventOptionHoverTipPatch
     private static void Postfix(NEventOptionButton __instance) =>
         Game.PatchGuard.Run("EventTips.OptionFocus", () =>
         {
-            if (!ModRuntime.Disabled
-                && __instance.Event is not MegaCrit.Sts2.Core.Models.AncientEventModel)
+            if (!ModRuntime.Disabled && !Game.AncientChoiceRules.StaysVisible(__instance.Event))
             {
                 NHoverTipSet.Remove(__instance);
             }

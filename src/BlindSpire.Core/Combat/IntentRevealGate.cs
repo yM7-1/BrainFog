@@ -11,13 +11,14 @@ public sealed class IntentRevealGate
 
     public bool IsLocked => _locked;
 
-    public bool ShouldShow(int roundNumber)
+    /// <summary>Intent shows only for creatures present at combat start, on round 1.</summary>
+    public bool ShouldShow(int roundNumber, bool isInitialCombatant)
     {
         if (roundNumber > 1)
         {
             _locked = true;
         }
-        return roundNumber == 1 && !_locked;
+        return roundNumber == 1 && isInitialCombatant && !_locked;
     }
 
     public void Reset() => _locked = false;
