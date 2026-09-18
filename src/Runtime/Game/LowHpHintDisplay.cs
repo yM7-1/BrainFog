@@ -16,7 +16,10 @@ internal static class LowHpHintDisplay
     private const string HintLabelName = "BlindSpireLowHpHint";
     private const string BorderName = "BlindSpireLowHpBorder";
 
-    public static void Evaluate(Player player, int trueHp, int maxHp)
+    public static void Evaluate(Player player, int trueHp, int maxHp) =>
+        PatchGuard.Run("LowHpHint.Evaluate", () => EvaluateCore(player, trueHp, maxHp));
+
+    private static void EvaluateCore(Player player, int trueHp, int maxHp)
     {
         if (ModRuntime.Disabled)
         {
@@ -42,6 +45,12 @@ internal static class LowHpHintDisplay
             return;
         }
 
+        var hpLabel = hpBar._hpLabel;
+        if (hpLabel == null || !GodotObject.IsInstanceValid(hpLabel))
+        {
+            return;
+        }
+
         var label = hpBar.GetNodeOrNull<Label>(HintLabelName);
         if (label == null)
         {
@@ -53,7 +62,7 @@ internal static class LowHpHintDisplay
                 Modulate = Colors.Red,
             };
             hpBar.AddChild(label);
-            label.Position = hpBar._hpLabel.Position + new Vector2(0, 28);
+            label.Position = hpLabel.Position + new Vector2(0, 28);
         }
         label.Visible = low;
     }

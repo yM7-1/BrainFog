@@ -14,14 +14,15 @@
     <RitsuLibReferenceTarget Condition="'$(RitsuLibReferenceTarget)' == ''">0.111.0</RitsuLibReferenceTarget>
     <RitsuLibReferencesProps>$(RitsuWorkshopRoot)/RitsuLib.References.props</RitsuLibReferencesProps>
     <ModOutputDir>$(Sts2Dir)/mods/BlindSpire</ModOutputDir>
-    <CopyModOnBuild Condition="'$(CopyModOnBuild)' == ''">true</CopyModOnBuild>
+    <CopyModOnBuild Condition="'$(CopyModOnBuild)' == ''">false</CopyModOnBuild>
     <NoWarn>$(NoWarn);CS0436</NoWarn>
   </PropertyGroup>
 
   <Import Project="$(RitsuLibReferencesProps)" Condition="Exists('$(RitsuLibReferencesProps)')" />
 
   <ItemGroup>
-    <Compile Remove="src/BlindSpire.Core/**/*.cs" />
+    <Compile Remove="src/BlindSpire.Core/bin/**/*.cs" />
+    <Compile Remove="src/BlindSpire.Core/obj/**/*.cs" />
     <Compile Remove="tests/**/*.cs" />
     <Compile Remove="tools/**/*.cs" />
   </ItemGroup>
@@ -35,7 +36,6 @@
     <Reference Include="sts2" HintPath="$(Sts2DataDir)/sts2.dll" Private="false" />
     <Reference Include="0Harmony" HintPath="$(Sts2DataDir)/0Harmony.dll" Private="false" />
     <Reference Include="GodotSharp" HintPath="$(Sts2DataDir)/GodotSharp.dll" Private="false" />
-    <ProjectReference Include="src/BlindSpire.Core/BlindSpire.Core.csproj" Private="false" />
   </ItemGroup>
 
   <Target Name="ValidateGameInstall" BeforeTargets="ResolveAssemblyReferences">

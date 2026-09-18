@@ -13,7 +13,10 @@ internal static class EnemyVisualMask
 {
     private const string BoxName = "BlindSpireEnemyBox";
 
-    public static void Apply(NCreature node)
+    public static void Apply(NCreature node) =>
+        PatchGuard.Run("EnemyMask.Apply", () => ApplyCore(node));
+
+    private static void ApplyCore(NCreature node)
     {
         if (!GodotObject.IsInstanceValid(node) || node.Entity is not { } entity)
         {
@@ -51,7 +54,10 @@ internal static class EnemyVisualMask
     }
 
     /// <summary>Restores the real model (own creatures, disabled mod, cleanup).</summary>
-    public static void Restore(NCreature node)
+    public static void Restore(NCreature node) =>
+        PatchGuard.Run("EnemyMask.Restore", () => RestoreCore(node));
+
+    private static void RestoreCore(NCreature node)
     {
         if (!GodotObject.IsInstanceValid(node))
         {

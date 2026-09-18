@@ -17,7 +17,10 @@ internal static class CardInstanceRegistry
 
     private static readonly ConditionalWeakTable<CardModel, Holder> Map = new();
 
-    public static string GetOrCreateId(CardModel card)
+    public static string GetOrCreateId(CardModel card) =>
+        PatchGuard.RunOr("Registry.GetOrCreateId", () => GetOrCreateIdCore(card), string.Empty);
+
+    private static string GetOrCreateIdCore(CardModel card)
     {
         if (Map.TryGetValue(card, out var existing))
         {

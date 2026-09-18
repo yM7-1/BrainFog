@@ -22,7 +22,10 @@ internal static class RevealPersistence
         _slot ??= RunSavedDataStore.For("BlindSpire").Register<BlindSpireRunData>("reveal");
     }
 
-    public static void OnRunStarted(RunState state)
+    public static void OnRunStarted(RunState state) =>
+        PatchGuard.Run("Persistence.OnRunStarted", () => OnRunStartedCore(state));
+
+    private static void OnRunStartedCore(RunState state)
     {
         _runState = state;
         PendingDeckOrder.Clear();
@@ -35,6 +38,9 @@ internal static class RevealPersistence
         {
             ModRuntime.Tracker.Reset();
         }
+        MegaCrit.Sts2.Core.Logging.Log.Info(
+            $"[BlindSpire][Persistence] run started: revealed={ModRuntime.Tracker.RevealedCount} savedDeck={PendingDeckOrder.Count}");
+        ModRuntime.DumpState("run-started");
     }
 
     /// <summary>Rebinds an instance id from the saved deck order (index-aligned).</summary>
@@ -64,7 +70,10 @@ internal static class RevealPersistence
     }
 
     /// <summary>Writes the current deck order (id per slot) into the run save.</summary>
-    public static void RefreshDeckOrder(Player owner)
+    public static void RefreshDeckOrder(Player owner) =>
+        PatchGuard.Run("Persistence.RefreshDeckOrder", () => RefreshDeckOrderCore(owner));
+
+    private static void RefreshDeckOrderCore(Player owner)
     {
         if (_refreshing || _slot == null || owner.RunState is not RunState state || !ReferenceEquals(state, _runState))
         {
@@ -87,7 +96,10 @@ internal static class RevealPersistence
         }
     }
 
-    public static void OnRevealed(CardModel card, string id)
+    public static void OnRevealed(CardModel card, string id) =>
+        PatchGuard.Run("Persistence.OnRevealed", () => OnRevealedCore(card, id));
+
+    private static void OnRevealedCore(CardModel card, string id)
     {
         if (_slot == null || card.RunState is not RunState state || !ReferenceEquals(state, _runState))
         {

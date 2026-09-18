@@ -9,26 +9,41 @@ namespace BlindSpire.Game;
 /// </summary>
 internal sealed partial class BreathingBox : ColorRect
 {
+    private const double ProbeIntervalSeconds = 0.5;
+
     public NCreature? Creature;
 
-    public override void _Process(double delta)
+    private float _elapsed;
+    private float _duration;
+    private double _probeTimer;
+
+    public override void _Process(double delta) =>
+        PatchGuard.Run("BreathingBox.Process", () => ProcessCore(delta));
+
+    private void ProcessCore(double delta)
     {
         if (Creature == null || !IsInstanceValid(Creature))
         {
             return;
         }
 
-        var phase = 0f;
-        using var track = Creature.SpineAnimation.GetCurrentTrack(0);
-        if (track != null)
+        _elapsed += (float)delta;
+        _probeTimer += delta;
+        if (_probeTimer >= ProbeIntervalSeconds)
         {
-            var duration = track.GetAnimationDuration();
-            if (duration > 0.001f)
+            _probeTimer = 0;
+            using var track = Creature.SpineAnimation.GetCurrentTrack(0);
+            if (track != null)
             {
-                phase = track.GetTrackTime() % duration / duration;
+                var duration = track.GetAnimationDuration();
+                if (duration > 0.001f)
+                {
+                    _duration = duration;
+                }
             }
         }
 
+        var phase = _duration > 0.001f ? _elapsed % _duration / _duration : 0f;
         var alpha = 0.55f + 0.35f * Mathf.Sin(phase * Mathf.Tau);
         Modulate = new Color(1f, 1f, 1f, alpha);
     }

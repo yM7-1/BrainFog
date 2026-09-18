@@ -10,7 +10,10 @@ namespace BlindSpire.Game;
 /// </summary>
 internal static class MapFogController
 {
-    public static void Apply(NMapScreen screen)
+    public static void Apply(NMapScreen screen) =>
+        PatchGuard.Run("MapFog.Apply", () => ApplyCore(screen));
+
+    private static void ApplyCore(NMapScreen screen)
     {
         if (ModRuntime.Disabled || screen._mapPointDictionary is not { } points)
         {
@@ -20,6 +23,10 @@ internal static class MapFogController
         var visible = new HashSet<MapCoord>();
         foreach (var pair in points)
         {
+            if (pair.Value == null || !GodotObject.IsInstanceValid(pair.Value))
+            {
+                continue;
+            }
             var show = IsFrontier(pair.Value.State);
             if (show)
             {

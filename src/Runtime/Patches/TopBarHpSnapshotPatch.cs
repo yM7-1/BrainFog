@@ -26,7 +26,10 @@ internal static class TopBarHpSnapshotPatch
 
     [HarmonyPatch("UpdateHealth")]
     [HarmonyPrefix]
-    private static bool UpdateHealthPrefix(NTopBarHp __instance)
+    private static bool UpdateHealthPrefix(NTopBarHp __instance) =>
+        Game.PatchGuard.RunOr("TopBarHp.UpdateHealth", () => UpdateHealthPrefixCore(__instance), true);
+
+    private static bool UpdateHealthPrefixCore(NTopBarHp __instance)
     {
         if (ModRuntime.Disabled || __instance._player is not { } player)
         {

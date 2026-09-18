@@ -15,20 +15,22 @@ internal static class NEventLayoutBlurPatch
     [HarmonyPrefix]
     private static void SetTitlePrefix(ref string title)
     {
-        if (!ModRuntime.Disabled)
-        {
-            title = EventTextBlurrer.Blur(title);
-        }
+        var input = title;
+        title = Game.PatchGuard.RunOr(
+            "EventBlur.Title",
+            () => ModRuntime.Disabled ? input : EventTextBlurrer.Blur(input),
+            input);
     }
 
     [HarmonyPatch("SetDescription")]
     [HarmonyPrefix]
     private static void SetDescriptionPrefix(ref string description)
     {
-        if (!ModRuntime.Disabled)
-        {
-            description = EventTextBlurrer.Blur(description);
-        }
+        var input = description;
+        description = Game.PatchGuard.RunOr(
+            "EventBlur.Description",
+            () => ModRuntime.Disabled ? input : EventTextBlurrer.Blur(input),
+            input);
     }
 }
 

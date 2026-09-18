@@ -23,8 +23,6 @@ internal static class MapFogPatch
 
     [HarmonyPatch("ProcessMouseDrawingEvent")]
     [HarmonyPrefix]
-    private static bool ProcessMouseDrawingEventPrefix()
-    {
-        return ModRuntime.Disabled;
-    }
+    private static bool ProcessMouseDrawingEventPrefix() =>
+        Game.PatchGuard.RunOr("MapFog.DrawingPrefix", () => ModRuntime.Disabled, false);
 }

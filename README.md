@@ -12,9 +12,13 @@
 ```bash
 # 构建 + 单测 + 补丁目标审计（一键验证）
 bash tools/check.sh
+
+# 可用环境变量覆盖默认路径
+# DOTNET_ROOT、STEAM_ROOT、STS2_DATA_DIR
 ```
 
-- 产物：`bin/Release/net9.0/BlindSpire.dll`；构建时默认复制到 `D:\Steam\steamapps\common\Slay the Spire 2\mods\BlindSpire\`（`-p:CopyModOnBuild=false` 可关闭）
+- 产物：`.godot/mono/temp/bin/Release/BlindSpire.dll`（含 Core 逻辑，单程序集）
+- 安装：`dotnet build BlindSpire.csproj -c Release -p:CopyModOnBuild=true` 会复制到 `D:\Steam\steamapps\common\Slay the Spire 2\mods\BlindSpire\`（默认 **不写**游戏目录）
 - 反编译参考源码在 `.refs/`（gitignored，可用 ilspycmd 重建，见 `docs/research/00-overview.md`）
 
 ## 目录

@@ -37,6 +37,13 @@ public class PatchTargetAuditTests
             new MemberTarget("_starLabel", Kind.Field),
             new MemberTarget("_enchantmentLabel", Kind.Field),
             new MemberTarget("_enchantmentTab", Kind.Field),
+            new MemberTarget("_ancientPortrait", Kind.Field),
+            new MemberTarget("_energyIcon", Kind.Field),
+            new MemberTarget("_starIcon", Kind.Field),
+            new MemberTarget("_unplayableEnergyIcon", Kind.Field),
+            new MemberTarget("_unplayableStarIcon", Kind.Field),
+            new MemberTarget("_typePlaque", Kind.Field),
+            new MemberTarget("_enchantmentIcon", Kind.Field),
             new MemberTarget("Reload", Kind.Method),
             new MemberTarget("UpdateVisuals", Kind.Method),
         },
@@ -108,6 +115,10 @@ public class PatchTargetAuditTests
         {
             new MemberTarget("UpdateRelicDisplay", Kind.Method),
             new MemberTarget("_relicImage", Kind.Field),
+            new MemberTarget("_nameLabel", Kind.Field),
+            new MemberTarget("_description", Kind.Field),
+            new MemberTarget("_flavor", Kind.Field),
+            new MemberTarget("_rarityLabel", Kind.Field),
         },
         ["MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen"] = new[]
         {
@@ -117,6 +128,9 @@ public class PatchTargetAuditTests
             new MemberTarget("_mapPointDictionary", Kind.Field),
             new MemberTarget("_paths", Kind.Field),
             new MemberTarget("_drawingTools", Kind.Field),
+            new MemberTarget("_bossPointNode", Kind.Field),
+            new MemberTarget("_secondBossPointNode", Kind.Field),
+            new MemberTarget("_startingPointNode", Kind.Field),
         },
         ["MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapPoint"] = new[]
         {

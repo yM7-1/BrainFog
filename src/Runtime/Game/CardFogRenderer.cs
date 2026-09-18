@@ -20,7 +20,10 @@ internal static class CardFogRenderer
     private const string HiddenPartMeta = "BlindSpireHiddenPart";
     private const string PlusNodeName = "BlindSpirePlusMarker";
 
-    public static CardVisualRule ResolveRule(NCard card)
+    public static CardVisualRule ResolveRule(NCard card) =>
+        PatchGuard.RunOr("CardFog.Resolve", () => ResolveRuleCore(card), CardVisualRule.FullFace);
+
+    private static CardVisualRule ResolveRuleCore(NCard card)
     {
         if (ModRuntime.Disabled || card.Model is not CardModel model)
         {
@@ -32,7 +35,10 @@ internal static class CardFogRenderer
         return RevealRules.Resolve(context, knowledge);
     }
 
-    public static void Apply(NCard card)
+    public static void Apply(NCard card) =>
+        PatchGuard.Run("CardFog.Apply", () => ApplyCore(card));
+
+    private static void ApplyCore(NCard card)
     {
         if (!GodotObject.IsInstanceValid(card) || !card.IsNodeReady())
         {

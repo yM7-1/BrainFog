@@ -25,7 +25,10 @@ internal static class TopBarGoldSnapshotPatch
 
     [HarmonyPatch("UpdateGold")]
     [HarmonyPrefix]
-    private static bool UpdateGoldPrefix(NTopBarGold __instance)
+    private static bool UpdateGoldPrefix(NTopBarGold __instance) =>
+        Game.PatchGuard.RunOr("TopBarGold.UpdateGold", () => UpdateGoldPrefixCore(__instance), true);
+
+    private static bool UpdateGoldPrefixCore(NTopBarGold __instance)
     {
         if (ModRuntime.Disabled || __instance._player is not { } player)
         {

@@ -27,6 +27,7 @@ internal sealed partial class VisionMask : CanvasLayer
 
     private ColorRect _rect = null!;
     private ShaderMaterial _material = null!;
+    private NCreature? _playerNode;
 
     public override void _Ready()
     {
@@ -44,15 +45,22 @@ internal sealed partial class VisionMask : CanvasLayer
         _rect.Visible = false;
     }
 
-    public override void _Process(double delta)
+    public override void _Process(double delta) =>
+        PatchGuard.Run("VisionMask.Process", () => ProcessCore(delta));
+
+    private void ProcessCore(double delta)
     {
-        if (ModRuntime.Disabled || NCombatRoom.Instance is not { } room)
+        if (ModRuntime.Disabled || NCombatRoom.Instance is not { } room || !IsInstanceValid(room))
         {
             _rect.Visible = false;
             return;
         }
 
-        var player = FindLocalPlayerNode(room);
+        if (_playerNode == null || !IsInstanceValid(_playerNode))
+        {
+            _playerNode = FindLocalPlayerNode(room);
+        }
+        var player = _playerNode;
         if (player == null)
         {
             _rect.Visible = false;

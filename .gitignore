@@ -14,3 +14,9 @@ TestResults/
 # 编辑器
 .idea/
 .vscode/
+
+# Godot
+.godot/
+
+# autopilot 运行状态
+.autopilot/
