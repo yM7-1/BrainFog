@@ -60,18 +60,80 @@ public class PatchTargetAuditTests
             new MemberTarget("Initialize", Kind.Method),
             new MemberTarget("UpdateHealth", Kind.Method),
             new MemberTarget("_player", Kind.Field),
+            new MemberTarget("_hpLabel", Kind.Field),
         },
         ["MegaCrit.sts2.Core.Nodes.TopBar.NTopBarGold"] = new[]
         {
             new MemberTarget("Initialize", Kind.Method),
             new MemberTarget("UpdateGold", Kind.Method),
             new MemberTarget("_player", Kind.Field),
+            new MemberTarget("_goldLabel", Kind.Field),
+            new MemberTarget("_currentGold", Kind.Field),
         },
+        ["MegaCrit.Sts2.Core.Entities.RestSite.HealRestSiteOption"] = new[]
+        {
+            new MemberTarget("OnSelect", Kind.Method),
+            new MemberTarget("Owner", Kind.Property),
+        },
+        ["MegaCrit.Sts2.Core.Nodes.Events.NEventLayout"] = new[]
+        {
+            new MemberTarget("SetTitle", Kind.Method),
+            new MemberTarget("SetDescription", Kind.Method),
+        },
+        ["MegaCrit.Sts2.Core.Nodes.Events.NEventOptionButton"] = new[]
+        {
+            new MemberTarget("_Ready", Kind.Method),
+            new MemberTarget("_label", Kind.Field),
+        },
+        ["MegaCrit.Sts2.Core.Nodes.Screens.CardSelection.NCardRewardSelectionScreen"] = Array.Empty<MemberTarget>(),
+        ["MegaCrit.Sts2.Core.Nodes.Screens.Shops.NMerchantInventory"] = Array.Empty<MemberTarget>(),
+        ["MegaCrit.Sts2.Core.Nodes.Potions.NPotion"] = new[]
+        {
+            new MemberTarget("Reload", Kind.Method),
+            new MemberTarget("Image", Kind.Property),
+            new MemberTarget("Outline", Kind.Property),
+        },
+        ["MegaCrit.Sts2.Core.Nodes.Relics.NRelic"] = new[]
+        {
+            new MemberTarget("Reload", Kind.Method),
+            new MemberTarget("Icon", Kind.Property),
+            new MemberTarget("Outline", Kind.Property),
+        },
+        ["MegaCrit.Sts2.Core.Rewards.RelicReward"] = new[]
+        {
+            new MemberTarget("CreateIcon", Kind.Method),
+        },
+        ["MegaCrit.Sts2.Core.Nodes.Screens.InspectScreens.NInspectRelicScreen"] = new[]
+        {
+            new MemberTarget("UpdateRelicDisplay", Kind.Method),
+            new MemberTarget("_relicImage", Kind.Field),
+        },
+        ["MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen"] = new[]
+        {
+            new MemberTarget("Open", Kind.Method),
+            new MemberTarget("RecalculateTravelability", Kind.Method),
+            new MemberTarget("ProcessMouseDrawingEvent", Kind.Method),
+            new MemberTarget("_mapPointDictionary", Kind.Field),
+            new MemberTarget("_paths", Kind.Field),
+            new MemberTarget("_drawingTools", Kind.Field),
+        },
+        ["MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapPoint"] = new[]
+        {
+            new MemberTarget("State", Kind.Property),
+        },
+        ["MegaCrit.Sts2.Core.Map.MapCoord"] = Array.Empty<MemberTarget>(),
+        ["MegaCrit.Sts2.Core.Map.MapPointState"] = Array.Empty<MemberTarget>(),
         ["MegaCrit.Sts2.Core.Nodes.Combat.NCreature"] = new[]
         {
             new MemberTarget("Body", Kind.Property),
+            new MemberTarget("Visuals", Kind.Property),
+            new MemberTarget("Entity", Kind.Property),
+            new MemberTarget("_Ready", Kind.Method),
         },
-        ["MegaCrit.Sts2.Core.Nodes.Combat.NIntent"] = Array.Empty<MemberTarget>(),
+        ["MegaCrit.Sts2.Core.Nodes.Combat.NIntent"] = new[]
+        {
+            new MemberTarget("UpdateIntent", Kind.Method),
+        },
         ["MegaCrit.Sts2.Core.Runs.RunManager"] = new[]
         {
             new MemberTarget("InitializeRunLobby", Kind.Method),

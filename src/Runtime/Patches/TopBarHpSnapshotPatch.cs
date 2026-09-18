@@ -7,18 +7,20 @@ namespace BlindSpire.Patches;
 /// <summary>
 /// Top-bar HP shows the stale snapshot: live changes are suppressed unless a
 /// refresh trigger (rest) requested one (spec 0.02 #3, 0.03 c).
+/// Low-HP warning is driven by TRUE hp on every change (spec 0.03 d).
 /// </summary>
 [HarmonyPatch(typeof(NTopBarHp))]
 internal static class TopBarHpSnapshotPatch
 {
     [HarmonyPatch("Initialize")]
     [HarmonyPrefix]
-    private static void InitializePrefix(Player player)
+    private static void InitializePrefix(NTopBarHp __instance, Player player)
     {
         if (ModRuntime.Disabled)
         {
             return;
         }
+        Game.SnapshotDisplay.AttachHpBar(__instance);
         Game.SnapshotDisplay.InitHp(player.Creature.CurrentHp, player.Creature.MaxHp);
     }
 
@@ -31,9 +33,12 @@ internal static class TopBarHpSnapshotPatch
             return true;
         }
 
+        var creature = player.Creature;
+        Game.LowHpHintDisplay.Evaluate(player, creature.CurrentHp, creature.MaxHp);
+
         if (Game.SnapshotDisplay.ConsumeHpRefresh())
         {
-            Game.SnapshotDisplay.OnHpChanged(player.Creature.CurrentHp, player.Creature.MaxHp);
+            Game.SnapshotDisplay.OnHpChanged(creature.CurrentHp, creature.MaxHp);
             return true;
         }
         return false;

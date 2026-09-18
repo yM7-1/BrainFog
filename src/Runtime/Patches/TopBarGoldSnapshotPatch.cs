@@ -13,12 +13,13 @@ internal static class TopBarGoldSnapshotPatch
 {
     [HarmonyPatch("Initialize")]
     [HarmonyPrefix]
-    private static void InitializePrefix(Player player)
+    private static void InitializePrefix(NTopBarGold __instance, Player player)
     {
         if (ModRuntime.Disabled)
         {
             return;
         }
+        Game.SnapshotDisplay.AttachGoldBar(__instance);
         Game.SnapshotDisplay.InitGold(player.Gold);
     }
 
