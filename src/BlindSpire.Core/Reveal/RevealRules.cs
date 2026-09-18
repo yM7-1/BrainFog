@@ -13,6 +13,9 @@ public enum CardDisplayContext
     DiscardPile,
     ExhaustPile,
 
+    /// <summary>Generic pile view screen (draw/discard/exhaust share one screen class).</summary>
+    PileView,
+
     /// <summary>Card reward screen (acquisition).</summary>
     Reward,
 

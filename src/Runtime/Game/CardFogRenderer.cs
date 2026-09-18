@@ -2,6 +2,7 @@ using BlindSpire.Core.Reveal;
 using Godot;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
+using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
 using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
@@ -73,6 +74,8 @@ internal static class CardFogRenderer
                     return CardDisplayContext.Reward;
                 case NMerchantInventory:
                     return CardDisplayContext.Shop;
+                case NCardPileScreen:
+                    return CardDisplayContext.PileView;
             }
             node = node.GetParent();
         }

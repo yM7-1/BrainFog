@@ -28,24 +28,21 @@ internal static class EnemyVisualMask
 
         node.Body.Visible = false;
 
-        var box = node.GetNodeOrNull<ColorRect>(BoxName);
-        if (box == null)
+        if (node.GetNodeOrNull<BreathingBox>(BoxName) is { } existing)
         {
-            box = new ColorRect
-            {
-                Name = BoxName,
-                Color = new Color(0.06f, 0.06f, 0.09f, 0.85f),
-                MouseFilter = Control.MouseFilterEnum.Ignore,
-            };
-            node.AddChild(box);
-            box.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-
-            var tween = box.CreateTween().SetLoops();
-            tween.TweenProperty(box, "modulate:a", 1.0f, 1.3f)
-                .SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-            tween.TweenProperty(box, "modulate:a", 0.55f, 1.3f)
-                .SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+            existing.Creature = node;
+            existing.Visible = true;
+            return;
         }
-        box.Visible = true;
+
+        var box = new BreathingBox
+        {
+            Name = BoxName,
+            Creature = node,
+            Color = new Color(0.06f, 0.06f, 0.09f, 0.85f),
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
+        node.AddChild(box);
+        box.SetAnchorsPreset(Control.LayoutPreset.FullRect);
     }
 }

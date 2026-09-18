@@ -45,4 +45,18 @@ public class StatusSnapshotTests
         Assert.Equal(55, snapshot.Hp);
         Assert.Equal(80, snapshot.MaxHp);
     }
+
+    [Theory]
+    [InlineData(0, 0, false)]
+    [InlineData(0, 1, false)]
+    [InlineData(100, 100, false)]
+    [InlineData(100, 0, true)]
+    [InlineData(1000000, 999999, true)]
+    [InlineData(999999, 1000000, false)]
+    public void Gold_DeductionEdgeCases(int shown, int next, bool expected)
+    {
+        var snapshot = new StatusSnapshot();
+        snapshot.Init(30, 80, shown);
+        Assert.Equal(expected, snapshot.ShouldRefreshGold(next));
+    }
 }

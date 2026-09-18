@@ -11,6 +11,7 @@ public class RevealRulesTests
     [InlineData(CardDisplayContext.DrawPile)]
     [InlineData(CardDisplayContext.DiscardPile)]
     [InlineData(CardDisplayContext.ExhaustPile)]
+    [InlineData(CardDisplayContext.PileView)]
     [InlineData(CardDisplayContext.Other)]
     public void OwnedContexts_UnknownIsFog_RevealedIsFullFace(CardDisplayContext context)
     {

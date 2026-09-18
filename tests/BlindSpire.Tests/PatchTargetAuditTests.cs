@@ -121,6 +121,11 @@ public class PatchTargetAuditTests
         {
             new MemberTarget("State", Kind.Property),
         },
+        ["MegaCrit.Sts2.Core.Nodes.Rooms.NCombatRoom"] = new[]
+        {
+            new MemberTarget("_Ready", Kind.Method),
+            new MemberTarget("CreatureNodes", Kind.Property),
+        },
         ["MegaCrit.Sts2.Core.Map.MapCoord"] = Array.Empty<MemberTarget>(),
         ["MegaCrit.Sts2.Core.Map.MapPointState"] = Array.Empty<MemberTarget>(),
         ["MegaCrit.Sts2.Core.Nodes.Combat.NCreature"] = new[]
