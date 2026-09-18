@@ -38,6 +38,7 @@ internal static class EnemyVisualMask
         if (node.GetNodeOrNull<BreathingBox>(BoxName) is { } existing)
         {
             existing.Creature = node;
+            existing.SetProcess(true);
             existing.Visible = true;
             return;
         }
@@ -73,6 +74,7 @@ internal static class EnemyVisualMask
         if (box != null && GodotObject.IsInstanceValid(box))
         {
             box.Visible = false;
+            box.SetProcess(false);
         }
     }
 }

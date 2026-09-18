@@ -17,13 +17,23 @@ internal sealed partial class BreathingBox : ColorRect
     private float _duration;
     private double _probeTimer;
 
-    public override void _Process(double delta) =>
-        PatchGuard.Run("BreathingBox.Process", () => ProcessCore(delta));
+    public override void _Process(double delta)
+    {
+        try
+        {
+            ProcessCore(delta);
+        }
+        catch (Exception ex)
+        {
+            PatchGuard.Run("BreathingBox.Process", () => throw ex);
+        }
+    }
 
     private void ProcessCore(double delta)
     {
         if (Creature == null || !IsInstanceValid(Creature))
         {
+            SetProcess(false);
             return;
         }
 

@@ -1,5 +1,6 @@
 using BlindSpire.Core.Reveal;
 using Godot;
+using MegaCrit.Sts2.Core.Localization.Fonts;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Screens;
@@ -19,6 +20,7 @@ internal static class CardFogRenderer
     private const string FogNodeName = "BlindSpireFog";
     private const string HiddenPartMeta = "BlindSpireHiddenPart";
     private const string PlusNodeName = "BlindSpirePlusMarker";
+    private const string RuleMeta = "BlindSpireRule";
 
     public static CardVisualRule ResolveRule(NCard card) =>
         PatchGuard.RunOr("CardFog.Resolve", () => ResolveRuleCore(card), CardVisualRule.FullFace);
@@ -51,16 +53,25 @@ internal static class CardFogRenderer
             // Pooled card without a model: clear any leftover state.
             RestoreFaceParts(card);
             fog.Visible = false;
+            card.RemoveMeta(RuleMeta);
             return;
         }
+
         var rule = ResolveRule(card);
-        var hide = rule != CardVisualRule.FullFace;
-        if (hide)
+        var previous = card.HasMeta(RuleMeta) ? (CardVisualRule)card.GetMeta(RuleMeta).AsInt32() : (CardVisualRule?)null;
+        if (previous == rule && rule != CardVisualRule.FullFace)
         {
-            HideFaceParts(card, fog);
-            // Draw the fog where the frame sits, so the frame stays on top.
-            var frameIndex = Mathf.Clamp(card._frame?.GetIndex() ?? 0, 0, Math.Max(0, card.GetChildCount() - 1));
-            card.MoveChild(fog, frameIndex);
+            // Same rule: the game may have re-shown parts (UpdateVisuals); enforce cheaply.
+            HideVisibleFaceParts(card);
+            EnsureFogPlacement(card, fog);
+            return;
+        }
+
+        card.SetMeta(RuleMeta, (int)rule);
+        if (rule != CardVisualRule.FullFace)
+        {
+            HideFaceParts(card);
+            EnsureFogPlacement(card, fog);
             fog.Visible = true;
             var upgraded = rule == CardVisualRule.RarityOnly
                 && RevealRules.ShowsUpgradeMarker(card.Model?.IsUpgraded == true);
@@ -70,6 +81,22 @@ internal static class CardFogRenderer
         {
             RestoreFaceParts(card);
             fog.Visible = false;
+        }
+    }
+
+    private static void EnsureFogPlacement(NCard card, ColorRect fog)
+    {
+        if (!GodotObject.IsInstanceValid(fog) || !fog.Visible)
+        {
+            if (GodotObject.IsInstanceValid(fog))
+            {
+                fog.Visible = true;
+            }
+        }
+        var frameIndex = Mathf.Clamp(card._frame?.GetIndex() ?? 0, 0, Math.Max(0, card.GetChildCount() - 1));
+        if (fog.GetIndex() != frameIndex)
+        {
+            card.MoveChild(fog, frameIndex);
         }
     }
 
@@ -117,6 +144,7 @@ internal static class CardFogRenderer
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Modulate = Colors.White,
             };
+            plus.ApplyLocaleFontSubstitution(FontType.Regular, "font");
             fog.AddChild(plus);
             plus.AnchorLeft = 1f;
             plus.AnchorRight = 1f;
@@ -146,7 +174,9 @@ internal static class CardFogRenderer
         return fog;
     }
 
-    private static void HideFaceParts(NCard card, ColorRect fog)
+    private static void HideFaceParts(NCard card) => HideVisibleFaceParts(card);
+
+    private static void HideVisibleFaceParts(NCard card)
     {
         foreach (var part in FaceParts(card))
         {

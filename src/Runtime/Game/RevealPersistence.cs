@@ -13,7 +13,7 @@ namespace BlindSpire.Game;
 internal static class RevealPersistence
 {
     private static RunSavedData<BlindSpireRunData>? _slot;
-    private static RunState? _runState;
+    private static WeakReference<RunState>? _runStateRef;
     private static readonly List<string> PendingDeckOrder = new();
     private static bool _refreshing;
 
@@ -27,7 +27,7 @@ internal static class RevealPersistence
 
     private static void OnRunStartedCore(RunState state)
     {
-        _runState = state;
+        _runStateRef = new WeakReference<RunState>(state);
         PendingDeckOrder.Clear();
         if (_slot != null && _slot.TryGet(state, out var data))
         {
@@ -75,7 +75,7 @@ internal static class RevealPersistence
 
     private static void RefreshDeckOrderCore(Player owner)
     {
-        if (_refreshing || _slot == null || owner.RunState is not RunState state || !ReferenceEquals(state, _runState))
+        if (_refreshing || _slot == null || owner.RunState is not RunState state || !IsCurrentRun(state))
         {
             return;
         }
@@ -88,6 +88,11 @@ internal static class RevealPersistence
             {
                 ids.Add(CardInstanceRegistry.PeekOrBindNew(card));
             }
+
+            if (_slot.TryGet(state, out var current) && DeckOrderEquals(current.DeckOrderIds, ids))
+            {
+                return; // nothing changed: avoid dirtying the run save
+            }
             _slot.Modify(state, data => data.DeckOrderIds = ids);
         }
         finally
@@ -96,12 +101,31 @@ internal static class RevealPersistence
         }
     }
 
+    private static bool DeckOrderEquals(List<string> a, List<string> b)
+    {
+        if (a.Count != b.Count)
+        {
+            return false;
+        }
+        for (var i = 0; i < a.Count; i++)
+        {
+            if (!string.Equals(a[i], b[i], StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static bool IsCurrentRun(RunState state) =>
+        _runStateRef != null && _runStateRef.TryGetTarget(out var current) && ReferenceEquals(current, state);
+
     public static void OnRevealed(CardModel card, string id) =>
         PatchGuard.Run("Persistence.OnRevealed", () => OnRevealedCore(card, id));
 
     private static void OnRevealedCore(CardModel card, string id)
     {
-        if (_slot == null || card.RunState is not RunState state || !ReferenceEquals(state, _runState))
+        if (_slot == null || card.RunState is not RunState state || !IsCurrentRun(state))
         {
             return;
         }

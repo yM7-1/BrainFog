@@ -33,6 +33,15 @@ bash tools/check.sh
 | `docs/IMPLEMENTATION-MAP.md` | 规格→代码→测试映射、已知限制、晨间验收清单 |
 | `docs/research/` | 游戏与依赖库研读笔记 |
 
+## 依赖与致谢
+
+- [RitsuLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3747602295)（作者 OLC）：生命周期、补丁管线、局内数据持久化、设置与本地化框架
+- 游戏内文本/内容版权归 MegaCrit 所有；本 mod 仅修改本地显示行为
+
+## 免责声明
+
+非官方 mod，与 MegaCrit 无关；使用风险自负，联机模式不支持（自动禁用）。
+
 ## 已知限制（摘要）
 
 近似与未覆盖项（黑雾层级、事件获得路径、RitsuLib 读档时序等）见 `docs/IMPLEMENTATION-MAP.md` §2。

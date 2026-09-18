@@ -1,5 +1,6 @@
 using BlindSpire.Core.Status;
 using Godot;
+using MegaCrit.Sts2.Core.Localization.Fonts;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
@@ -61,9 +62,10 @@ internal static class LowHpHintDisplay
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Modulate = Colors.Red,
             };
+            label.ApplyLocaleFontSubstitution(FontType.Regular, "font");
             hpBar.AddChild(label);
-            label.Position = hpLabel.Position + new Vector2(0, 28);
         }
+        label.Position = hpLabel.Position + new Vector2(0, 28);
         label.Visible = low;
     }
 

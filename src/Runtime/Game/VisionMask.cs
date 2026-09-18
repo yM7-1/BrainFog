@@ -28,6 +28,8 @@ internal sealed partial class VisionMask : CanvasLayer
     private ColorRect _rect = null!;
     private ShaderMaterial _material = null!;
     private NCreature? _playerNode;
+    private Vector2 _lastCenter = new(-1f, -1f);
+    private float _lastAspect = -1f;
 
     public override void _Ready()
     {
@@ -45,8 +47,17 @@ internal sealed partial class VisionMask : CanvasLayer
         _rect.Visible = false;
     }
 
-    public override void _Process(double delta) =>
-        PatchGuard.Run("VisionMask.Process", () => ProcessCore(delta));
+    public override void _Process(double delta)
+    {
+        try
+        {
+            ProcessCore(delta);
+        }
+        catch (Exception ex)
+        {
+            PatchGuard.Run("VisionMask.Process", () => throw ex);
+        }
+    }
 
     private void ProcessCore(double delta)
     {
@@ -73,8 +84,15 @@ internal sealed partial class VisionMask : CanvasLayer
             return;
         }
 
-        _material.SetShaderParameter("hole_center", player.GetGlobalRect().GetCenter() / viewportSize);
-        _material.SetShaderParameter("aspect", viewportSize.X / viewportSize.Y);
+        var center = player.GetGlobalRect().GetCenter() / viewportSize;
+        var aspect = viewportSize.X / viewportSize.Y;
+        if (!center.IsEqualApprox(_lastCenter) || !Mathf.IsEqualApprox(aspect, _lastAspect))
+        {
+            _material.SetShaderParameter("hole_center", center);
+            _material.SetShaderParameter("aspect", aspect);
+            _lastCenter = center;
+            _lastAspect = aspect;
+        }
         _rect.Visible = true;
     }
 
