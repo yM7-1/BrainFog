@@ -22,6 +22,19 @@ internal static class NEventLayoutBlurPatch
             input);
     }
 
+    [HarmonyPatch("SetTitle")]
+    [HarmonyPostfix]
+    private static void SetTitlePostfix(NEventLayout __instance)
+    {
+        Game.PatchGuard.Run("EventBlur.TitleResize", () =>
+        {
+            if (!ModRuntime.Disabled && __instance._title is { } label)
+            {
+                label.SetTextAutoSize(label.Text);
+            }
+        });
+    }
+
     [HarmonyPatch("SetDescription")]
     [HarmonyPrefix]
     private static void SetDescriptionPrefix(ref string description)
@@ -51,5 +64,6 @@ internal static class NEventOptionButtonBlurPatch
             return;
         }
         label.Text = EventTextBlurrer.Blur(label.Text);
+        label.SetTextAutoSize(label.Text);
     }
 }
