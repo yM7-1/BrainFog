@@ -17,10 +17,15 @@ internal sealed partial class VisionMask : CanvasLayer
         uniform float hole_radius = 0.30;
         uniform float softness = 0.12;
         uniform float aspect = 1.777;
+        uniform float ui_top = 0.12;
+        uniform float ui_bottom = 0.70;
         void fragment() {
             vec2 p = vec2((UV.x - hole_center.x) * aspect, UV.y - hole_center.y);
             float d = length(p);
-            float a = smoothstep(hole_radius, hole_radius + softness, d);
+            float fog = smoothstep(hole_radius, hole_radius + softness, d);
+            // Keep the status bar (top) and hand area (bottom) readable.
+            float ui_excluded = step(UV.y, ui_top) + step(ui_bottom, UV.y);
+            float a = fog * (1.0 - clamp(ui_excluded, 0.0, 1.0));
             COLOR = vec4(0.0, 0.0, 0.0, a);
         }
         """;
@@ -37,6 +42,8 @@ internal sealed partial class VisionMask : CanvasLayer
         _material = new ShaderMaterial { Shader = new Shader { Code = ShaderCode } };
         _material.SetShaderParameter("hole_radius", BlindSpireTuning.VisionHoleRadius);
         _material.SetShaderParameter("softness", BlindSpireTuning.VisionSoftness);
+        _material.SetShaderParameter("ui_top", BlindSpireTuning.VisionTopUiBand);
+        _material.SetShaderParameter("ui_bottom", BlindSpireTuning.VisionBottomUiBand);
         _rect = new ColorRect
         {
             Name = "BlindSpireVisionMask",

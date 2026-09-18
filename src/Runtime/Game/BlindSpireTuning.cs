@@ -9,6 +9,11 @@ internal static class BlindSpireTuning
     public const float VisionHoleRadius = 0.30f;
     public const float VisionSoftness = 0.12f;
 
+    // UI bands excluded from the vision fog (fractions of viewport height):
+    // top strip keeps the HP/gold bar readable, bottom strip keeps the hand usable.
+    public const float VisionTopUiBand = 0.12f;
+    public const float VisionBottomUiBand = 0.70f;
+
     // Enemy breathing box.
     public static readonly Godot.Color EnemyBoxColor = new(0.06f, 0.06f, 0.09f, 0.85f);
     public const float EnemyBoxAlphaMin = 0.55f;

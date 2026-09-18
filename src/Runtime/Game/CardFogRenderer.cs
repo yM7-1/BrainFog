@@ -52,7 +52,8 @@ internal static class CardFogRenderer
             return;
         }
 
-        foreach (var node in tree.Root.FindChildren("*", nameof(NCard), recursive: true, owned: false))
+        // Note: type filters match native class names, not C# types; filter in code.
+        foreach (var node in tree.Root.FindChildren("*", "Control", recursive: true, owned: false))
         {
             if (node is NCard card && ReferenceEquals(card.Model, model))
             {

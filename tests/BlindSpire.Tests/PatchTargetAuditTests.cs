@@ -94,10 +94,16 @@ public class PatchTargetAuditTests
             new MemberTarget("_Ready", Kind.Method),
             new MemberTarget("RefreshVotes", Kind.Method),
             new MemberTarget("FlashConfirmation", Kind.Method),
+            new MemberTarget("OnFocus", Kind.Method),
             new MemberTarget("_label", Kind.Field),
         },
         ["MegaCrit.Sts2.Core.Nodes.Screens.CardSelection.NCardRewardSelectionScreen"] = Array.Empty<MemberTarget>(),
         ["MegaCrit.Sts2.Core.Nodes.Screens.Shops.NMerchantInventory"] = Array.Empty<MemberTarget>(),
+        ["MegaCrit.Sts2.Core.Nodes.Screens.Shops.NMerchantCard"] = new[]
+        {
+            new MemberTarget("CreateHoverTip", Kind.Method),
+            new MemberTarget("_cardNode", Kind.Field),
+        },
         ["MegaCrit.Sts2.Core.Nodes.Potions.NPotion"] = new[]
         {
             new MemberTarget("Reload", Kind.Method),

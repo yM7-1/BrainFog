@@ -1,6 +1,9 @@
 using BlindSpire.Core.Reveal;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
+using MegaCrit.Sts2.Core.Nodes.Events;
+using MegaCrit.Sts2.Core.Nodes.HoverTips;
+using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 
 namespace BlindSpire.Patches;
 
@@ -59,4 +62,51 @@ internal static class HandCardHighlightFogPatch
             card.CardHighlight.AnimHide();
         }
     }
+}
+
+
+/// <summary>
+/// Event option focus tips can carry real card/relic details (non-Ancient events);
+/// suppress while masked. Boss relic choices (Ancient events) keep their tips
+/// (spec 0.03 i).
+/// </summary>
+[HarmonyPatch(typeof(NEventOptionButton), "OnFocus")]
+internal static class EventOptionHoverTipPatch
+{
+    [HarmonyPostfix]
+    private static void Postfix(NEventOptionButton __instance) =>
+        Game.PatchGuard.Run("EventTips.OptionFocus", () =>
+        {
+            if (!ModRuntime.Disabled
+                && __instance.Event is not MegaCrit.Sts2.Core.Models.AncientEventModel)
+            {
+                NHoverTipSet.Remove(__instance);
+            }
+        });
+}
+
+
+/// <summary>
+/// Shop cards use their own hover tip path; suppress while masked (acquisition
+/// shows the rarity border only, spec 0.02 #5).
+/// </summary>
+[HarmonyPatch(typeof(NMerchantCard), "CreateHoverTip")]
+internal static class MerchantCardHoverTipPatch
+{
+    [HarmonyPrefix]
+    private static bool Prefix(NMerchantCard __instance) =>
+        Game.PatchGuard.RunOr("ShopTips.Suppress", () =>
+        {
+            if (ModRuntime.Disabled)
+            {
+                return true;
+            }
+
+            var card = __instance._cardNode;
+            if (card?.Model == null)
+            {
+                return true;
+            }
+            return Game.CardFogRenderer.ResolveRule(card) == CardVisualRule.FullFace;
+        }, true);
 }
