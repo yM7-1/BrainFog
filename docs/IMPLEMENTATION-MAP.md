@@ -32,6 +32,10 @@
 | 1.4 地图迷雾+画线禁用 | `Game/MapFogController.cs` + `Patches/MapFogPatch.cs` | 补丁审计 NMapScreen |
 | 1.4 事件 75% 固定模糊 | `Core/Text/EventTextBlurrer.cs` + `Patches/EventTextBlurPatch.cs` | `EventTextBlurrerTests` |
 | 1.5 仅单人守卫 | `Core/MultiplayerGuard.cs`、`ModRuntime`、`RunManagerMultiplayerGuardPatch` | `MultiplayerGuardTests` + 审计 |
+| 全局部件：异常边界 | `Game/PatchGuard.cs`（每 key 一次性 Error 日志），关键类入口与前缀补丁均包裹 | 编译期 |
+| 全局部件：新增文本字体 | `ApplyLocaleFontSubstitution`（濒危标签/加号标记，CJK 字体替换） | 编译期 |
+| 全局部件：调试观测 | `BLINDSPIRE_DEBUG=1` → `ModRuntime.DumpState`（加载/开局输出揭示数、快照值、禁用状态） | 编译期 |
+| 全局部件：发布形态 | manifest 字段/依赖 + 单程序集内含 Core 类型 | `ReleaseShapeTests` |
 
 ## 2. 已知限制 / 近似（晨间重点核查）
 
@@ -46,6 +50,9 @@
 
 ## 3. 晨间验收清单（约 10 分钟）
 
+> 启动参数：在环境变量设置 `BLINDSPIRE_DEBUG=1` 可让日志输出状态摘要（`[BlindSpire][State:...]`）。
+
+
 1. **启动**：游戏加载 mod 无报错（日志 `mods/BlindSpire/`；检查 `BlindSpire.json` 依赖 RitsuLib 0.6.2 已装）。
 2. **新局卡牌**：初始卡组全部黑雾（仅边框）；战斗中打出一张 → 该张在后续战斗中显示真牌面；同名其他副本仍黑雾。
 3. **升级**：锻造一张从未打出的牌 → 变真牌面。
@@ -58,3 +65,4 @@
 10. **战斗**：敌人=呼吸方框（呼吸节奏应跟随敌人原动画）；第 1 回合有意图、之后无；受击特效/伤害数字仍在；己方召唤物正常可见；屏幕只留玩家周围圆形可见区域（视野遮罩）。
 11. **战斗外**：遗物不可见（检视界面黑雾）；Boss 遗物三选一正常可读；药水仅轮廓；地图仅当前/已走/下一层可见，画线按钮消失且右键无法画；事件文本 75% 乱码且每次进入一致；图鉴正常。
 12. **联机**：进入联机对局 → 日志提示 BlindSpire 已禁用（本 mod 不做联机适配）。
+13. **异常自检**：若某功能未生效，日志搜索 `[BlindSpire][` 前缀：`PatchGuard` 会记录首个失败点（补丁目标漂移的最小线索）。
