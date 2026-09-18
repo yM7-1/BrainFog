@@ -47,6 +47,7 @@ public class PatchTargetAuditTests
             new MemberTarget("CardHighlight", Kind.Property),
             new MemberTarget("Reload", Kind.Method),
             new MemberTarget("UpdateVisuals", Kind.Method),
+            new MemberTarget("_Ready", Kind.Method),
         },
         ["MegaCrit.Sts2.Core.Models.CardModel"] = new[]
         {

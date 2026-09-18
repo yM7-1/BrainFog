@@ -36,6 +36,12 @@ internal sealed partial class BreathingBox : ColorRect
             SetProcess(false);
             return;
         }
+        if (Creature.Entity is { IsDead: true })
+        {
+            Visible = false;
+            SetProcess(false);
+            return;
+        }
 
         _elapsed += (float)delta;
         _probeTimer += delta;

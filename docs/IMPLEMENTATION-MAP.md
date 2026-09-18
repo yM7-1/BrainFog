@@ -41,6 +41,8 @@
 | 适配层：Core 纯函数 | `MapFogRules`/`CardContextClassifier`/`MaskEligibility`/`DeckOrderBinding`/`IntentRevealGate`（+测试） | 单测 |
 | 本地化 | `ModLocalization`（RitsuLib I18N，嵌入 zhs/eng：low_hp_warning/unknown_card） | 编译期 |
 | 调试 | `BLINDSPIRE_DEBUG=1` → 状态 dump + F9 覆盖层 | 编译期 |
+| 性能 | 在场卡组注册（揭示刷新精确查找）；雾规则/排序/持久化写入去抖；每帧路径去分配 | 编译期 |
+| 战斗收尾 | 敌人死亡隐藏占位框；视野遮罩排除顶部/底部 UI 带（`BlindSpireTuning` 可调） | 编译期 |
 
 ## 2. 已知限制 / 近似（晨间重点核查）
 

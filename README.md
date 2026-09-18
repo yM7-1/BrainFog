@@ -18,6 +18,7 @@ bash tools/check.sh
 ```
 
 - 产物：`.godot/mono/temp/bin/Release/BlindSpire.dll`（含 Core 逻辑，单程序集）
+- 调试：环境变量 `BLINDSPIRE_DEBUG=1` 输出状态日志并显示 F9 状态覆盖层
 - 安装：`dotnet build BlindSpire.csproj -c Release -p:CopyModOnBuild=true` 会复制到 `D:\Steam\steamapps\common\Slay the Spire 2\mods\BlindSpire\`（默认 **不写**游戏目录）
 - 反编译参考源码在 `.refs/`（gitignored，可用 ilspycmd 重建，见 `docs/research/00-overview.md`）
 

@@ -51,7 +51,8 @@ public static class Entry
         {
             var harmony = new Harmony("BlindSpire");
             harmony.PatchAll(typeof(Entry).Assembly);
-            Log.Info("[BlindSpire] loaded (v0.1.0)");
+            var gameVersion = typeof(MegaCrit.Sts2.Core.Runs.RunManager).Assembly.GetName().Version?.ToString() ?? "unknown";
+            Log.Info($"[BlindSpire] loaded (v0.1.0) against game assembly {gameVersion}");
             ModRuntime.DumpState("loaded");
             TryAttachDebugOverlay();
         }
