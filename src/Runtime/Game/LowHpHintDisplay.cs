@@ -58,13 +58,13 @@ internal static class LowHpHintDisplay
             label = new Label
             {
                 Name = HintLabelName,
-                Text = LowHpHint.Message,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
-                Modulate = Colors.Red,
+                Modulate = BlindSpireTuning.LowHpColor,
             };
             label.ApplyLocaleFontSubstitution(FontType.Regular, "font");
             hpBar.AddChild(label);
         }
+        label.Text = ModLocalization.LowHpWarning;
         label.Position = hpLabel.Position + new Vector2(0, 28);
         label.Visible = low;
     }

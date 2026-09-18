@@ -23,8 +23,8 @@ internal static class EnemyVisualMask
             return;
         }
 
-        var isOurs = entity.IsPlayer || (entity.PetOwner != null && LocalContext.IsMe(entity.PetOwner));
-        if (ModRuntime.Disabled || isOurs)
+        var isOwnPet = entity.PetOwner != null && LocalContext.IsMe(entity.PetOwner);
+        if (!Core.Reveal.MaskEligibility.ShouldMask(ModRuntime.Disabled, entity.IsPlayer, isOwnPet))
         {
             Restore(node);
             return;
@@ -47,7 +47,7 @@ internal static class EnemyVisualMask
         {
             Name = BoxName,
             Creature = node,
-            Color = new Color(0.06f, 0.06f, 0.09f, 0.85f),
+            Color = BlindSpireTuning.EnemyBoxColor,
             MouseFilter = Control.MouseFilterEnum.Ignore,
         };
         node.AddChild(box);

@@ -49,21 +49,55 @@ internal static class NEventLayoutBlurPatch
 
 /// <summary>Event option buttons are blurred as well (spec 0.03 e: 全都模糊).
 /// Boss relic choices (Ancient events) stay readable (spec 0.03 i).</summary>
-[HarmonyPatch(typeof(NEventOptionButton), "_Ready")]
+[HarmonyPatch(typeof(NEventOptionButton))]
 internal static class NEventOptionButtonBlurPatch
 {
+    [HarmonyPatch("_Ready")]
     [HarmonyPostfix]
-    private static void Postfix(NEventOptionButton __instance)
+    private static void ReadyPostfix(NEventOptionButton __instance) =>
+        Game.PatchGuard.Run("EventBlur.OptionReady", () => EventTextBlurHelper.ApplyTo(__instance));
+
+    [HarmonyPatch("RefreshVotes")]
+    [HarmonyPostfix]
+    private static void RefreshVotesPostfix(NEventOptionButton __instance) =>
+        Game.PatchGuard.Run("EventBlur.OptionVotes", () => EventTextBlurHelper.ApplyTo(__instance));
+
+    [HarmonyPatch("FlashConfirmation")]
+    [HarmonyPostfix]
+    private static void FlashConfirmationPostfix(NEventOptionButton __instance) =>
+        Game.PatchGuard.Run("EventBlur.OptionFlash", () => EventTextBlurHelper.ApplyTo(__instance));
+}
+
+/// <summary>Idempotent option-text blurring: remembers the original text so
+/// re-renders stay garbled but never double-blur.</summary>
+internal static class EventTextBlurHelper
+{
+    private const string OriginalMeta = "BlindSpireOriginalText";
+
+    public static void ApplyTo(NEventOptionButton button)
     {
-        if (ModRuntime.Disabled || __instance._label is not { } label)
+        if (ModRuntime.Disabled || button._label is not { } label)
         {
             return;
         }
-        if (__instance.Event is MegaCrit.Sts2.Core.Models.AncientEventModel)
+        if (button.Event is MegaCrit.Sts2.Core.Models.AncientEventModel)
         {
             return;
         }
-        label.Text = EventTextBlurrer.Blur(label.Text);
-        label.SetTextAutoSize(label.Text);
+
+        var original = label.HasMeta(OriginalMeta)
+            ? label.GetMeta(OriginalMeta).AsString()
+            : label.Text;
+        if (!label.HasMeta(OriginalMeta))
+        {
+            label.SetMeta(OriginalMeta, original);
+        }
+
+        var blurred = EventTextBlurrer.Blur(original);
+        if (!string.Equals(label.Text, blurred, StringComparison.Ordinal))
+        {
+            label.Text = blurred;
+            label.SetTextAutoSize(blurred);
+        }
     }
 }

@@ -44,6 +44,7 @@ public class PatchTargetAuditTests
             new MemberTarget("_unplayableStarIcon", Kind.Field),
             new MemberTarget("_typePlaque", Kind.Field),
             new MemberTarget("_enchantmentIcon", Kind.Field),
+            new MemberTarget("CardHighlight", Kind.Property),
             new MemberTarget("Reload", Kind.Method),
             new MemberTarget("UpdateVisuals", Kind.Method),
         },
@@ -91,6 +92,8 @@ public class PatchTargetAuditTests
         ["MegaCrit.Sts2.Core.Nodes.Events.NEventOptionButton"] = new[]
         {
             new MemberTarget("_Ready", Kind.Method),
+            new MemberTarget("RefreshVotes", Kind.Method),
+            new MemberTarget("FlashConfirmation", Kind.Method),
             new MemberTarget("_label", Kind.Field),
         },
         ["MegaCrit.Sts2.Core.Nodes.Screens.CardSelection.NCardRewardSelectionScreen"] = Array.Empty<MemberTarget>(),
@@ -107,9 +110,24 @@ public class PatchTargetAuditTests
             new MemberTarget("Icon", Kind.Property),
             new MemberTarget("Outline", Kind.Property),
         },
+        ["MegaCrit.Sts2.Core.Nodes.Relics.NRelicBasicHolder"] = new[]
+        {
+            new MemberTarget("OnFocus", Kind.Method),
+        },
+        ["MegaCrit.Sts2.Core.Nodes.Relics.NRelicInventoryHolder"] = new[]
+        {
+            new MemberTarget("OnFocus", Kind.Method),
+        },
         ["MegaCrit.Sts2.Core.Rewards.RelicReward"] = new[]
         {
             new MemberTarget("CreateIcon", Kind.Method),
+            new MemberTarget("ExtraHoverTips", Kind.Property),
+        },
+        ["MegaCrit.Sts2.Core.Rewards.SpecialCardReward"] = new[]
+        {
+            new MemberTarget("Description", Kind.Property),
+            new MemberTarget("ExtraHoverTips", Kind.Property),
+            new MemberTarget("_card", Kind.Field),
         },
         ["MegaCrit.Sts2.Core.Nodes.Screens.InspectScreens.NInspectRelicScreen"] = new[]
         {
@@ -120,11 +138,19 @@ public class PatchTargetAuditTests
             new MemberTarget("_flavor", Kind.Field),
             new MemberTarget("_rarityLabel", Kind.Field),
         },
+        ["MegaCrit.Sts2.Core.Nodes.Cards.NCardGrid"] = new[]
+        {
+            new MemberTarget("SetCards", Kind.Method),
+        },
+        ["MegaCrit.Sts2.Core.Nodes.Screens.NDeckViewScreen"] = Array.Empty<MemberTarget>(),
         ["MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen"] = new[]
         {
             new MemberTarget("Open", Kind.Method),
             new MemberTarget("RecalculateTravelability", Kind.Method),
             new MemberTarget("ProcessMouseDrawingEvent", Kind.Method),
+            new MemberTarget("OnDrawingToolsHotkeyPressed", Kind.Method),
+            new MemberTarget("OnMapDrawingButtonPressed", Kind.Method),
+            new MemberTarget("OnMapErasingButtonPressed", Kind.Method),
             new MemberTarget("_mapPointDictionary", Kind.Field),
             new MemberTarget("_paths", Kind.Field),
             new MemberTarget("_drawingTools", Kind.Field),
@@ -144,9 +170,19 @@ public class PatchTargetAuditTests
         ["MegaCrit.Sts2.Core.Nodes.Combat.NCreatureVisuals"] = new[]
         {
             new MemberTarget("UpdatePhobiaMode", Kind.Method),
+            new MemberTarget("SetUpSkin", Kind.Method),
         },
         ["MegaCrit.Sts2.Core.Map.MapCoord"] = Array.Empty<MemberTarget>(),
         ["MegaCrit.Sts2.Core.Map.MapPointState"] = Array.Empty<MemberTarget>(),
+        ["MegaCrit.Sts2.Core.Nodes.Cards.Holders.NCardHolder"] = new[]
+        {
+            new MemberTarget("CreateHoverTips", Kind.Method),
+            new MemberTarget("CardNode", Kind.Property),
+        },
+        ["MegaCrit.Sts2.Core.Nodes.Cards.Holders.NHandCardHolder"] = new[]
+        {
+            new MemberTarget("UpdateCard", Kind.Method),
+        },
         ["MegaCrit.Sts2.Core.Nodes.Combat.NCreature"] = new[]
         {
             new MemberTarget("Body", Kind.Property),

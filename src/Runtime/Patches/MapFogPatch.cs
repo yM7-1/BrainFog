@@ -25,4 +25,19 @@ internal static class MapFogPatch
     [HarmonyPrefix]
     private static bool ProcessMouseDrawingEventPrefix() =>
         Game.PatchGuard.RunOr("MapFog.DrawingPrefix", () => ModRuntime.Disabled, false);
+
+    [HarmonyPatch("OnDrawingToolsHotkeyPressed")]
+    [HarmonyPrefix]
+    private static bool HotkeyPrefix() =>
+        Game.PatchGuard.RunOr("MapFog.HotkeyPrefix", () => ModRuntime.Disabled, false);
+
+    [HarmonyPatch("OnMapDrawingButtonPressed")]
+    [HarmonyPrefix]
+    private static bool DrawButtonPrefix() =>
+        Game.PatchGuard.RunOr("MapFog.DrawButtonPrefix", () => ModRuntime.Disabled, false);
+
+    [HarmonyPatch("OnMapErasingButtonPressed")]
+    [HarmonyPrefix]
+    private static bool EraseButtonPrefix() =>
+        Game.PatchGuard.RunOr("MapFog.EraseButtonPrefix", () => ModRuntime.Disabled, false);
 }

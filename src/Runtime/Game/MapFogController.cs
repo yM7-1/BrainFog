@@ -1,3 +1,4 @@
+using BlindSpire.Core.Map;
 using Godot;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
@@ -27,7 +28,9 @@ internal static class MapFogController
             {
                 continue;
             }
-            var show = IsFrontier(pair.Value.State);
+            var show = MapFogRules.IsFrontierNode(
+                pair.Value.State == MapPointState.Traveled,
+                pair.Value.State == MapPointState.Travelable);
             if (show)
             {
                 visible.Add(pair.Key);
@@ -44,7 +47,10 @@ internal static class MapFogController
                 var show = visible.Contains(from)
                     && visible.Contains(to)
                     && points.TryGetValue(from, out var fromNode)
-                    && fromNode.State == MapPointState.Traveled;
+                    && MapFogRules.IsPathVisible(
+                        fromTraveled: fromNode.State == MapPointState.Traveled,
+                        fromVisible: visible.Contains(from),
+                        toVisible: visible.Contains(to));
                 foreach (var segment in pair.Value)
                 {
                     if (segment != null && GodotObject.IsInstanceValid(segment))
@@ -65,15 +71,14 @@ internal static class MapFogController
         }
     }
 
-    private static bool IsFrontier(MapPointState state) =>
-        state is MapPointState.Traveled or MapPointState.Travelable;
-
     private static void HideSpecial(NMapPoint? node)
     {
         if (node == null || !GodotObject.IsInstanceValid(node))
         {
             return;
         }
-        node.Visible = IsFrontier(node.State);
+        node.Visible = MapFogRules.IsFrontierNode(
+            node.State == MapPointState.Traveled,
+            node.State == MapPointState.Travelable);
     }
 }

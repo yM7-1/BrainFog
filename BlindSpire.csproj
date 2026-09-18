@@ -28,6 +28,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="src/Runtime/Localization/*.json">
+      <LogicalName>BlindSpire.Localization.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Krafs.Publicizer" Version="2.3.0" PrivateAssets="all" />
     <Publicize Include="sts2" IncludeVirtualMembers="false" IncludeCompilerGeneratedMembers="false" />
   </ItemGroup>

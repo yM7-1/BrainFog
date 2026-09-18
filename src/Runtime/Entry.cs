@@ -9,8 +9,26 @@ namespace BlindSpire;
 [ModInitializer(nameof(Initialize))]
 public static class Entry
 {
+    private static void TryAttachDebugOverlay()
+    {
+        if (!ModRuntime.DebugEnabled || Godot.Engine.GetMainLoop() is not Godot.SceneTree tree || tree.Root == null)
+        {
+            return;
+        }
+        tree.Root.CallDeferred(Godot.Node.MethodName.AddChild, new Game.DebugOverlay { Name = "BlindSpireDebugOverlay" });
+    }
+
     public static void Initialize()
     {
+        try
+        {
+            ModLocalization.Initialize();
+        }
+        catch (Exception ex)
+        {
+            Log.Error("[BlindSpire] localization init failed: " + ex);
+        }
+
         try
         {
             RevealPersistence.Register();
@@ -35,6 +53,7 @@ public static class Entry
             harmony.PatchAll(typeof(Entry).Assembly);
             Log.Info("[BlindSpire] loaded (v0.1.0)");
             ModRuntime.DumpState("loaded");
+            TryAttachDebugOverlay();
         }
         catch (Exception ex)
         {

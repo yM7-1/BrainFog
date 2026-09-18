@@ -21,5 +21,6 @@ internal static class CardModelPlayRevealPatch
         var id = Game.CardInstanceRegistry.GetOrCreateId(__instance);
         ModRuntime.Tracker.RevealByPlay(id);
         Game.RevealPersistence.OnRevealed(__instance, id);
+        Game.CardFogRenderer.RefreshLiveCards(__instance);
     }
 }

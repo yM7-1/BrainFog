@@ -35,6 +35,8 @@ internal sealed partial class VisionMask : CanvasLayer
     {
         Layer = 90;
         _material = new ShaderMaterial { Shader = new Shader { Code = ShaderCode } };
+        _material.SetShaderParameter("hole_radius", BlindSpireTuning.VisionHoleRadius);
+        _material.SetShaderParameter("softness", BlindSpireTuning.VisionSoftness);
         _rect = new ColorRect
         {
             Name = "BlindSpireVisionMask",

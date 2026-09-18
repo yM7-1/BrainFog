@@ -54,7 +54,9 @@ internal sealed partial class BreathingBox : ColorRect
         }
 
         var phase = _duration > 0.001f ? _elapsed % _duration / _duration : 0f;
-        var alpha = 0.55f + 0.35f * Mathf.Sin(phase * Mathf.Tau);
+        var mid = (BlindSpireTuning.EnemyBoxAlphaMin + BlindSpireTuning.EnemyBoxAlphaMax) * 0.5f;
+        var amp = (BlindSpireTuning.EnemyBoxAlphaMax - BlindSpireTuning.EnemyBoxAlphaMin) * 0.5f;
+        var alpha = mid + amp * Mathf.Sin(phase * Mathf.Tau);
         Modulate = new Color(1f, 1f, 1f, alpha);
     }
 }

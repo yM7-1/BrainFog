@@ -20,5 +20,6 @@ internal static class CardModelUpgradeRevealPatch
         var id = Game.CardInstanceRegistry.GetOrCreateId(__instance);
         ModRuntime.Tracker.RevealByUpgrade(id);
         Game.RevealPersistence.OnRevealed(__instance, id);
+        Game.CardFogRenderer.RefreshLiveCards(__instance);
     }
 }

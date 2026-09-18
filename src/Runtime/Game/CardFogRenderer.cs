@@ -40,6 +40,27 @@ internal static class CardFogRenderer
     public static void Apply(NCard card) =>
         PatchGuard.Run("CardFog.Apply", () => ApplyCore(card));
 
+    /// <summary>Re-applies the rule to every live NCard showing this instance
+    /// (reveal can happen while the card is on screen: play/upgrade).</summary>
+    public static void RefreshLiveCards(CardModel model) =>
+        PatchGuard.Run("CardFog.RefreshLive", () => RefreshLiveCardsCore(model));
+
+    private static void RefreshLiveCardsCore(CardModel model)
+    {
+        if (ModRuntime.Disabled || Engine.GetMainLoop() is not SceneTree tree || tree.Root == null)
+        {
+            return;
+        }
+
+        foreach (var node in tree.Root.FindChildren("*", nameof(NCard), recursive: true, owned: false))
+        {
+            if (node is NCard card && ReferenceEquals(card.Model, model))
+            {
+                ApplyCore(card);
+            }
+        }
+    }
+
     private static void ApplyCore(NCard card)
     {
         if (!GodotObject.IsInstanceValid(card) || !card.IsNodeReady())
@@ -71,6 +92,12 @@ internal static class CardFogRenderer
         if (rule != CardVisualRule.FullFace)
         {
             HideFaceParts(card);
+            if (rule == CardVisualRule.RarityOnly)
+            {
+                // Acquisition shows rarity only: hide the type-encoding frame/border.
+                HidePart(card._frame);
+                HidePart(card._portraitBorder);
+            }
             EnsureFogPlacement(card, fog);
             fog.Visible = true;
             var upgraded = rule == CardVisualRule.RarityOnly
@@ -102,25 +129,14 @@ internal static class CardFogRenderer
 
     private static CardDisplayContext ResolveContext(NCard card)
     {
+        var names = new List<string>();
         var node = card.GetParent();
-        while (node != null)
+        while (node != null && names.Count < 16)
         {
-            switch (node)
-            {
-                // The compendium is never fogged (spec 0.03 j).
-                case NCardLibrary:
-                    return CardDisplayContext.CardLibrary;
-                // Acquisition screens: rarity border only (spec 0.02 #5, 0.03 h).
-                case NCardRewardSelectionScreen:
-                    return CardDisplayContext.Reward;
-                case NMerchantInventory:
-                    return CardDisplayContext.Shop;
-                case NCardPileScreen:
-                    return CardDisplayContext.PileView;
-            }
+            names.Add(node.GetType().Name);
             node = node.GetParent();
         }
-        return CardDisplayContext.Other;
+        return CardContextClassifier.Classify(names);
     }
 
     private static void UpdatePlusMarker(ColorRect fog, bool show)
@@ -166,7 +182,7 @@ internal static class CardFogRenderer
         var fog = new ColorRect
         {
             Name = FogNodeName,
-            Color = Colors.Black,
+            Color = BlindSpireTuning.CardFogColor,
             MouseFilter = Control.MouseFilterEnum.Ignore,
         };
         card.AddChild(fog);
@@ -175,6 +191,15 @@ internal static class CardFogRenderer
     }
 
     private static void HideFaceParts(NCard card) => HideVisibleFaceParts(card);
+
+    private static void HidePart(CanvasItem? part)
+    {
+        if (part != null && GodotObject.IsInstanceValid(part) && part.Visible)
+        {
+            part.SetMeta(HiddenPartMeta, true);
+            part.Visible = false;
+        }
+    }
 
     private static void HideVisibleFaceParts(NCard card)
     {
@@ -206,6 +231,9 @@ internal static class CardFogRenderer
 
     private static IEnumerable<CanvasItem?> FaceParts(NCard card)
     {
+        // Frame/border are restored here too when RarityOnly hid them.
+        yield return card._frame;
+        yield return card._portraitBorder;
         yield return card._portrait;
         yield return card._ancientPortrait;
         yield return card._titleLabel;
