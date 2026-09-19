@@ -2,7 +2,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.sts2.Core.Nodes.TopBar;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>
 /// Top-bar gold shows the stale snapshot: only deductions refresh it,

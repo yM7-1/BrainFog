@@ -4,7 +4,7 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>
 /// Enemy intents only on the first round of the combat (spec 0.03 f);

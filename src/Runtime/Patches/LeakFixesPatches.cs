@@ -1,11 +1,11 @@
-using BlindSpire.Core.Reveal;
+using BrainFog.Core.Reveal;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Events;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>
 /// Unknown cards show no hover tips: real tips (keywords, mechanics) would leak

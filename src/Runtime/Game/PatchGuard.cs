@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using MegaCrit.Sts2.Core.Logging;
 
-namespace BlindSpire.Game;
+namespace BrainFog.Game;
 
 /// <summary>
 /// Shared exception boundary for patch/game-side code: a broken assumption logs
@@ -46,6 +46,6 @@ internal static class PatchGuard
                 return;
             }
         }
-        Log.Error($"[BlindSpire][{key}] {ex}");
+        Log.Error($"[BrainFog][{key}] {ex}");
     }
 }

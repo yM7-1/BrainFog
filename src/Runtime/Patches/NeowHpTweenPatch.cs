@@ -1,7 +1,7 @@
 using HarmonyLib;
 using MegaCrit.sts2.Core.Nodes.TopBar;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>
 /// Neow's HP-only show writes the true value straight into the top bar; keep the

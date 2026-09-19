@@ -1,9 +1,9 @@
-using BlindSpire.Core.Map;
+using BrainFog.Core.Map;
 using Godot;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 
-namespace BlindSpire.Game;
+namespace BrainFog.Game;
 
 /// <summary>
 /// Map fog (spec 0.01 3.3 / 0.02 #9): only visited points/paths and the next

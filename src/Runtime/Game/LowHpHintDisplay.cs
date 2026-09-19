@@ -1,4 +1,4 @@
-using BlindSpire.Core.Status;
+using BrainFog.Core.Status;
 using Godot;
 using MegaCrit.Sts2.Core.Localization.Fonts;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -6,7 +6,7 @@ using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.sts2.Core.Nodes.TopBar;
 
-namespace BlindSpire.Game;
+namespace BrainFog.Game;
 
 /// <summary>
 /// Low-HP warning: a red border around the player's creature node plus a status-bar
@@ -14,8 +14,8 @@ namespace BlindSpire.Game;
 /// </summary>
 internal static class LowHpHintDisplay
 {
-    private const string HintLabelName = "BlindSpireLowHpHint";
-    private const string BorderName = "BlindSpireLowHpBorder";
+    private const string HintLabelName = "BrainFogLowHpHint";
+    private const string BorderName = "BrainFogLowHpBorder";
 
     public static void Evaluate(Player player, int trueHp, int maxHp) =>
         PatchGuard.Run("LowHpHint.Evaluate", () => EvaluateCore(player, trueHp, maxHp));
@@ -59,13 +59,14 @@ internal static class LowHpHintDisplay
             {
                 Name = HintLabelName,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
-                Modulate = BlindSpireTuning.LowHpColor,
+                Modulate = BrainFogTuning.LowHpColor,
             };
             label.ApplyLocaleFontSubstitution(FontType.Regular, "font");
             hpBar.AddChild(label);
         }
         label.Text = ModLocalization.LowHpWarning;
-        label.Position = hpLabel.Position + new Vector2(0, 28);
+        // Below the snapshot tag + hint labels so the two never overlap.
+        label.Position = hpLabel.Position + new Vector2(0, 52);
         label.Visible = low;
     }
 

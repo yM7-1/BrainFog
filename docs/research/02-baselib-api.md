@@ -129,7 +129,7 @@ ModConfigRegistry.Register("QuickRestart", new Config());   // QR/MainFile.cs:39
 - 依赖是对象数组 `{id,min_version}`（`GAME/.../ModDependency.cs`）；旧式纯字符串会告警（`ModManifest.cs:54-73`）。
 - 加载顺序：按依赖拓扑排序，依赖先加载（`GAME/.../ModManager.cs:331-342`）。
 - 校验：`min_game_version` 高于当前游戏版本 → mod 直接 Fail（`:805-867`）；依赖缺失或版本低于 `min_version` → Fail（`:871-925`）。
-- 重要：BaseLib 仅在「某依赖方 manifest 同时声明 `affects_gameplay: true` 且依赖 BaseLib」时才开启玩法修改相关能力（如 `CardModifier.RegisterSave`，`BL/Patches/PostModInitPatch.cs:62-75`）。BlindSpire 若要注册玩法内容，manifest 建议 `affects_gameplay: true`。
+- 重要：BaseLib 仅在「某依赖方 manifest 同时声明 `affects_gameplay: true` 且依赖 BaseLib」时才开启玩法修改相关能力（如 `CardModifier.RegisterSave`，`BL/Patches/PostModInitPatch.cs:62-75`）。BrainFog 若要注册玩法内容，manifest 建议 `affects_gameplay: true`。
 
 ### 3.2 csproj 引用
 
@@ -140,7 +140,7 @@ ModConfigRegistry.Register("QuickRestart", new Config());   // QR/MainFile.cs:39
   ```
   `TargetFramework` = `netcoreapp9.0`，`LangVersion`=11。
 - **BaseLib 自身不发布任何 .props**（workshop 目录只有 dll/json/pck 三个文件）。对比：RitsuLib 随包提供 `RitsuLib.References.props`，用 `HintPath` + `Private="False"` 指向各版本兼容程序集（`.../3747602295/RitsuLib.References.props`）。
-- 因此 BlindSpire 需要自备 `Directory.Build.props`（或逐条 HintPath）：指向 `D:/Steam/steamapps/workshop/content/2868840/3737335127/BaseLib/BaseLib.dll`（或开发机上的 `mods/BaseLib/BaseLib.dll`），并设 `Private="False"` 避免把依赖 dll 复制进输出。`sts2`/`GodotSharp`/`0Harmony` 可从 `D:/Steam/steamapps/common/Slay the Spire 2/data_sts2_windows_x86_64/` 取。
+- 因此 BrainFog 需要自备 `Directory.Build.props`（或逐条 HintPath）：指向 `D:/Steam/steamapps/workshop/content/2868840/3737335127/BaseLib/BaseLib.dll`（或开发机上的 `mods/BaseLib/BaseLib.dll`），并设 `Private="False"` 避免把依赖 dll 复制进输出。`sts2`/`GodotSharp`/`0Harmony` 可从 `D:/Steam/steamapps/common/Slay the Spire 2/data_sts2_windows_x86_64/` 取。
 - 访问游戏 internal 类型需 `[assembly: IgnoresAccessChecksTo("sts2")]`（`QR/Properties/AssemblyInfo.cs`），并通过 `AssemblyHasScripts` 列出所有 Godot 脚本类型（同文件）。
 
 ### 3.3 pck 的作用与打包

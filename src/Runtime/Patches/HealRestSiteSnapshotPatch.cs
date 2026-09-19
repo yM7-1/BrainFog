@@ -1,7 +1,7 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.RestSite;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>
 /// Rest refreshes the HP and gold snapshots (spec 0.02 #3).

@@ -1,7 +1,7 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>Map fog applied whenever the map opens or travelability changes.</summary>
 [HarmonyPatch(typeof(NMapScreen))]

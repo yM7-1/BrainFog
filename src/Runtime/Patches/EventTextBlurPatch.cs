@@ -1,8 +1,8 @@
-using BlindSpire.Core.Text;
+using BrainFog.Core.Text;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.Events;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>
 /// Event text is blurred at 75%, fixed per text (spec 0.03 e).
@@ -31,6 +31,7 @@ internal static class NEventLayoutBlurPatch
             if (!ModRuntime.Disabled && __instance._title is { } label)
             {
                 label.SetTextAutoSize(label.Text);
+                Game.TextBlurService.Mark(label);
             }
         });
     }
@@ -45,10 +46,23 @@ internal static class NEventLayoutBlurPatch
             () => ModRuntime.Disabled ? input : EventTextBlurrer.Blur(input),
             input);
     }
+
+    [HarmonyPatch("SetDescription")]
+    [HarmonyPostfix]
+    private static void SetDescriptionPostfix(NEventLayout __instance) =>
+        Game.PatchGuard.Run("EventBlur.DescriptionMark", () =>
+        {
+            if (!ModRuntime.Disabled)
+            {
+                Game.TextBlurService.Mark(__instance._description);
+            }
+        });
 }
 
 /// <summary>Event option buttons are blurred as well (spec 0.03 e: 全都模糊).
-/// Boss relic choices (Ancient events) stay readable (spec 0.03 i).</summary>
+/// Ancient options are garbled at 90% but keep the relic icon visible so the
+/// Boss-relic choice stays playable (user change 2026-09-19). Neow-style hidden
+/// choices also hide the icon.</summary>
 [HarmonyPatch(typeof(NEventOptionButton))]
 internal static class NEventOptionButtonBlurPatch
 {
@@ -72,7 +86,6 @@ internal static class NEventOptionButtonBlurPatch
 /// re-renders stay garbled but never double-blur.</summary>
 internal static class EventTextBlurHelper
 {
-    private const string OriginalMeta = "BlindSpireOriginalText";
 
     public static void ApplyTo(NEventOptionButton button)
     {
@@ -80,8 +93,11 @@ internal static class EventTextBlurHelper
         {
             return;
         }
+
         if (Game.AncientChoiceRules.StaysVisible(button.Event))
         {
+            // Ancient dialogue options: 90% garbled, icon stays visible.
+            ApplyBlur(label, TextBlurPercents.Dialogue);
             return;
         }
 
@@ -91,19 +107,9 @@ internal static class EventTextBlurHelper
             relicIcon.Visible = false;
         }
 
-        var original = label.HasMeta(OriginalMeta)
-            ? label.GetMeta(OriginalMeta).AsString()
-            : label.Text;
-        if (!label.HasMeta(OriginalMeta))
-        {
-            label.SetMeta(OriginalMeta, original);
-        }
-
-        var blurred = EventTextBlurrer.Blur(original);
-        if (!string.Equals(label.Text, blurred, StringComparison.Ordinal))
-        {
-            label.Text = blurred;
-            label.SetTextAutoSize(blurred);
-        }
+        ApplyBlur(label, TextBlurPercents.Event);
     }
+
+    private static void ApplyBlur(MegaCrit.Sts2.addons.mega_text.MegaRichTextLabel label, int percent) =>
+        Game.TextBlurService.BlurNode(label, percent);
 }

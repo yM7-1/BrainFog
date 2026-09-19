@@ -1,4 +1,7 @@
 {
   "low_hp_warning": "Critical: I feel like I'm dying",
-  "unknown_card": "Unknown Card"
+  "unknown_card": "Unknown Card",
+  "unknown_relic": "Unknown Relic",
+  "hp_snapshot_tag": "State at last rest",
+  "hp_snapshot_hint": "Not your current HP. Rest at a campfire to refresh this."
 }

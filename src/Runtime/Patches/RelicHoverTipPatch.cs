@@ -2,9 +2,11 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Relics;
+using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
+using MegaCrit.Sts2.Core.Nodes.Screens.TreasureRoomRelic;
 using MegaCrit.Sts2.Core.Rewards;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>
 /// Relics are invisible (spec 0.01 3.1): focus hover tips must not reveal their
@@ -52,4 +54,36 @@ internal static class RelicRewardHoverTipPatch
         __result = Array.Empty<IHoverTip>();
         return false;
     }
+}
+
+/// <summary>Treasure-room (chest) relic choices hover-tip name+description; suppress
+/// while masked (leak fix 2026-09-19).</summary>
+[HarmonyPatch(typeof(NTreasureRoomRelicHolder), "OnFocus")]
+internal static class TreasureRoomRelicHoverTipPatch
+{
+    [HarmonyPostfix]
+    private static void Postfix(NTreasureRoomRelicHolder __instance) =>
+        Game.PatchGuard.Run("RelicTips.Treasure", () =>
+        {
+            if (!ModRuntime.Disabled)
+            {
+                NHoverTipSet.Remove(__instance);
+            }
+        });
+}
+
+/// <summary>Shop relics hover-tip the real relic; suppress while masked
+/// (leak fix 2026-09-19).</summary>
+[HarmonyPatch(typeof(NMerchantRelic), "CreateHoverTip")]
+internal static class MerchantRelicHoverTipPatch
+{
+    [HarmonyPostfix]
+    private static void Postfix(NMerchantRelic __instance) =>
+        Game.PatchGuard.Run("RelicTips.Merchant", () =>
+        {
+            if (!ModRuntime.Disabled)
+            {
+                NHoverTipSet.Remove(__instance);
+            }
+        });
 }

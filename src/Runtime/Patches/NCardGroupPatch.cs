@@ -1,7 +1,7 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>
 /// Keeps every live NCard in a Godot group so reveal refreshes are precise
@@ -10,7 +10,7 @@ namespace BlindSpire.Patches;
 [HarmonyPatch(typeof(NCard), "_Ready")]
 internal static class NCardGroupPatch
 {
-    internal const string GroupName = "blindspire_cards";
+    internal const string GroupName = "brainfog_cards";
 
     [HarmonyPostfix]
     private static void Postfix(NCard __instance) =>

@@ -1,7 +1,7 @@
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Events;
 
-namespace BlindSpire.Game;
+namespace BrainFog.Game;
 
 /// <summary>
 /// Boss/act-start Ancient relic choices stay visible (spec 0.03 i), but Neow's

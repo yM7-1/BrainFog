@@ -1,4 +1,4 @@
-# BlindSpire 研读总览（笔记 00）
+# BrainFog 研读总览（笔记 00）
 
 > 状态：项目初始化 + 游戏/依赖库研读完成，**等待功能目标**。最后更新：2026-09-18。
 
@@ -46,6 +46,6 @@ ilspycmd -p -o .refs/sts2-v0.111.0/src --nested-directories \
 
 ## 5. 待办
 
-1. **等待用户提供 BlindSpire 的功能目标**（决定选型：BaseLib 基类注册 vs RitsuLib 声明式注册；是否两者都用）。
-2. 目标确定后：搭 csproj（游戏 + 两库引用）、`BlindSpire.json` manifest、`[ModInitializer]` 入口、pck 打包链路。
+1. **等待用户提供 BrainFog 的功能目标**（决定选型：BaseLib 基类注册 vs RitsuLib 声明式注册；是否两者都用）。
+2. 目标确定后：搭 csproj（游戏 + 两库引用）、`BrainFog.json` manifest、`[ModInitializer]` 入口、pck 打包链路。
 3. 决定是否把本仓库注册为 `D:\0_git` 元仓库子模块（需要 GitHub remote 后）。

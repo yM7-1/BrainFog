@@ -1,7 +1,7 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>Enemy models are masked at creature creation (spec 0.01 4.1).</summary>
 [HarmonyPatch(typeof(NCreature), "_Ready")]

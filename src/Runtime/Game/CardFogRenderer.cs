@@ -1,4 +1,5 @@
-using BlindSpire.Core.Reveal;
+using BrainFog.Core.Reveal;
+using BrainFog.Core.Text;
 using Godot;
 using MegaCrit.Sts2.Core.Localization.Fonts;
 using MegaCrit.Sts2.Core.Models;
@@ -8,7 +9,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
 using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 
-namespace BlindSpire.Game;
+namespace BrainFog.Game;
 
 /// <summary>
 /// Applies the black-fog rule to an NCard: unknown instances show only the frame,
@@ -17,10 +18,11 @@ namespace BlindSpire.Game;
 /// </summary>
 internal static class CardFogRenderer
 {
-    private const string FogNodeName = "BlindSpireFog";
-    private const string HiddenPartMeta = "BlindSpireHiddenPart";
-    private const string PlusNodeName = "BlindSpirePlusMarker";
-    private const string RuleMeta = "BlindSpireRule";
+    private const string FogNodeName = "BrainFogFog";
+    private const string HiddenPartMeta = "BrainFogHiddenPart";
+    private const string PlusNodeName = "BrainFogPlusMarker";
+    private const string RuleMeta = "BrainFogRule";
+    private const string BlurredTextMeta = "BrainFogBlurredText";
 
     public static CardVisualRule ResolveRule(NCard card) =>
         PatchGuard.RunOr("CardFog.Resolve", () => ResolveRuleCore(card), CardVisualRule.FullFace);
@@ -32,16 +34,16 @@ internal static class CardFogRenderer
             return CardVisualRule.FullFace;
         }
 
-        var context = ResolveContext(card);
-        var knowledge = ModRuntime.Tracker.GetKnowledge(CardInstanceRegistry.GetOrCreateId(model));
+        var context = ResolveContext(card, model);
+        var knowledge = ModRuntime.Tracker.GetKnowledge(RevealKeys.Of(model));
         return RevealRules.Resolve(context, knowledge);
     }
 
     public static void Apply(NCard card) =>
         PatchGuard.Run("CardFog.Apply", () => ApplyCore(card));
 
-    /// <summary>Re-applies the rule to every live NCard showing this instance
-    /// (reveal can happen while the card is on screen: play/upgrade).</summary>
+    /// <summary>Re-applies the rule to every live NCard of this card definition
+    /// (reveal covers all copies and can happen while a copy is on screen).</summary>
     public static void RefreshLiveCards(CardModel model) =>
         PatchGuard.Run("CardFog.RefreshLive", () => RefreshLiveCardsCore(model));
 
@@ -54,7 +56,7 @@ internal static class CardFogRenderer
 
         foreach (var node in tree.GetNodesInGroup(Patches.NCardGroupPatch.GroupName))
         {
-            if (node is NCard card && ReferenceEquals(card.Model, model))
+            if (node is NCard card && card.Model is { } candidate && candidate.Id == model.Id)
             {
                 ApplyCore(card);
             }
@@ -108,7 +110,79 @@ internal static class CardFogRenderer
         {
             RestoreFaceParts(card);
             fog.Visible = false;
+            BlurFaceText(card);
         }
+    }
+
+    /// <summary>Revealed cards keep their art but every text on the face is
+    /// garbled at 85% (user change 2026-09-19). The compendium stays clean.</summary>
+    private static void BlurFaceText(NCard card)
+    {
+        if (IsCompendiumCard(card))
+        {
+            return;
+        }
+        foreach (var label in TextFaceParts(card))
+        {
+            BlurText(label);
+        }
+    }
+
+    private static bool IsCompendiumCard(NCard card)
+    {
+        for (var node = card.GetParent(); node != null; node = node.GetParent())
+        {
+            if (node is NCardLibrary)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void BlurText(CanvasItem? part)
+    {
+        if (part == null || !GodotObject.IsInstanceValid(part))
+        {
+            return;
+        }
+
+        var current = part switch
+        {
+            RichTextLabel rich => rich.Text,
+            Label plain => plain.Text,
+            _ => null,
+        };
+        if (string.IsNullOrEmpty(current))
+        {
+            return;
+        }
+        if (part.HasMeta(BlurredTextMeta) && part.GetMeta(BlurredTextMeta).AsString() == current)
+        {
+            return;
+        }
+
+        var blurred = EventTextBlurrer.Blur(current, TextBlurPercents.CardFaceText);
+        part.SetMeta(BlurredTextMeta, blurred);
+        switch (part)
+        {
+            case RichTextLabel rich:
+                rich.Text = blurred;
+                break;
+            case Label plain:
+                plain.Text = blurred;
+                break;
+        }
+    }
+
+    private static IEnumerable<CanvasItem?> TextFaceParts(NCard card)
+    {
+        yield return card._titleLabel;
+        yield return card._descriptionLabel;
+        yield return card._typeLabel;
+        yield return card._energyLabel;
+        yield return card._starLabel;
+        yield return card._enchantmentLabel;
     }
 
     private static void EnsureFogPlacement(NCard card, ColorRect fog)
@@ -127,16 +201,40 @@ internal static class CardFogRenderer
         }
     }
 
-    private static CardDisplayContext ResolveContext(NCard card)
+    private static CardDisplayContext ResolveContext(NCard card, CardModel model)
     {
         var names = new List<string>();
+        var ownedView = false;
+        var forceAcquisition = false;
         var node = card.GetParent();
         while (node != null && names.Count < 16)
         {
             names.Add(node.GetType().Name);
+            if (node is NInspectCardScreen inspect)
+            {
+                ownedView = true;
+                forceAcquisition |= InspectSourceIsUnowned(inspect);
+            }
+            else if (node.GetType().Name == "NUpgradePreview")
+            {
+                ownedView = true;
+            }
             node = node.GetParent();
         }
-        return CardContextClassifier.Classify(names);
+        return CardContextClassifier.Classify(names, model.Pile != null, ownedView, forceAcquisition);
+    }
+
+    /// <summary>The inspect screen can be opened from acquisition screens (card
+    /// rewards); those source cards live in no pile and must stay masked.</summary>
+    private static bool InspectSourceIsUnowned(NInspectCardScreen screen)
+    {
+        var cards = screen._cards;
+        var index = screen._index;
+        if (cards == null || index < 0 || index >= cards.Count)
+        {
+            return false;
+        }
+        return cards[index]?.Pile == null;
     }
 
     private static void UpdatePlusMarker(ColorRect fog, bool show)
@@ -182,7 +280,7 @@ internal static class CardFogRenderer
         var fog = new ColorRect
         {
             Name = FogNodeName,
-            Color = BlindSpireTuning.CardFogColor,
+            Color = BrainFogTuning.CardFogColor,
             MouseFilter = Control.MouseFilterEnum.Ignore,
         };
         card.AddChild(fog);

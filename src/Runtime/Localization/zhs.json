@@ -1,4 +1,7 @@
 {
   "low_hp_warning": "濒危：我感觉自己快死了",
-  "unknown_card": "未知卡牌"
+  "unknown_card": "未知卡牌",
+  "unknown_relic": "未知遗物",
+  "hp_snapshot_tag": "上次休息时的状态",
+  "hp_snapshot_hint": "该状态并非当前真实状态，请在火堆休息获得最新状态信息"
 }

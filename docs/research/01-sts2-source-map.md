@@ -1,4 +1,4 @@
-# STS2 v0.111.0 源码地图（BlindSpire 研读笔记 01）
+# STS2 v0.111.0 源码地图（BrainFog 研读笔记 01）
 
 > 来源：`.refs/sts2-v0.111.0/src/`（ILSpy 8.2 反编译，3538 个 .cs，只读）；官方 XML 文档 `sts2.xml`（20723 个 member，可用于按 summary 快速定位）。
 > 游戏版本 v0.111.0（commit `41cef1ea`，2026-08-13），程序集 `sts2`（NET 9，Godot）。**以下路径均相对 `.refs/sts2-v0.111.0/src/`**。
@@ -256,7 +256,7 @@
 | `MegaCrit/sts2/Core/AutoSlay/AutoSlayer.cs:73` | 自动跑关（QA/参考用） |
 | `MegaCrit/sts2/Core/DevConsole/DevConsole.cs:18` | 内置控制台命令 |
 
-## 7. 研读建议（BlindSpire 下一步）
+## 7. 研读建议（BrainFog 下一步）
 
 - 想改战斗数值：从 `Hook.ModifyDamage`/`CreatureCmd.Damage` + `AbstractModel.Modify*` 入手，先写“只读钩子”旁路验证。
 - 想加内容：先照抄 `Anger.cs`（卡）+ `VulnerablePower.cs`（能力）+ `Nibbit.cs`（怪）三个模板，再在 `ModInitializer` 里 `ModHelper.AddModelToPool`。

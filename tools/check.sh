@@ -12,11 +12,11 @@ export STS2_DATA_DIR
 cd "$(dirname "$0")/.."
 
 echo "==> build"
-dotnet build BlindSpire.csproj -c Release -p:CopyModOnBuild=false \
+dotnet build BrainFog.csproj -c Release -p:CopyModOnBuild=false \
   -p:SteamRoot="$STEAM_ROOT" \
   -p:Sts2DataDir="$STS2_DATA_DIR" \
   -v minimal -nologo
 
 echo "==> test"
-dotnet test tests/BlindSpire.Tests/BlindSpire.Tests.csproj -c Release \
+dotnet test tests/BrainFog.Tests/BrainFog.Tests.csproj -c Release \
   -v minimal -nologo

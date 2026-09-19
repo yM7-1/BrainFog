@@ -2,7 +2,7 @@ using Godot;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 
-namespace BlindSpire.Game;
+namespace BrainFog.Game;
 
 /// <summary>
 /// Hides enemy models and replaces them with a breathing rectangle placeholder
@@ -11,7 +11,7 @@ namespace BlindSpire.Game;
 /// </summary>
 internal static class EnemyVisualMask
 {
-    private const string BoxName = "BlindSpireEnemyBox";
+    private const string BoxName = "BrainFogEnemyBox";
 
     public static void Apply(NCreature node) =>
         PatchGuard.Run("EnemyMask.Apply", () => ApplyCore(node));
@@ -47,7 +47,7 @@ internal static class EnemyVisualMask
         {
             Name = BoxName,
             Creature = node,
-            Color = BlindSpireTuning.EnemyBoxColor,
+            Color = BrainFogTuning.EnemyBoxColor,
             MouseFilter = Control.MouseFilterEnum.Ignore,
         };
         node.AddChild(box);

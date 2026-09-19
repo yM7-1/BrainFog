@@ -1,6 +1,6 @@
-using BlindSpire.Core.Status;
+using BrainFog.Core.Status;
 
-namespace BlindSpire.Game;
+namespace BrainFog.Game;
 
 /// <summary>
 /// Game-side holder for the displayed snapshot and its refresh triggers.

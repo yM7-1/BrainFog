@@ -32,7 +32,7 @@ RitsuLib 是「多版本兼容 + 声明式注册 + Harmony 补丁管线 + 设置
 ### 2.1 从游戏加载到框架初始化
 
 1. 游戏 ModManager：解析 manifest → 依赖校验/拓扑排序（`GAME/MegaCrit/sts2/Core/Modding/ModManager.cs:330`）→ 加载 `<modId>.dll`（`:953`）→ 找 `[ModInitializer]` 类型并反射调用静态初始化方法（`:996-1002`）；没有初始化器则退回 `Harmony.PatchAll`（`:1011`，即配置/注册代码不会执行）。
-2. RitsuLib 的初始化器是 **Loader 里的 `STS2RitsuLib.Loader.Bootstrap.Initialize`**：解析 `ritsulib-variants.manifest` 选 compat 变体并逐文件校验 SHA256，用自建 `AssemblyLoadContext` 装载 5 个模块，把变体程序集关联到游戏 mod `STS2-RitsuLib` 并给 ReflectionHelper 打桥，再对每个模块调 `EnsureGodotScriptsRegistered`，最后反射调用 Runtime 的 `RitsuLibFramework.Initialize`。因为 RitsuLib 是依赖项，它的初始化一定先于 BlindSpire 的 `[ModInitializer]`。
+2. RitsuLib 的初始化器是 **Loader 里的 `STS2RitsuLib.Loader.Bootstrap.Initialize`**：解析 `ritsulib-variants.manifest` 选 compat 变体并逐文件校验 SHA256，用自建 `AssemblyLoadContext` 装载 5 个模块，把变体程序集关联到游戏 mod `STS2-RitsuLib` 并给 ReflectionHelper 打桥，再对每个模块调 `EnsureGodotScriptsRegistered`，最后反射调用 Runtime 的 `RitsuLibFramework.Initialize`。因为 RitsuLib 是依赖项，它的初始化一定先于 BrainFog 的 `[ModInitializer]`。
 3. `RitsuLibFramework.Initialize`（`RL/STS2RitsuLib/RitsuLibFramework.cs:706`）：初始化设置存储/搜索/日志管线/遥测；按 7 个区域注册必需补丁并 `PatchAllRequired`（`:758-778`，区域枚举 `:188`：Core、SettingsUi、ContentAssets、CharacterAssets、ContentRegistry、Persistence、Unlocks）；启动运行时服务（`:780-792`）；发布 `FrameworkInitializingEvent`/`FrameworkInitializedEvent`（`:755`/`:805`），置 `IsInitialized`/`IsActive`（`:803`）。
 4. 之后的事件由补丁在游戏原生节点发布：`OneTimeInitialization.ExecuteEssential/ExecuteDeferred` → Essential/Deferred 事件（`RL/STS2RitsuLib/Lifecycle/Patches/CoreInitializationLifecyclePatch.cs:42,57`）；`ModelDb.Init` → 冻结内容注册 + `ModelRegistryInitializingEvent`（`RL/STS2RitsuLib/Lifecycle/Patches/ModelRegistryLifecyclePatch.cs:59`）；`LocManager.Initialize` → 运行类型发现 `ModTypeDiscoveryHub.RunOnce` 并冲刷延迟内容包（`RL/STS2RitsuLib/Interop/Patches/ModTypeDiscoveryPatch.cs:33,56`）；主菜单 → `MainMenuReadyEvent`（预热设置镜像，`RL/STS2RitsuLib/RitsuLibFramework.cs:793-802`）。
 5. 档案服务由档案补丁调用 `EnsureProfileServicesInitialized`（`:875`）后发布 `ProfileServicesInitializedEvent`（`:889`），并初始化所有 profile 作用域的 `ModDataStore`。
@@ -69,7 +69,7 @@ RitsuLib 是「多版本兼容 + 声明式注册 + Harmony 补丁管线 + 设置
 
 - 在类型上标注 `[RegisterCard]`、`[RegisterRelic]`、`[RegisterCharacter]`、`[RegisterAct]`、`[RegisterMonster]`、`[RegisterEpoch]`、`[AutoTimelineSlot]`、`[RegisterNodeAttachmentFromScene]`、`[RegisterModelCapability]` 等（基类 `RL/STS2RitsuLib/Interop/AutoRegistration/AutoRegistrationAttribute.cs:9`、`ContentRegistrationAttribute.cs:7`；示例 `RegisterCardAttribute.cs:14`），无需手写注册调用。
 - 管线：`ModTypeDiscoveryHub.RunOnce`（`RL/STS2RitsuLib/Interop/ModTypeDiscoveryHub.cs:162`）扫描「游戏已关联到 mod」的程序集（也可手动 `RegisterModAssembly`，`:89`；内置贡献器注册 `:148`），由 `AttributeAutoRegistrationTypeDiscoveryContributor`（`.../AutoRegistration/AttributeAutoRegistrationTypeDiscoveryContributor.cs:44`）确定性排序并执行；在 `LocManager.Initialize` 触发（`ModTypeDiscoveryPatch.cs:33`）。
-- 归属 modId 取不到时用 `[RitsuLibOwnedBy("BlindSpire")]`（`RitsuLibOwnedByAttribute.cs:19`）覆盖，否则自动注册会被跳过（`:1946` 会告警）。
+- 归属 modId 取不到时用 `[RitsuLibOwnedBy("BrainFog")]`（`RitsuLibOwnedByAttribute.cs:19`）覆盖，否则自动注册会被跳过（`:1946` 会告警）。
 
 ### 2.5 Harmony 补丁辅助
 
@@ -164,7 +164,7 @@ props 做什么（`PKG/RitsuLib.References.props`）：
   <PropertyGroup>
     <TargetFramework>netcoreapp9.0</TargetFramework>
     <LangVersion>11.0</LangVersion>
-    <AssemblyName>BlindSpire</AssemblyName>
+    <AssemblyName>BrainFog</AssemblyName>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
   </PropertyGroup>
 
@@ -192,25 +192,25 @@ props 做什么（`PKG/RitsuLib.References.props`）：
 - 宿主版本探测 API：`Sts2HostVersion.Numeric` / `ReleaseLabel`（`RL/STS2RitsuLib/Compat/Sts2HostVersion.cs:146,152`）；`Compat/Sts2ApiCapabilityGate.cs`、`Sts2ApiFeatureThresholds.cs` 预留集中式能力门控。
 - 游戏侧同时约束：manifest `min_game_version` 高于当前游戏 → mod 直接 Fail；下游 manifest 的 `dependencies[].min_version` 高于已装 RitsuLib → Fail（`GAME/.../ModManager.cs:805-925`）。
 
-## 5. 最小接入步骤（BlindSpire）
+## 5. 最小接入步骤（BrainFog）
 
-1. **manifest**（`BlindSpire.json`）：`id: "BlindSpire"`、`has_dll: true`、`has_pck` 按需、`affects_gameplay: true`（加玩法内容时）、`min_game_version: "0.107.1"`（按需）、依赖 `[{"id": "STS2-RitsuLib", "min_version": "0.6.2"}]`（若也依赖 BaseLib，两者并列）。dll 文件名必须为 `BlindSpire.dll`（游戏按 `<modId>.dll` 查找，`GAME/.../ModManager.cs:953`）。
+1. **manifest**（`BrainFog.json`）：`id: "BrainFog"`、`has_dll: true`、`has_pck` 按需、`affects_gameplay: true`（加玩法内容时）、`min_game_version: "0.107.1"`（按需）、依赖 `[{"id": "STS2-RitsuLib", "min_version": "0.6.2"}]`（若也依赖 BaseLib，两者并列）。dll 文件名必须为 `BrainFog.dll`（游戏按 `<modId>.dll` 查找，`GAME/.../ModManager.cs:953`）。
 2. **csproj**：按 §4.3 片段引用 RitsuLib + 游戏程序集 + BaseLib；访问游戏 internal 类型加 `[assembly: IgnoresAccessChecksTo("sts2")]`；有 Godot 脚本类型时按 BaseLib 笔记的方式声明 `AssemblyHasScripts`/`ScriptPath`。
-3. **入口**：`[ModInitializer("Initialize")] public static class BlindSpireMain`；在 `Initialize()`（RitsuLib 保证已就绪）里：
+3. **入口**：`[ModInitializer("Initialize")] public static class BrainFogMain`；在 `Initialize()`（RitsuLib 保证已就绪）里：
    ```csharp
    var patcher = RitsuLibFramework.CreatePatcher(ModId, "main");
-   patcher.RegisterPatches<BlindSpirePatches>();                 // IModPatches
+   patcher.RegisterPatches<BrainFogPatches>();                 // IModPatches
    RitsuLibFramework.ApplyRequiredPatcher(patcher, () => { /* 标记本 mod 失效 */ });
 
    RitsuLibFramework.CreateContentPack(ModId)
-       .Card<BlindSpireCardPool, BlindSpireStrike>()             // 或改用 [RegisterCard] 特性
+       .Card<BrainFogCardPool, BrainFogStrike>()             // 或改用 [RegisterCard] 特性
        .Apply();
 
-   RitsuLibFramework.RegisterModSettingsReflectionProvider<BlindSpireSettings>(); // [ModSettingsPage] 类
-   var loc = RitsuLibFramework.CreateModLocalization(ModId, "BlindSpire");
+   RitsuLibFramework.RegisterModSettingsReflectionProvider<BrainFogSettings>(); // [ModSettingsPage] 类
+   var loc = RitsuLibFramework.CreateModLocalization(ModId, "BrainFog");
    RitsuLibFramework.RegisterI18NLocTableBridge(ModId, loc);
    ```
-4. **打包**：只带 `BlindSpire.dll`（+ 可选 pck/json）与自有关卡资源；**不要把 RitsuLib 的 dll 复制进自己目录**（props 的 `Private=False` 已避免编译期复制）；要求玩家安装完整 RitsuLib（workshop 或本地 mods 目录，保持 `compat/`+`shared/`+`ritsulib-variants.manifest`+`assets.zip` 原样）。
+4. **打包**：只带 `BrainFog.dll`（+ 可选 pck/json）与自有关卡资源；**不要把 RitsuLib 的 dll 复制进自己目录**（props 的 `Private=False` 已避免编译期复制）；要求玩家安装完整 RitsuLib（workshop 或本地 mods 目录，保持 `compat/`+`shared/`+`ritsulib-variants.manifest`+`assets.zip` 原样）。
 5. **注意**：内容/设置注册要在 `ModelDb.Init`（内容冻结）之前完成；`[ModInitializer]` 缺失时游戏会退回 `Harmony.PatchAll`，所有 RitsuLib API 都不会被初始化；每局/每档案数据分别用 `RunSavedDataStore`/`ModDataStore(Profile)`，跨存档全局配置用 `SaveScope.Global`。
 
 ## 6. 索引（最重要文件）

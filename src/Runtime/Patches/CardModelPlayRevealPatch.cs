@@ -1,11 +1,12 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>
-/// Playing an instance once reveals its face for the rest of the run (spec 0.02 #6),
-/// and the reveal is persisted with the run save.
+/// Playing a card once reveals that card for the rest of the run — every copy,
+/// not just the played instance (user change 2026-09-19) — and the reveal is
+/// persisted with the run save.
 /// </summary>
 [HarmonyPatch(typeof(CardModel), "OnPlayWrapper")]
 internal static class CardModelPlayRevealPatch
@@ -18,9 +19,9 @@ internal static class CardModelPlayRevealPatch
             return;
         }
 
-        var id = Game.CardInstanceRegistry.GetOrCreateId(__instance);
-        ModRuntime.Tracker.RevealByPlay(id);
-        Game.RevealPersistence.OnRevealed(__instance, id);
+        var key = Game.RevealKeys.Of(__instance);
+        ModRuntime.Tracker.RevealByPlay(key);
+        Game.RevealPersistence.OnRevealed(key);
         Game.CardFogRenderer.RefreshLiveCards(__instance);
     }
 }

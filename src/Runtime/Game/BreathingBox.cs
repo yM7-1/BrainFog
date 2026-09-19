@@ -1,7 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 
-namespace BlindSpire.Game;
+namespace BrainFog.Game;
 
 /// <summary>
 /// Enemy placeholder rectangle whose breathing pulse follows the enemy's own
@@ -60,8 +60,8 @@ internal sealed partial class BreathingBox : ColorRect
         }
 
         var phase = _duration > 0.001f ? _elapsed % _duration / _duration : 0f;
-        var mid = (BlindSpireTuning.EnemyBoxAlphaMin + BlindSpireTuning.EnemyBoxAlphaMax) * 0.5f;
-        var amp = (BlindSpireTuning.EnemyBoxAlphaMax - BlindSpireTuning.EnemyBoxAlphaMin) * 0.5f;
+        var mid = (BrainFogTuning.EnemyBoxAlphaMin + BrainFogTuning.EnemyBoxAlphaMax) * 0.5f;
+        var amp = (BrainFogTuning.EnemyBoxAlphaMax - BrainFogTuning.EnemyBoxAlphaMin) * 0.5f;
         var alpha = mid + amp * Mathf.Sin(phase * Mathf.Tau);
         Modulate = new Color(1f, 1f, 1f, alpha);
     }

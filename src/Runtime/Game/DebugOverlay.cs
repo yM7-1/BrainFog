@@ -1,10 +1,10 @@
 using Godot;
 using MegaCrit.Sts2.Core.Localization.Fonts;
 
-namespace BlindSpire.Game;
+namespace BrainFog.Game;
 
 /// <summary>
-/// BLINDSPIRE_DEBUG=1 only: a small F9-toggled overlay with live mod state,
+/// BRAINFOG_DEBUG=1 only: a small F9-toggled overlay with live mod state,
 /// used to verify rules in-game without reading logs.
 /// </summary>
 internal sealed partial class DebugOverlay : CanvasLayer
@@ -49,7 +49,7 @@ internal sealed partial class DebugOverlay : CanvasLayer
     {
         var snapshot = SnapshotDisplay.Snapshot;
         _label.Text =
-            $"[BlindSpire] F9 toggle\n" +
+            $"[BrainFog] F9 toggle\n" +
             $"disabled={ModRuntime.Disabled} revealed={ModRuntime.Tracker.RevealedCount}\n" +
             $"hp={snapshot.Hp?.ToString() ?? "-"}/{snapshot.MaxHp?.ToString() ?? "-"} gold={snapshot.Gold?.ToString() ?? "-"}";
     }

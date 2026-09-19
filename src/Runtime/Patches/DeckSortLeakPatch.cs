@@ -1,11 +1,11 @@
-using BlindSpire.Core.Reveal;
+using BrainFog.Core.Reveal;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>
 /// The deck viewer sorts cards by type/cost/alphabet on the REAL model, which
@@ -69,8 +69,7 @@ internal static class DeckSortLeakPatch
             {
                 continue;
             }
-            var id = Game.CardInstanceRegistry.GetOrCreateId(card);
-            if (ModRuntime.Tracker.GetKnowledge(id) == CardKnowledge.Unknown)
+            if (ModRuntime.Tracker.GetKnowledge(Game.RevealKeys.Of(card)) == CardKnowledge.Unknown)
             {
                 return true;
             }

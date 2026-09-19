@@ -1,0 +1,45 @@
+#※█◆ ░▒a░n◆◆%
+
+◇#@▒在@内@░◆＊§还◆#&◇＊▓不＊＊▒#▓◇
+
+§ 卡牌※▓█░#※◆#※▓@█░次§%◆█来&%◆＊选◆界▒%%◇░░&
+# 文字&＊@事@◇█@、＊▓＊%▓◆░#▒＊▒@乱▓&%◆░%置§█）
+※ ※※▓&◇@▒＊&币&▒#@次休◆█◆战▒※█▒█示▒█&※
+◆ @█▓%※#▓＊◆&◆%@＊█※隐@§＊※█▓▓%※%◆◇░█%＊@░%%◇只@轮廓§░░◇§@▓※░@ ＊息隐藏
+
+&░ ▓&§◆ ◆§◆▓&◆※0 ▒ █#▒░※＊@◇ §@#◇@▒◆单@；◆载◇▒◆▓◇◆
+
+＊██@█&链§：https://github.com/yM7-1/BrainFog
+
+
+[h1]脑雾尖塔 BrainFog[/h1]
+
+一场发生在脑内的灾难。你还能操作，但认不出任何东西。
+
+[list]
+[*][b]卡牌失认[/b]：卡牌要打出/升级过一次才能认出来；奖励与选牌界面只显示稀有度
+[*][b]文字失读[/b]：事件、菜单、提示、卡面与对话全部固定乱码（图鉴与设置除外）
+[*][b]记忆失真[/b]：生命与金币停留在上次休息时；战斗血条不显示真实血量
+[*][b]世界模糊[/b]：敌人只剩呼吸方框、名字隐藏、意图仅战斗首回合显示；遗物不可见、药水只剩轮廓、地图迷雾、Boss 信息隐藏
+[/list]
+
+依赖 STS2 v0.111.0 与 RitsuLib 0.6.2；仅单人；卸载即恢复原版。
+
+Github链接：https://github.com/yM7-1/BrainFog
+
+[hr][/hr]
+
+[h1]BrainFog[/h1]
+
+A disaster inside your own mind. You can still play — you just can't recognize anything.
+
+[list]
+[*][b]Card agnosia[/b]: cards stay unrecognizable until played or upgraded once; rewards and selection screens show rarity only
+[*][b]Text alexia[/b]: events, menus, prompts, card text and dialogue are permanently garbled (compendium and settings stay readable)
+[*][b]Faulty memory[/b]: HP and gold are frozen at your last rest; the combat health bar hides true HP
+[*][b]Blurred world[/b]: enemies are breathing boxes with hidden names and intents only on the first combat round; relics invisible, potions outlined, map fogged, boss info hidden
+[/list]
+
+Requires STS2 v0.111.0 + RitsuLib 0.6.2. Single-player only; uninstall restores everything.
+
+GitHub: https://github.com/yM7-1/BrainFog

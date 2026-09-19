@@ -1,10 +1,10 @@
 # 游戏版本升级指南
 
-BlindSpire 只支持**固定游戏版本**（当前 v0.111.0）。游戏升级后按以下步骤适配：
+BrainFog 只支持**固定游戏版本**（当前 v0.111.0）。游戏升级后按以下步骤适配：
 
 1. **更新引用版本**
-   - `BlindSpire.json` 的 `min_game_version` 改为新版本；
-   - `BlindSpire.csproj` 的 `RitsuLibReferenceTarget` 改为新版本（RitsuLib 需提供对应 compat 变体）；
+   - `BrainFog.json` 的 `min_game_version` 改为新版本；
+   - `BrainFog.csproj` 的 `RitsuLibReferenceTarget` 改为新版本（RitsuLib 需提供对应 compat 变体）；
    - 检查 `SteamRoot` 下新版本 `data_sts2_windows_x86_64/sts2.dll` 存在。
 2. **重建并跑审计**
    ```bash

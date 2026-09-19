@@ -1,10 +1,10 @@
-using BlindSpire.Game;
+using BrainFog.Game;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace BlindSpire;
+namespace BrainFog;
 
 [ModInitializer(nameof(Initialize))]
 public static class Entry
@@ -15,7 +15,16 @@ public static class Entry
         {
             return;
         }
-        tree.Root.CallDeferred(Godot.Node.MethodName.AddChild, new Game.DebugOverlay { Name = "BlindSpireDebugOverlay" });
+        tree.Root.CallDeferred(Godot.Node.MethodName.AddChild, new Game.DebugOverlay { Name = "BrainFogDebugOverlay" });
+    }
+
+    private static void TryAttachTextBlurDriver()
+    {
+        if (Godot.Engine.GetMainLoop() is not Godot.SceneTree tree || tree.Root == null)
+        {
+            return;
+        }
+        tree.Root.CallDeferred(Godot.Node.MethodName.AddChild, new Game.GlobalTextBlurDriver { Name = "BrainFogTextBlurDriver" });
     }
 
     public static void Initialize()
@@ -26,7 +35,7 @@ public static class Entry
         }
         catch (Exception ex)
         {
-            Log.Error("[BlindSpire] localization init failed: " + ex);
+            Log.Error("[BrainFog] localization init failed: " + ex);
         }
 
         try
@@ -35,7 +44,7 @@ public static class Entry
         }
         catch (Exception ex)
         {
-            Log.Error("[BlindSpire] persistence register failed: " + ex);
+            Log.Error("[BrainFog] persistence register failed: " + ex);
         }
 
         try
@@ -44,21 +53,22 @@ public static class Entry
         }
         catch (Exception ex)
         {
-            Log.Error("[BlindSpire] run event subscription failed: " + ex);
+            Log.Error("[BrainFog] run event subscription failed: " + ex);
         }
 
         try
         {
-            var harmony = new Harmony("BlindSpire");
+            var harmony = new Harmony("BrainFog");
             harmony.PatchAll(typeof(Entry).Assembly);
             var gameVersion = typeof(MegaCrit.Sts2.Core.Runs.RunManager).Assembly.GetName().Version?.ToString() ?? "unknown";
-            Log.Info($"[BlindSpire] loaded (v0.1.0) against game assembly {gameVersion}");
+            Log.Info($"[BrainFog] loaded (v0.1.0) against game assembly {gameVersion}");
             ModRuntime.DumpState("loaded");
+            TryAttachTextBlurDriver();
             TryAttachDebugOverlay();
         }
         catch (Exception ex)
         {
-            Log.Error("[BlindSpire] Harmony patch application failed: " + ex);
+            Log.Error("[BrainFog] Harmony patch application failed: " + ex);
         }
     }
 }

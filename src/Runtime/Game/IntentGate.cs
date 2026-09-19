@@ -1,8 +1,8 @@
 using System.Runtime.CompilerServices;
-using BlindSpire.Core.Combat;
+using BrainFog.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 
-namespace BlindSpire.Game;
+namespace BrainFog.Game;
 
 /// <summary>
 /// Per-creature intent gates (spec 0.03 f); semantics live in IntentRevealGate.

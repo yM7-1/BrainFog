@@ -1,10 +1,10 @@
-using BlindSpire.Core.Reveal;
+using BrainFog.Core.Reveal;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Rewards;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>
 /// Special card rewards (thief return, quest cards) embed the real card title
@@ -63,7 +63,6 @@ internal static class SpecialCardRewardLeakPatch
         {
             return false;
         }
-        var id = Game.CardInstanceRegistry.GetOrCreateId(card);
-        return ModRuntime.Tracker.GetKnowledge(id) == CardKnowledge.Unknown;
+        return ModRuntime.Tracker.GetKnowledge(Game.RevealKeys.Of(card)) == CardKnowledge.Unknown;
     }
 }

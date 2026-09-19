@@ -1,10 +1,11 @@
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.Relics;
+using MegaCrit.Sts2.Core.Nodes.Rewards;
 using MegaCrit.Sts2.Core.Nodes.Screens.InspectScreens;
 using MegaCrit.Sts2.Core.Rewards;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>Relics are invisible everywhere (spec 0.01 3.1 / 0.02 #9).</summary>
 [HarmonyPatch(typeof(NRelic), "Reload")]
@@ -51,6 +52,28 @@ internal static class RelicRewardHidePatch
         if (!ModRuntime.Disabled && __result != null && GodotObject.IsInstanceValid(__result))
         {
             __result.Visible = false;
+        }
+    }
+}
+
+/// <summary>Relic reward rows print the relic title as their label; replace it
+/// with "unknown relic" while masked (leak fix 2026-09-19).</summary>
+[HarmonyPatch(typeof(NRewardButton), "Reload")]
+internal static class RelicRewardLabelPatch
+{
+    [HarmonyPostfix]
+    private static void Postfix(NRewardButton __instance)
+    {
+        try
+        {
+            if (!ModRuntime.Disabled && __instance.Reward is RelicReward && __instance._label != null)
+            {
+                __instance._label.Text = Game.ModLocalization.UnknownRelic;
+            }
+        }
+        catch (Exception ex)
+        {
+            Game.PatchGuard.Run("RelicReward.Label", () => throw ex);
         }
     }
 }

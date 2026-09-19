@@ -1,0 +1,12 @@
+namespace BrainFog.Core;
+
+/// <summary>
+/// BrainFog only supports single-player runs (spec 0.02 #10).
+/// The game layer reports the multiplayer flag; this stays pure and testable.
+/// </summary>
+public static class MultiplayerGuard
+{
+    public static bool ShouldDisable(bool isMultiplayer) => isMultiplayer;
+
+    public const string DisabledReason = "BrainFog 仅支持单人模式，联机对局已自动禁用。";
+}

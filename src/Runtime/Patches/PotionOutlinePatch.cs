@@ -2,7 +2,7 @@ using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.Potions;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>Potions show only the outline (spec 0.01 4.3 / 0.02 #9).</summary>
 [HarmonyPatch(typeof(NPotion), "Reload")]

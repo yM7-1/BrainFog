@@ -2,7 +2,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 
-namespace BlindSpire.Patches;
+namespace BrainFog.Patches;
 
 /// <summary>Marks the opening combat roster (intent gate only allows these).</summary>
 [HarmonyPatch(typeof(NCombatRoom), "OnCombatSetUp")]
