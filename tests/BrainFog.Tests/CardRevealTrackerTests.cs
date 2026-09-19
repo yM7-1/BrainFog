@@ -94,6 +94,40 @@ public class CardRevealTrackerTests
     }
 
     [Fact]
+    public void InstanceReveal_OnlyThatCopyIsKnown()
+    {
+        var tracker = new CardRevealTracker();
+        Assert.True(tracker.RevealInstanceByPlay("BrainFog.a"));
+        Assert.True(tracker.IsInstanceRevealed("BrainFog.a"));
+        Assert.Equal(CardKnowledge.Revealed, tracker.GetKnowledge("cards.STRIKE", "BrainFog.a"));
+        Assert.Equal(CardKnowledge.Unknown, tracker.GetKnowledge("cards.STRIKE", "BrainFog.b"));
+        Assert.Equal(CardKnowledge.Unknown, tracker.GetKnowledge("cards.STRIKE"));
+    }
+
+    [Fact]
+    public void DefinitionAndInstanceScopes_Coexist()
+    {
+        var tracker = new CardRevealTracker();
+        tracker.RevealByPlay("cards.STRIKE");
+        tracker.RevealInstanceByPlay("BrainFog.x");
+        Assert.Equal(CardKnowledge.Revealed, tracker.GetKnowledge("cards.STRIKE", "BrainFog.unrelated"));
+        Assert.Equal(CardKnowledge.Revealed, tracker.GetKnowledge("cards.BASH", "BrainFog.x"));
+        Assert.Equal(2, tracker.RevealedCount);
+    }
+
+    [Fact]
+    public void Load_RestoresInstancesAndClearsThemOnReset()
+    {
+        var tracker = new CardRevealTracker();
+        tracker.Load(new[] { "cards.STRIKE" }, new[] { "BrainFog.a", "BrainFog.b" });
+        Assert.True(tracker.IsInstanceRevealed("BrainFog.a"));
+        Assert.Equal(3, tracker.RevealedCount);
+        tracker.Reset();
+        Assert.Equal(0, tracker.RevealedCount);
+        Assert.False(tracker.IsInstanceRevealed("BrainFog.a"));
+    }
+
+    [Fact]
     public void CrossReveal_PathsAgree()
     {
         var tracker = new CardRevealTracker();

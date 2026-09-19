@@ -1,3 +1,5 @@
+using BrainFog.Core.Options;
+
 namespace BrainFog.Core.Reveal;
 
 /// <summary>Where a card face is being rendered; drives which visibility rule applies.</summary>
@@ -22,7 +24,7 @@ public enum CardDisplayContext
     /// <summary>Shop card stock (acquisition).</summary>
     Shop,
 
-    /// <summary>Event that grants a card (acquisition).</summary>
+    /// <summary>Event that grants a card, or a generic acquisition selection screen.</summary>
     EventAcquisition,
 
     /// <summary>In-game card compendium (spec 0.03 j: never fogged).</summary>
@@ -40,13 +42,13 @@ public enum CardVisualRule
     /// <summary>Only the rarity border (and upgrade "+" marker) is visible.</summary>
     RarityOnly,
 
-    /// <summary>Full true face.</summary>
+    /// <summary>Full true face (card text is still garbled separately).</summary>
     FullFace,
 }
 
 /// <summary>
-/// Pure visibility rules (spec 0.02 #1/#2/#5, 0.03 b/g/h/j).
-/// UI layers call this instead of duplicating policy.
+/// Pure visibility rules (spec 0.02 #1/#2/#5, 0.03 b/g/h/j) plus the player-facing
+/// difficulty options (selection reveal count, shop/event reveal).
 /// </summary>
 public static class RevealRules
 {
@@ -55,11 +57,28 @@ public static class RevealRules
             or CardDisplayContext.Shop
             or CardDisplayContext.EventAcquisition;
 
-    public static CardVisualRule Resolve(CardDisplayContext context, CardKnowledge knowledge)
+    public static CardVisualRule Resolve(
+        CardDisplayContext context,
+        CardKnowledge knowledge,
+        DifficultySettings? settings = null,
+        bool selectionSlotRevealed = false)
     {
-        // Acquisition always shows rarity only, even for known instances (0.02 #5).
+        // Acquisition shows rarity only by default (0.02 #5); difficulty options
+        // can reveal the face (reward slot picked by SelectionRevealPlanner).
         if (IsAcquisition(context))
         {
+            if (settings != null)
+            {
+                if (context == CardDisplayContext.Reward && selectionSlotRevealed)
+                {
+                    return CardVisualRule.FullFace;
+                }
+                if (context is CardDisplayContext.Shop or CardDisplayContext.EventAcquisition
+                    && settings.RevealShopAndEventCards)
+                {
+                    return CardVisualRule.FullFace;
+                }
+            }
             return CardVisualRule.RarityOnly;
         }
 

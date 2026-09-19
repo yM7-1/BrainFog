@@ -27,6 +27,15 @@ public static class Entry
         tree.Root.CallDeferred(Godot.Node.MethodName.AddChild, new Game.GlobalTextBlurDriver { Name = "BrainFogTextBlurDriver" });
     }
 
+    private static void TryAttachDifficultyPanel()
+    {
+        if (Godot.Engine.GetMainLoop() is not Godot.SceneTree tree || tree.Root == null)
+        {
+            return;
+        }
+        tree.Root.CallDeferred(Godot.Node.MethodName.AddChild, new Game.DifficultyPanel { Name = "BrainFogDifficultyPanelLayer" });
+    }
+
     public static void Initialize()
     {
         try
@@ -63,7 +72,9 @@ public static class Entry
             var gameVersion = typeof(MegaCrit.Sts2.Core.Runs.RunManager).Assembly.GetName().Version?.ToString() ?? "unknown";
             Log.Info($"[BrainFog] loaded (v0.1.0) against game assembly {gameVersion}");
             ModRuntime.DumpState("loaded");
+            Game.DifficultyRuntime.Load();
             TryAttachTextBlurDriver();
+            TryAttachDifficultyPanel();
             TryAttachDebugOverlay();
         }
         catch (Exception ex)

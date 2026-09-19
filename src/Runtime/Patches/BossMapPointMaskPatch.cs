@@ -7,9 +7,10 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 namespace BrainFog.Patches;
 
 /// <summary>
-/// The map boss point shows "?" instead of the boss art (user change
-/// 2026-09-19; font slightly smaller than the original icon) and never
-/// reveals the boss via hover. The node stays clickable for act completion.
+/// The map boss point shows "?" instead of the boss art by default (user change
+/// 2026-09-19) and hides its hover info. When the difficulty option "show all
+/// map routes" is on, the real boss art and hover are restored. The node stays
+/// clickable for act completion either way.
 /// </summary>
 [HarmonyPatch(typeof(NBossMapPoint))]
 internal static class BossMapPointMaskPatch
@@ -29,11 +30,14 @@ internal static class BossMapPointMaskPatch
     private static void AfterFocus(NBossMapPoint __instance) =>
         Game.PatchGuard.Run("BossMapPoint.Tip", () =>
         {
-            if (!ModRuntime.Disabled)
+            if (!ModRuntime.Disabled && !Game.DifficultyRuntime.Current.ShowAllMapRoutes)
             {
                 NHoverTipSet.Remove(__instance);
             }
         });
+
+    /// <summary>Re-applies the mask/restore for the current option (map open refresh).</summary>
+    internal static void Refresh(NBossMapPoint point) => Mask(point);
 
     private static void Mask(NBossMapPoint point)
     {
@@ -44,13 +48,30 @@ internal static class BossMapPointMaskPatch
                 return;
             }
 
+            var question = point.GetNodeOrNull<Label>(QuestionNodeName);
+            if (Game.DifficultyRuntime.Current.ShowAllMapRoutes)
+            {
+                // Difficulty option: restore the real boss point.
+                question?.SetVisible(false);
+                if (point._usesSpine)
+                {
+                    Show(point._spineSprite);
+                }
+                else
+                {
+                    Show(point._placeholderImage);
+                    Show(point._placeholderOutline);
+                }
+                return;
+            }
+
             Hide(point._spineSprite);
             Hide(point._placeholderImage);
             Hide(point._placeholderOutline);
 
-            if (point.GetNodeOrNull<Label>(QuestionNodeName) == null)
+            if (question == null)
             {
-                var question = new Label
+                question = new Label
                 {
                     Name = QuestionNodeName,
                     Text = "?",
@@ -66,10 +87,19 @@ internal static class BossMapPointMaskPatch
                 point.AddChild(question);
                 question.SetAnchorsPreset(Control.LayoutPreset.FullRect);
             }
+            question.SetVisible(true);
         }
         catch (Exception ex)
         {
             Game.PatchGuard.Run("BossMapPoint.Mask", () => throw ex);
+        }
+    }
+
+    private static void Show(Node? node)
+    {
+        if (node is CanvasItem item && GodotObject.IsInstanceValid(item))
+        {
+            item.Visible = true;
         }
     }
 

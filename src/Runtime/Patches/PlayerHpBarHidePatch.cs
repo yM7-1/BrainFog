@@ -24,6 +24,11 @@ internal static class PlayerHpBarHidePatch
                 return;
             }
 
+            if (Game.DifficultyRuntime.Current.ShowLiveStatus)
+            {
+                return; // real-time display: let the game manage the bar
+            }
+
             bar._hpLabel.Visible = false;
             bar._hpForeground.Visible = false;
             bar._hpMiddleground.Visible = false;

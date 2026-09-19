@@ -76,4 +76,18 @@ internal static class SnapshotDisplay
             Snapshot.RefreshGold(gold);
         }
     }
+
+    /// <summary>Re-renders the top bar for the current live/snapshot display mode.</summary>
+    public static void RefreshTopBar() =>
+        PatchGuard.Run("Snapshot.RefreshTopBar", () =>
+        {
+            if (_hpBar != null && Godot.GodotObject.IsInstanceValid(_hpBar))
+            {
+                Patches.HpSnapshotVisualPatch.Refresh(_hpBar);
+            }
+            if (_goldBar != null && Godot.GodotObject.IsInstanceValid(_goldBar))
+            {
+                Patches.TopBarGoldSnapshotPatch.Refresh(_goldBar);
+            }
+        });
 }

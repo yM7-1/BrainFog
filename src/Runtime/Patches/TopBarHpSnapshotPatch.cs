@@ -39,6 +39,11 @@ internal static class TopBarHpSnapshotPatch
         var creature = player.Creature;
         Game.LowHpHintDisplay.Evaluate(player, creature.CurrentHp, creature.MaxHp);
 
+        if (Game.DifficultyRuntime.Current.ShowLiveStatus)
+        {
+            return true; // real-time display
+        }
+
         if (Game.SnapshotDisplay.ConsumeHpRefresh())
         {
             Game.SnapshotDisplay.OnHpChanged(creature.CurrentHp, creature.MaxHp);

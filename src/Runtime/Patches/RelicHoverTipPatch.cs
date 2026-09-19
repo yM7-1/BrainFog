@@ -33,7 +33,8 @@ internal static class RelicInventoryHolderHoverTipPatch
     private static void Postfix(NRelicInventoryHolder __instance) =>
         Game.PatchGuard.Run("RelicTips.Inventory", () =>
         {
-            if (!ModRuntime.Disabled)
+            // Owned-relic display enabled: keep the real hover tip.
+            if (!ModRuntime.Disabled && !Game.DifficultyRuntime.Current.ShowOwnedRelics)
             {
                 NHoverTipSet.Remove(__instance);
             }

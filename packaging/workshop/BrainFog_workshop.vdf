@@ -5,21 +5,7 @@
 	"contentfolder"		"D:\\0_git\\BrainFog\\packaging\\workshop\\content"
 	"previewfile"		"D:\\0_git\\BrainFog\\packaging\\workshop\\preview.jpg"
 	"title"		"BrainFog / 脑雾尖塔"
-	"description"		"#※█◆ ░▒a░n◆◆%
-
-◇#@▒在@内@░◆＊§还◆#&◇＊▓不＊＊▒#▓◇
-
-§ 卡牌※▓█░#※◆#※▓@█░次§%◆█来&%◆＊选◆界▒%%◇░░&
-# 文字&＊@事@◇█@、＊▓＊%▓◆░#▒＊▒@乱▓&%◆░%置§█）
-※ ※※▓&◇@▒＊&币&▒#@次休◆█◆战▒※█▒█示▒█&※
-◆ @█▓%※#▓＊◆&◆%@＊█※隐@§＊※█▓▓%※%◆◇░█%＊@░%%◇只@轮廓§░░◇§@▓※░@ ＊息隐藏
-
-&░ ▓&§◆ ◆§◆▓&◆※0 ▒ █#▒░※＊@◇ §@#◇@▒◆单@；◆载◇▒◆▓◇◆
-
-＊██@█&链§：https://github.com/yM7-1/BrainFog
-
-
-[h1]脑雾尖塔 BrainFog[/h1]
+	"description"		"[h1]脑雾尖塔 BrainFog[/h1]
 
 一场发生在脑内的灾难。你还能操作，但认不出任何东西。
 
@@ -49,7 +35,22 @@ A disaster inside your own mind. You can still play — you just can't recognize
 
 Requires STS2 v0.111.0 + RitsuLib 0.6.2. Single-player only; uninstall restores everything.
 
-GitHub: https://github.com/yM7-1/BrainFog"
-	"changenote"		"更新描述：GitHub 仓库公开并附链接"
+GitHub: https://github.com/yM7-1/BrainFog
+
+[hr][/hr]
+
+#※█◆ ░▒a░n◆◆%
+
+◇#@▒在@内@░◆＊§还◆#&◇＊▓不＊＊▒#▓◇
+
+§ 卡牌※▓█░#※◆#※▓@█░次§%◆█来&%◆＊选◆界▒%%◇░░&
+# 文字&＊@事@◇█@、＊▓＊%▓◆░#▒＊▒@乱▓&%◆░%置§█）
+※ ※※▓&◇@▒＊&币&▒#@次休◆█◆战▒※█▒█示▒█&※
+◆ @█▓%※#▓＊◆&◆%@＊█※隐@§＊※█▓▓%※%◆◇░█%＊@░%%◇只@轮廓§░░◇§@▓※░@ ＊息隐藏
+
+&░ ▓&§◆ ◆§◆▓&◆※0 ▒ █#▒░※＊@◇ §@#◇@▒◆单@；◆载◇▒◆▓◇◆
+
+＊██@█&链§：https://github.com/yM7-1/BrainFog"
+	"changenote"		"v0.2.0：难度调整器（选卡随机揭露/商店事件/同名揭露/实时状态/已拥有遗物/地图全路线）+ 打出卡顿优化；描述顺序调整"
 	"visibility"		"0"
 }

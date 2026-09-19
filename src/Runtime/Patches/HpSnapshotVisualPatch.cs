@@ -41,6 +41,16 @@ internal static class HpSnapshotVisualPatch
                 return;
             }
 
+            if (Game.DifficultyRuntime.Current.ShowLiveStatus)
+            {
+                // Live display: no gray, no snapshot tag/hint.
+                bar._hpLabel.RemoveThemeColorOverride(ThemeConstants.Label.FontColor);
+                bar._hpLabel.RemoveThemeColorOverride(ThemeConstants.Label.FontOutlineColor);
+                SetVisible(bar, TagNodeName, false);
+                SetVisible(bar, HintNodeName, false);
+                return;
+            }
+
             bar._hpLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, SnapshotGray);
             bar._hpLabel.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, new Color(0f, 0f, 0f, 0.6f));
 
@@ -48,6 +58,8 @@ internal static class HpSnapshotVisualPatch
             var hint = EnsureLabel(bar, HintNodeName, 13, HintGray);
             tag.Text = Game.ModLocalization.HpSnapshotTag;
             hint.Text = Game.ModLocalization.HpSnapshotHint;
+            tag.Visible = true;
+            hint.Visible = true;
 
             var labelPosition = bar._hpLabel.Position;
             var labelHeight = bar._hpLabel.Size.Y;
@@ -57,6 +69,32 @@ internal static class HpSnapshotVisualPatch
         catch (Exception ex)
         {
             Game.PatchGuard.Run("HpSnapshot.Decorate", () => throw ex);
+        }
+    }
+
+    /// <summary>Re-renders the HP label for the current display mode.</summary>
+    internal static void Refresh(NTopBarHp bar)
+    {
+        if (Game.DifficultyRuntime.Current.ShowLiveStatus)
+        {
+            if (bar._player is { } player)
+            {
+                bar._hpLabel.SetTextAutoSize($"{player.Creature.CurrentHp}/{player.Creature.MaxHp}");
+            }
+        }
+        else if (Game.SnapshotDisplay.Snapshot.Hp is int hp && Game.SnapshotDisplay.Snapshot.MaxHp is int max)
+        {
+            bar._hpLabel.SetTextAutoSize($"{hp}/{max}");
+        }
+        Decorate(bar);
+    }
+
+    private static void SetVisible(NTopBarHp bar, string name, bool visible)
+    {
+        var label = bar.GetNodeOrNull<Label>(name);
+        if (label != null && GodotObject.IsInstanceValid(label))
+        {
+            label.Visible = visible;
         }
     }
 

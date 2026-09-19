@@ -35,11 +35,31 @@ internal static class TopBarGoldSnapshotPatch
             return true;
         }
 
+        if (Game.DifficultyRuntime.Current.ShowLiveStatus)
+        {
+            return true; // real-time display
+        }
+
         if (Game.SnapshotDisplay.Snapshot.ShouldRefreshGold(player.Gold))
         {
             Game.SnapshotDisplay.OnGoldChanged(player.Gold);
             return true;
         }
         return false;
+    }
+
+    /// <summary>Re-renders the gold label for the current display mode.</summary>
+    internal static void Refresh(NTopBarGold bar)
+    {
+        if (Game.DifficultyRuntime.Current.ShowLiveStatus)
+        {
+            bar.UpdateGold();
+            return;
+        }
+        if (Game.SnapshotDisplay.Snapshot.Gold is int gold
+            && bar._goldLabel != null && Godot.GodotObject.IsInstanceValid(bar._goldLabel))
+        {
+            bar._goldLabel.SetTextAutoSize($"{gold}");
+        }
     }
 }

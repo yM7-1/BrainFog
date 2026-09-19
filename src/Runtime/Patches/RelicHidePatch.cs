@@ -7,39 +7,62 @@ using MegaCrit.Sts2.Core.Rewards;
 
 namespace BrainFog.Patches;
 
-/// <summary>Relics are invisible everywhere (spec 0.01 3.1 / 0.02 #9).</summary>
-[HarmonyPatch(typeof(NRelic), "Reload")]
-internal static class RelicHidePatch
+/// <summary>
+/// Relics are invisible by default; the difficulty option "show owned relics"
+/// keeps relics in the player's own inventory/inspect view visible.
+/// </summary>
+internal static class RelicMasking
 {
-    [HarmonyPostfix]
-    private static void Postfix(NRelic __instance)
+    public static void Apply(NRelic relic)
     {
-        if (ModRuntime.Disabled || IsCompendiumEntry(__instance))
+        if (ModRuntime.Disabled || !GodotObject.IsInstanceValid(relic) || IsCompendiumEntry(relic))
         {
             return;
         }
-        if (__instance.Icon != null && GodotObject.IsInstanceValid(__instance.Icon))
-        {
-            __instance.Icon.Visible = false;
-        }
-        if (__instance.Outline != null && GodotObject.IsInstanceValid(__instance.Outline))
-        {
-            __instance.Outline.Visible = false;
-        }
+
+        var show = Game.DifficultyRuntime.Current.ShowOwnedRelics && IsOwnedContext(relic);
+        SetVisible(relic.Icon, show);
+        SetVisible(relic.Outline, show);
     }
+
+    private static bool IsOwnedContext(NRelic relic)
+    {
+        for (var node = relic.GetParent(); node != null; node = node.GetParent())
+        {
+            if (node is NRelicInventory)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static bool IsCompendiumEntry(NRelic relic)
     {
-        var node = relic.GetParent();
-        while (node != null)
+        for (var node = relic.GetParent(); node != null; node = node.GetParent())
         {
             if (node.GetType().Name.StartsWith("NRelicCollection", StringComparison.Ordinal))
             {
                 return true;
             }
-            node = node.GetParent();
         }
         return false;
     }
+
+    private static void SetVisible(CanvasItem? item, bool visible)
+    {
+        if (item != null && GodotObject.IsInstanceValid(item))
+        {
+            item.Visible = visible;
+        }
+    }
+}
+
+[HarmonyPatch(typeof(NRelic), "Reload")]
+internal static class RelicHidePatch
+{
+    [HarmonyPostfix]
+    private static void Postfix(NRelic __instance) => RelicMasking.Apply(__instance);
 }
 
 /// <summary>Relic rewards carry their own TextureRect (does not use NRelic).</summary>
@@ -78,7 +101,8 @@ internal static class RelicRewardLabelPatch
     }
 }
 
-/// <summary>Relic inspect screen is covered by black fog (spec 0.01 3.1).</summary>
+/// <summary>Relic inspect screen is fogged by default; "show owned relics"
+/// restores the real display.</summary>
 [HarmonyPatch(typeof(NInspectRelicScreen), "UpdateRelicDisplay")]
 internal static class InspectRelicFogPatch
 {
@@ -87,6 +111,19 @@ internal static class InspectRelicFogPatch
     {
         if (ModRuntime.Disabled)
         {
+            return;
+        }
+
+        if (Game.DifficultyRuntime.Current.ShowOwnedRelics)
+        {
+            if (__instance._relicImage != null && GodotObject.IsInstanceValid(__instance._relicImage))
+            {
+                __instance._relicImage.SelfModulate = Colors.White;
+            }
+            Show(__instance._nameLabel);
+            Show(__instance._description);
+            Show(__instance._flavor);
+            Show(__instance._rarityLabel);
             return;
         }
 
@@ -105,6 +142,14 @@ internal static class InspectRelicFogPatch
         if (node != null && GodotObject.IsInstanceValid(node))
         {
             node.Visible = false;
+        }
+    }
+
+    private static void Show(CanvasItem? node)
+    {
+        if (node != null && GodotObject.IsInstanceValid(node))
+        {
+            node.Visible = true;
         }
     }
 }

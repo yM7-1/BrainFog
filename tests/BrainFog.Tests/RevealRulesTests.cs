@@ -1,3 +1,4 @@
+using BrainFog.Core.Options;
 using BrainFog.Core.Reveal;
 using Xunit;
 
@@ -42,5 +43,61 @@ public class RevealRulesTests
     {
         Assert.True(RevealRules.ShowsUpgradeMarker(true));
         Assert.False(RevealRules.ShowsUpgradeMarker(false));
+    }
+
+    [Fact]
+    public void Reward_SelectionSlotRevealed_ShowsFace()
+    {
+        var settings = new DifficultySettings { SelectionReveal = SelectionRevealOption.RandomOne };
+        Assert.Equal(
+            CardVisualRule.FullFace,
+            RevealRules.Resolve(CardDisplayContext.Reward, CardKnowledge.Unknown, settings, selectionSlotRevealed: true));
+        Assert.Equal(
+            CardVisualRule.RarityOnly,
+            RevealRules.Resolve(CardDisplayContext.Reward, CardKnowledge.Unknown, settings, selectionSlotRevealed: false));
+    }
+
+    [Fact]
+    public void Reward_WithoutSettings_StaysRarityOnlyEvenWhenMarked()
+    {
+        Assert.Equal(
+            CardVisualRule.RarityOnly,
+            RevealRules.Resolve(CardDisplayContext.Reward, CardKnowledge.Unknown, null, selectionSlotRevealed: true));
+    }
+
+    [Fact]
+    public void ShopAndEvent_RevealToggle_ControlsFace()
+    {
+        var withReveal = new DifficultySettings { RevealShopAndEventCards = true };
+        Assert.Equal(
+            CardVisualRule.FullFace,
+            RevealRules.Resolve(CardDisplayContext.Shop, CardKnowledge.Unknown, withReveal));
+        Assert.Equal(
+            CardVisualRule.FullFace,
+            RevealRules.Resolve(CardDisplayContext.EventAcquisition, CardKnowledge.Unknown, withReveal));
+
+        var withoutReveal = new DifficultySettings { RevealShopAndEventCards = false };
+        Assert.Equal(
+            CardVisualRule.RarityOnly,
+            RevealRules.Resolve(CardDisplayContext.Shop, CardKnowledge.Unknown, withoutReveal));
+        Assert.Equal(
+            CardVisualRule.RarityOnly,
+            RevealRules.Resolve(CardDisplayContext.EventAcquisition, CardKnowledge.Unknown, withoutReveal));
+    }
+
+    [Fact]
+    public void Options_DoNotChangeOwnedContexts()
+    {
+        var revealAll = new DifficultySettings
+        {
+            SelectionReveal = SelectionRevealOption.All,
+            RevealShopAndEventCards = true,
+        };
+        Assert.Equal(
+            CardVisualRule.BlackFog,
+            RevealRules.Resolve(CardDisplayContext.Hand, CardKnowledge.Unknown, revealAll, selectionSlotRevealed: true));
+        Assert.Equal(
+            CardVisualRule.FullFace,
+            RevealRules.Resolve(CardDisplayContext.Hand, CardKnowledge.Revealed, revealAll, selectionSlotRevealed: true));
     }
 }

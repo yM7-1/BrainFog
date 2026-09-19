@@ -21,6 +21,12 @@ internal static class MapFogController
             return;
         }
 
+        if (DifficultyRuntime.Current.ShowAllMapRoutes)
+        {
+            RevealEverything(screen, points);
+            return;
+        }
+
         var visible = new HashSet<MapCoord>();
         foreach (var pair in points)
         {
@@ -68,6 +74,49 @@ internal static class MapFogController
         if (screen._drawingTools != null && GodotObject.IsInstanceValid(screen._drawingTools))
         {
             screen._drawingTools.Visible = false;
+        }
+    }
+
+    /// <summary>Difficulty option: show every node and route (drawing stays disabled).</summary>
+    private static void RevealEverything(NMapScreen screen, System.Collections.Generic.Dictionary<MapCoord, NMapPoint> points)
+    {
+        foreach (var pair in points)
+        {
+            if (pair.Value != null && GodotObject.IsInstanceValid(pair.Value))
+            {
+                pair.Value.Visible = true;
+            }
+        }
+
+        if (screen._paths is { } paths)
+        {
+            foreach (var pair in paths)
+            {
+                foreach (var segment in pair.Value)
+                {
+                    if (segment != null && GodotObject.IsInstanceValid(segment))
+                    {
+                        segment.Visible = true;
+                    }
+                }
+            }
+        }
+
+        ShowSpecial(screen._bossPointNode);
+        ShowSpecial(screen._secondBossPointNode);
+        ShowSpecial(screen._startingPointNode);
+
+        if (screen._drawingTools != null && GodotObject.IsInstanceValid(screen._drawingTools))
+        {
+            screen._drawingTools.Visible = false;
+        }
+    }
+
+    private static void ShowSpecial(NMapPoint? node)
+    {
+        if (node != null && GodotObject.IsInstanceValid(node))
+        {
+            node.Visible = true;
         }
     }
 

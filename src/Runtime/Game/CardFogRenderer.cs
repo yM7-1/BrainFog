@@ -1,9 +1,11 @@
+using BrainFog.Core.Options;
 using BrainFog.Core.Reveal;
 using BrainFog.Core.Text;
 using Godot;
 using MegaCrit.Sts2.Core.Localization.Fonts;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
+using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
@@ -23,6 +25,8 @@ internal static class CardFogRenderer
     private const string PlusNodeName = "BrainFogPlusMarker";
     private const string RuleMeta = "BrainFogRule";
     private const string BlurredTextMeta = "BrainFogBlurredText";
+    private const string ContextMeta = "BrainFogContext";
+    private const string ContextParentMeta = "BrainFogContextParent";
 
     public static CardVisualRule ResolveRule(NCard card) =>
         PatchGuard.RunOr("CardFog.Resolve", () => ResolveRuleCore(card), CardVisualRule.FullFace);
@@ -34,9 +38,78 @@ internal static class CardFogRenderer
             return CardVisualRule.FullFace;
         }
 
+        var context = ResolveContextCached(card, model);
+        var knowledge = ModRuntime.Tracker.GetKnowledge(
+            RevealKeys.Of(model),
+            CardInstanceRegistry.TryGetId(model));
+        var settings = DifficultyRuntime.Current;
+        var slotRevealed = context == CardDisplayContext.Reward && IsRewardSlotRevealed(card, settings);
+        return RevealRules.Resolve(context, knowledge, settings, slotRevealed);
+    }
+
+    /// <summary>
+    /// Context depends only on the ancestor chain; cache it per card and
+    /// recompute only when the card is re-parented (pooled cards move screens).
+    /// Perf: avoids a 16-node walk on every UpdateVisuals (card-play hitch fix).
+    /// </summary>
+    private static CardDisplayContext ResolveContextCached(NCard card, CardModel model)
+    {
+        var parentId = (long)(card.GetParent()?.GetInstanceId() ?? 0UL);
+        if (card.HasMeta(ContextMeta) && card.GetMeta(ContextParentMeta).AsInt64() == parentId)
+        {
+            return (CardDisplayContext)card.GetMeta(ContextMeta).AsInt32();
+        }
+
         var context = ResolveContext(card, model);
-        var knowledge = ModRuntime.Tracker.GetKnowledge(RevealKeys.Of(model));
-        return RevealRules.Resolve(context, knowledge);
+        card.SetMeta(ContextMeta, (int)context);
+        card.SetMeta(ContextParentMeta, parentId);
+        return context;
+    }
+
+    /// <summary>Random (but stable per offer) reward-slot reveal pick.</summary>
+    private static bool IsRewardSlotRevealed(NCard card, DifficultySettings settings)
+    {
+        if (settings.SelectionReveal == SelectionRevealOption.None)
+        {
+            return false;
+        }
+
+        var holder = FindHolder(card);
+        var row = holder?.GetParent();
+        if (holder == null || row == null)
+        {
+            // Single-card presentation (e.g. inspect view): only "all" reveals.
+            return settings.SelectionReveal == SelectionRevealOption.All;
+        }
+
+        var keys = new List<string>();
+        var myIndex = -1;
+        foreach (var sibling in row.GetChildren())
+        {
+            if (sibling is not NCardHolder siblingHolder)
+            {
+                continue;
+            }
+            if (ReferenceEquals(siblingHolder, holder))
+            {
+                myIndex = keys.Count;
+            }
+            keys.Add(siblingHolder.CardNode?.Model?.Id.ToString() ?? "?");
+        }
+        return SelectionRevealPlanner.IsRevealed(
+            keys, settings.SelectionReveal, DifficultyRuntime.RevealSalt, myIndex);
+    }
+
+    private static NCardHolder? FindHolder(NCard card)
+    {
+        for (var node = card.GetParent(); node != null; node = node.GetParent())
+        {
+            if (node is NCardHolder holder)
+            {
+                return holder;
+            }
+        }
+        return null;
     }
 
     public static void Apply(NCard card) =>
@@ -63,6 +136,26 @@ internal static class CardFogRenderer
         }
     }
 
+    /// <summary>Re-applies the rule to every live card (difficulty option changed).</summary>
+    public static void RefreshAllLiveCards() =>
+        PatchGuard.Run("CardFog.RefreshAll", () => RefreshAllLiveCardsCore());
+
+    private static void RefreshAllLiveCardsCore()
+    {
+        if (ModRuntime.Disabled || Engine.GetMainLoop() is not SceneTree tree || tree.Root == null)
+        {
+            return;
+        }
+
+        foreach (var node in tree.GetNodesInGroup(Patches.NCardGroupPatch.GroupName))
+        {
+            if (node is NCard card)
+            {
+                ApplyCore(card);
+            }
+        }
+    }
+
     private static void ApplyCore(NCard card)
     {
         if (!GodotObject.IsInstanceValid(card) || !card.IsNodeReady())
@@ -82,9 +175,14 @@ internal static class CardFogRenderer
 
         var rule = ResolveRule(card);
         var previous = card.HasMeta(RuleMeta) ? (CardVisualRule)card.GetMeta(RuleMeta).AsInt32() : (CardVisualRule?)null;
-        if (previous == rule && rule != CardVisualRule.FullFace)
+        if (previous == rule)
         {
-            // Same rule: the game may have re-shown parts (UpdateVisuals); enforce cheaply.
+            // Same rule: the game may have re-shown face parts (UpdateVisuals).
+            if (rule == CardVisualRule.FullFace)
+            {
+                BlurFaceText(card); // only the text needs re-enforcement
+                return;
+            }
             HideVisibleFaceParts(card);
             EnsureFogPlacement(card, fog);
             return;
