@@ -12,31 +12,35 @@ internal static class TextBlurService
 {
     public const string OutputMeta = "BrainFogBlurOutput";
 
-    public static void BlurNode(CanvasItem? node, int percent)
+    /// <summary>Blurs the node's text in place. Returns true when the text
+    /// changed (drives the sweep backoff).</summary>
+    public static bool BlurNode(CanvasItem? node, int percent)
     {
         try
         {
             if (node == null || !GodotObject.IsInstanceValid(node))
             {
-                return;
+                return false;
             }
             var current = Read(node);
             if (string.IsNullOrEmpty(current))
             {
-                return;
+                return false;
             }
             if (node.HasMeta(OutputMeta) && node.GetMeta(OutputMeta).AsString() == current)
             {
-                return; // unchanged since our last blur
+                return false; // unchanged since our last blur
             }
 
-            var blurred = EventTextBlurrer.Blur(current, percent);
+            var blurred = EventTextBlurrer.Blur(current, percent, BlurSalt.Current);
             node.SetMeta(OutputMeta, blurred);
             Write(node, blurred);
+            return true;
         }
         catch (Exception ex)
         {
             PatchGuard.Run("TextBlur.Node", () => throw ex);
+            return false;
         }
     }
 
@@ -52,6 +56,16 @@ internal static class TextBlurService
         if (!string.IsNullOrEmpty(current))
         {
             node.SetMeta(OutputMeta, current);
+        }
+    }
+
+    /// <summary>Marks a node with the blur output that is about to be applied
+    /// (source-side blur in a SetTextAutoSize prefix).</summary>
+    public static void MarkOutput(CanvasItem? node, string output)
+    {
+        if (node != null && GodotObject.IsInstanceValid(node))
+        {
+            node.SetMeta(OutputMeta, output);
         }
     }
 

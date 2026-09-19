@@ -5,8 +5,9 @@ using MegaCrit.Sts2.Core.Nodes.Events;
 namespace BrainFog.Patches;
 
 /// <summary>
-/// Event text is blurred at 75%, fixed per text (spec 0.03 e).
-/// Prefixes rewrite the incoming string so repeated renders stay stable.
+/// Event text is blurred at 75%, fixed per text within a launch and re-rolled
+/// per launch (user change 2026-09-20). Prefixes rewrite the incoming string so
+/// repeated renders stay stable.
 /// </summary>
 [HarmonyPatch(typeof(NEventLayout))]
 internal static class NEventLayoutBlurPatch
@@ -18,7 +19,7 @@ internal static class NEventLayoutBlurPatch
         var input = title;
         title = Game.PatchGuard.RunOr(
             "EventBlur.Title",
-            () => ModRuntime.Disabled ? input : EventTextBlurrer.Blur(input),
+            () => ModRuntime.Disabled ? input : EventTextBlurrer.Blur(input, EventTextBlurrer.BlurPercent, BlurSalt.Current),
             input);
     }
 
@@ -43,7 +44,7 @@ internal static class NEventLayoutBlurPatch
         var input = description;
         description = Game.PatchGuard.RunOr(
             "EventBlur.Description",
-            () => ModRuntime.Disabled ? input : EventTextBlurrer.Blur(input),
+            () => ModRuntime.Disabled ? input : EventTextBlurrer.Blur(input, EventTextBlurrer.BlurPercent, BlurSalt.Current),
             input);
     }
 

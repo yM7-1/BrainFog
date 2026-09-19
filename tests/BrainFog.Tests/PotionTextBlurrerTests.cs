@@ -7,7 +7,7 @@ namespace BrainFog.Tests;
 public class PotionTextBlurrerTests
 {
     [Fact]
-    public void Blur_IsDeterministic()
+    public void Blur_IsStableWithinALaunch()
     {
         const string text = "获得 2 点力量。";
         Assert.Equal(PotionTextBlurrer.Blur(text), PotionTextBlurrer.Blur(text));

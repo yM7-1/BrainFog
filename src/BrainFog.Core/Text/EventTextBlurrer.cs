@@ -3,9 +3,11 @@ using System.Text;
 namespace BrainFog.Core.Text;
 
 /// <summary>
-/// Deterministic 75% blur for event text (spec 0.03 e): the same input always
-/// produces the same output ("固定不重掷"), whitespace and valid BBCode tags survive.
-/// Blurring works per Unicode rune so surrogate pairs (emoji) never break.
+/// Deterministic blur for event text (spec 0.03 e, revised 2026-09-20): the same
+/// input always produces the same output within one game launch, and a different
+/// output on the next launch (per-launch salt, "每次进入游戏都是不一样的随机乱码").
+/// Whitespace and valid BBCode tags survive. Blurring works per Unicode rune so
+/// surrogate pairs (emoji) never break.
 /// </summary>
 public static class EventTextBlurrer
 {
@@ -37,15 +39,21 @@ public static class EventTextBlurrer
 
     public static string Blur(string? text) => Blur(text, BlurPercent);
 
-    /// <summary>Deterministic blur at a custom ratio (used by potion text, 50%).</summary>
-    public static string Blur(string? text, int blurPercent)
+    /// <summary>Blur at a custom ratio (used by potion text, 50%).</summary>
+    public static string Blur(string? text, int blurPercent) => Blur(text, blurPercent, 0);
+
+    /// <summary>
+    /// Blur at a custom ratio with a per-launch salt: same input + same salt
+    /// always yields the same output; a new salt (next launch) re-rolls it.
+    /// </summary>
+    public static string Blur(string? text, int blurPercent, int salt)
     {
         if (string.IsNullOrEmpty(text))
         {
             return text ?? string.Empty;
         }
 
-        var rng = new Random(StableHash(text));
+        var rng = new Random(StableHash(text) ^ salt);
         var sb = new StringBuilder(text.Length);
         var i = 0;
         while (i < text.Length)

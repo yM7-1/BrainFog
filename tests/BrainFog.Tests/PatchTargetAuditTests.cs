@@ -145,6 +145,14 @@ public class PatchTargetAuditTests
             new MemberTarget("_label", Kind.Field),
             new MemberTarget("Reward", Kind.Property),
         },
+        ["MegaCrit.Sts2.addons.mega_text.MegaLabel"] = new[]
+        {
+            new MemberTarget("SetTextAutoSize", Kind.Method),
+        },
+        ["MegaCrit.Sts2.addons.mega_text.MegaRichTextLabel"] = new[]
+        {
+            new MemberTarget("SetTextAutoSize", Kind.Method),
+        },
         ["MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NMainMenuTextButton"] = new[]
         {
             new MemberTarget("RefreshLabel", Kind.Method),

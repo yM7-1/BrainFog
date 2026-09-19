@@ -9,13 +9,28 @@ namespace BrainFog.Game;
 /// <summary>
 /// Periodic scene sweep that garbles remaining UI text (user rule 2026-09-19:
 /// all unmentioned prompts/descriptions default to 60%). Contexts with their own
-/// rule are skipped: card faces (85% via CardFogRenderer), hover tips (own
-/// policy), settings and the compendium (stay readable), and mod-owned labels.
+/// rule are skipped: card faces (blurred at the source by CardFaceTextBlurPatch),
+/// hover tips (own policy), settings and the compendium (stay readable), and
+/// mod-owned labels.
+///
+/// Perf (2026-09-20): the sweep interval backs off while nothing changes, and
+/// VFX/particle subtrees are skipped entirely, so card-play effects spawning
+/// and despawning no longer cost a full-tree walk.
 /// </summary>
 internal sealed partial class GlobalTextBlurDriver : Node
 {
-    private const double SweepIntervalSeconds = 0.2;
+    private const double BaseIntervalSeconds = 0.2;
+    private const double MaxIntervalSeconds = 0.4;
     private const int MaxDepth = 64;
+
+    /// <summary>Subtrees that never contain game UI text: VFX, particles, spine
+    /// trails. Damage numbers / "Blocked" / heal numbers live here and must stay
+    /// readable (spec 1.3: hit VFX preserved), and skipping them keeps the sweep
+    /// cheap while card-play effects spawn and despawn (perf 2026-09-20).</summary>
+    private static readonly string[] SkipTypeMarkers =
+    {
+        "Vfx", "Particles", "Trail", "Spark", "Glow", "Smoke", "Flipbook",
+    };
 
     private enum Context
     {
@@ -24,7 +39,8 @@ internal sealed partial class GlobalTextBlurDriver : Node
         Skip,
     }
 
-    private double _timer = SweepIntervalSeconds;
+    private double _timer = BaseIntervalSeconds;
+    private double _interval = BaseIntervalSeconds;
 
     public override void _Process(double delta)
     {
@@ -35,17 +51,25 @@ internal sealed partial class GlobalTextBlurDriver : Node
                 return;
             }
             _timer += delta;
-            if (_timer < SweepIntervalSeconds)
+            if (_timer < _interval)
             {
                 return;
             }
             _timer = 0;
 
             var root = GetTree()?.Root;
-            if (root != null)
+            if (root == null)
             {
-                Sweep(root, Context.Default, 0);
+                return;
             }
+
+            // Adaptive backoff: when a sweep blurred nothing, the scene was
+            // already covered and the next sweep can wait longer; any actual
+            // text change snaps back to the fast interval (perf 2026-09-20).
+            var changed = Sweep(root, Context.Default, 0);
+            _interval = changed
+                ? BaseIntervalSeconds
+                : Math.Min(_interval * 1.5, MaxIntervalSeconds);
         }
         catch (Exception ex)
         {
@@ -53,22 +77,24 @@ internal sealed partial class GlobalTextBlurDriver : Node
         }
     }
 
-    private static void Sweep(Node node, Context context, int depth)
+    /// <summary>Walks the tree, blurring text that changed. Returns true when at
+    /// least one node was actually re-blurred this pass.</summary>
+    private static bool Sweep(Node node, Context context, int depth)
     {
         if (depth > MaxDepth)
         {
-            return;
+            return false;
         }
 
         var next = RefineContext(node, context);
         if (next == Context.Skip)
         {
-            return;
+            return false;
         }
 
         if (node is CanvasItem canvas && !canvas.IsVisibleInTree())
         {
-            return; // handled once it becomes visible
+            return false; // handled once it becomes visible
         }
 
         if (node is Label or RichTextLabel)
@@ -77,19 +103,20 @@ internal sealed partial class GlobalTextBlurDriver : Node
             // only their description texts are garbled.
             if (IsTopBarValueLabel(node))
             {
-                return;
+                return false;
             }
             var percent = next == Context.UiDescription
                 ? TextBlurPercents.UiDescription
                 : TextBlurPercents.Default;
-            TextBlurService.BlurNode(node as CanvasItem, percent);
-            return;
+            return TextBlurService.BlurNode(node as CanvasItem, percent);
         }
 
+        var changed = false;
         foreach (var child in node.GetChildren())
         {
-            Sweep(child, next, depth + 1);
+            changed |= Sweep(child, next, depth + 1);
         }
+        return changed;
     }
 
     private static bool IsTopBarValueLabel(Node node)
@@ -126,6 +153,16 @@ internal sealed partial class GlobalTextBlurDriver : Node
             || node is NCard)
         {
             return Context.Skip;
+        }
+
+        // VFX/particle subtrees never contain UI text: skipping them keeps the
+        // sweep cheap while card-play effects spawn and despawn (perf 2026-09-20).
+        foreach (var marker in SkipTypeMarkers)
+        {
+            if (typeName.Contains(marker, StringComparison.Ordinal))
+            {
+                return Context.Skip;
+            }
         }
 
         // Enemy intents stay readable (user rule 2026-09-20): the "visible

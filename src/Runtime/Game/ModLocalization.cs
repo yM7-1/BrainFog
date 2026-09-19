@@ -32,4 +32,14 @@ internal static class ModLocalization
     public static string HpSnapshotHint =>
         _i18n?.Get("hp_snapshot_hint", "该状态并非当前真实状态，请在火堆休息获得最新状态信息")
         ?? "该状态并非当前真实状态，请在火堆休息获得最新状态信息";
+
+    /// <summary>Localized string for the cognition-modifier panel; falls back
+    /// to the literal Chinese text when the table is unavailable.</summary>
+    public static string Panel(string key, string fallback) => _i18n?.Get(key, fallback) ?? fallback;
+
+    /// <summary>Normalized current game language code (e.g. "zhs", "eng").</summary>
+    public static string CurrentLanguageCode => I18N.ResolveCurrentLanguageCode();
+
+    public static bool IsChinese =>
+        string.Equals(CurrentLanguageCode, "zhs", StringComparison.OrdinalIgnoreCase);
 }

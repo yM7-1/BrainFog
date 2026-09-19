@@ -69,7 +69,6 @@ internal static class RevealPersistence
         }
         return false;
     }
-
     /// <summary>Writes the current deck order (id per slot) into the run save.</summary>
     public static void RefreshDeckOrder(Player owner) =>
         PatchGuard.Run("Persistence.RefreshDeckOrder", () => RefreshDeckOrderCore(owner));
@@ -152,8 +151,13 @@ internal static class RevealPersistence
             return;
         }
 
-        // Deck order was already refreshed when the id was minted
-        // (CardInstanceRegistry.GetOrCreateId); no second rebuild here.
+        // Keep the saved deck order in sync with the deck as of this reveal, so
+        // index binding after a load cannot drift (bug fix 2026-09-20).
+        if (card.Owner is { } owner)
+        {
+            RefreshDeckOrderCore(owner);
+        }
+
         _slot.Modify(state, data =>
         {
             if (!data.RevealedInstances.Contains(instanceId))

@@ -14,6 +14,82 @@ public class EventTextBlurrerTests
     }
 
     [Fact]
+    public void Blur_SameSaltAndText_AreStable()
+    {
+        const string text = "你走进了一个阴暗的房间，四周弥漫着雾气。";
+        Assert.Equal(
+            EventTextBlurrer.Blur(text, 75, 12345),
+            EventTextBlurrer.Blur(text, 75, 12345));
+    }
+
+    [Fact]
+    public void Blur_DifferentSalt_RollsADifferentPattern()
+    {
+        const string text = "你走进了一个阴暗的房间，四周弥漫着雾气，远处传来低沉的钟声。";
+        Assert.NotEqual(
+            EventTextBlurrer.Blur(text, 75, 1),
+            EventTextBlurrer.Blur(text, 75, 2));
+    }
+
+    [Fact]
+    public void Blur_SaltedBlur_KeepsWhitespaceAndRatio()
+    {
+        var text = string.Concat(Enumerable.Repeat("这是一个用于测试模糊比例的中文句子。", 100));
+        var result = EventTextBlurrer.Blur(text, 75, unchecked((int)0xDEADBEEF));
+        var total = 0;
+        var changed = 0;
+        for (var i = 0; i < text.Length;)
+        {
+            var rune = Rune.GetRuneAt(text, i);
+            var size = rune.Utf16SequenceLength;
+            if (!Rune.IsWhiteSpace(rune))
+            {
+                total++;
+                if (result[i] != text[i])
+                {
+                    changed++;
+                }
+            }
+            else
+            {
+                Assert.Equal(text[i], result[i]);
+            }
+            i += size;
+        }
+        Assert.InRange((double)changed / total, 0.65, 0.85);
+    }
+
+    [Fact]
+    public void Blur_SaltedBlur_PreservesBbCodeAndImgPaths()
+    {
+        const string text = "[b]危险[/b]的[color=red]选择[/color] [img]res://a/b.png[/img]";
+        var result = EventTextBlurrer.Blur(text, 75, 777);
+        Assert.Contains("[b]", result);
+        Assert.Contains("[/b]", result);
+        Assert.Contains("[color=red]", result);
+        Assert.Contains("[img]res://a/b.png[/img]", result);
+    }
+
+    [Fact]
+    public void Blur_SameSalt_ProducesByteIdenticalOutput()
+    {
+        // Card-face blur relies on this: repeated UpdateVisuals with the same
+        // source text must yield the identical string so the game's own
+        // "text unchanged" check skips re-shaping (perf 2026-09-20).
+        const string text = "造成 6 点伤害。获得 6 点格挡。";
+        Assert.Equal(
+            EventTextBlurrer.Blur(text, 85, 4242),
+            EventTextBlurrer.Blur(text, 85, 4242));
+    }
+
+    [Fact]
+    public void BlurSalt_For_IsStablePerText()
+    {
+        Assert.Equal(BlurSalt.For("同一句话"), BlurSalt.For("同一句话"));
+        Assert.NotEqual(BlurSalt.For("第一句话"), BlurSalt.For("第二句话"));
+    }
+
+    [Fact]
     public void Blur_KeepsWhitespaceAndNewlines()
     {
         var result = EventTextBlurrer.Blur("a b\nc");

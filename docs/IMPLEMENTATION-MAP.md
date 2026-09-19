@@ -27,17 +27,17 @@
 | 1.3 受击效果/伤害数字保留 | 仅隐藏 `Body`；VFX 在 `NCombatRoom.CombatVfxContainer`，不受影响 | 见 §3 人工核查项 |
 | 1.3 意图仅首回合 | `Game/IntentGate.cs` + `Patches/NIntentFirstRoundPatch.cs` | 补丁审计 NIntent |
 | 1.3 药水仅轮廓 | `Patches/PotionOutlinePatch.cs`（NPotion.Reload 隐藏 Image） | 补丁审计 NPotion |
-| 1.3 药水名称/描述 50% 固定乱码（实机调整 2026-09-19） | `Patches/PotionTextBlurPatch.cs`（PotionModel.HoverTip 拦截）+ `Core/Text/PotionTextBlurrer.cs` | `PotionTextBlurrerTests` + 补丁审计 PotionModel |
+| 1.3 药水名称/描述 50% 乱码（实机调整 2026-09-19；每次启动随机 2026-09-20） | `Patches/PotionTextBlurPatch.cs`（PotionModel.HoverTip 拦截）+ `Core/Text/PotionTextBlurrer.cs` | `PotionTextBlurrerTests` + 补丁审计 PotionModel |
 | 1.3 敌人名字隐藏（实机调整 2026-09-19） | `Patches/EnemyNameHidePatch.cs`（NCreatureStateDisplay.SetCreature → `_nameplateLabel` 隐藏） | 补丁审计 NCreatureStateDisplay |
 | 1.2 战斗内角色真实血量隐藏（实机调整 2026-09-19） | `Patches/PlayerHpBarHidePatch.cs`（NHealthBar：HP 数字/填充/中毒/毁灭覆盖隐藏，格挡保留） | 补丁审计 NHealthBar |
 | 1.1 事件/通用选牌按获得场景（实机调整 2026-09-19） | `Game/CardFogRenderer.cs`（`Pile==null` → 获得场景）+ `Core/Reveal/CardContextClassifier.cs` | `CardContextClassifierTests` |
 | 1.1 升级预览不揭示（实机调整 2026-09-19） | `Patches/CardModelUpgradeRevealPatch.cs`（`Pile==null` 的克隆跳过） | 编译期 |
 | 1.4 宝箱/商店遗物提示遮蔽 + 奖励行"未知遗物"（实机调整 2026-09-19） | `Patches/RelicHoverTipPatch.cs`（TreasureRoom/Merchant）+ `Patches/RelicHidePatch.cs`（NRewardButton 标签替换） | 补丁审计 + I18N |
-| 1.4 标题/暂停菜单 75% 固定乱码（实机调整 2026-09-19） | `Patches/MenuTextBlurPatch.cs`（设置按钮保留可读） | 补丁审计 NMainMenu/NPauseMenu |
-| 1.1 卡牌查看/升级界面关键词描述 50% 固定乱码（实机调整 2026-09-19） | `Patches/HoverTipDescriptionBlurPatch.cs`（NHoverTipSet.Init + 上下文判定：Inspect/UpgradeSelect/UpgradePreview） + `Core/Text/PotionTextBlurrer.cs` | 补丁审计 NHoverTipSet |
+| 1.4 标题/暂停菜单 75% 乱码（实机调整 2026-09-19；含主标题界面，每次启动随机 2026-09-20） | `Patches/MenuTextBlurPatch.cs`（设置按钮保留可读） | 补丁审计 NMainMenu/NPauseMenu |
+| 1.1 卡牌查看/升级界面关键词描述 50% 乱码（实机调整 2026-09-19；每次启动随机 2026-09-20） | `Patches/HoverTipDescriptionBlurPatch.cs`（NHoverTipSet.Init + 上下文判定：Inspect/UpgradeSelect/UpgradePreview） + `Core/Text/PotionTextBlurrer.cs` | 补丁审计 NHoverTipSet |
 | 1.2 顶栏快照灰显 + 标注与提示（实机调整 2026-09-19） | `Patches/HpSnapshotVisualPatch.cs`（HP 数字灰色；"上次休息时的状态"标签 + 刷新提示；I18N zhs/eng） | 补丁审计 NTopBarHp |
 | 1.4 顶栏不显示阶段 Boss 图标（实机调整 2026-09-19） | `Patches/BossIconHidePatch.cs`（Icon 隐藏 + 悬停提示移除） | 补丁审计 NTopBarBossIcon |
-| 1.1 揭示卡面文字 85% 乱码（实机调整 2026-09-19） | `Game/CardFogRenderer.cs`（BlurFaceText，图鉴豁免）+ `Core/Text/TextBlurPercents.cs` | `TextBlurPercentsTests` |
+| 1.1 揭示卡面文字 85% 乱码（实机调整 2026-09-19） | **`Patches/CardFaceTextBlurPatch.cs`（源头乱码：MegaLabel/MegaRichTextLabel.SetTextAutoSize 前缀，图鉴豁免，性能 2026-09-20）** + `Core/Text/TextBlurPercents.cs` | `TextBlurPercentsTests` + 补丁审计 MegaLabel/MegaRichTextLabel |
 | 1.3 战斗开始横幅乱码（实机调整 2026-09-19） | `Patches/CombatStartBannerBlurPatch.cs`（默认 60%） | 补丁审计 NCombatStartBanner |
 | 1.4 顶栏/地图 UI 描述 70% + 未规定文本默认 60%（统一悬停提示策略，实机调整 2026-09-19） | `Patches/HoverTipTextBlurPatch.cs` + `Patches/MapLegendTextBlurPatch.cs`（设置/图鉴豁免、药水跳过） | 补丁审计 NHoverTipSet/NMapLegendItem |
 | 1.4 先古之民（含建筑师）对话与选项 90%（实机调整 2026-09-19） | `Patches/AncientDialogueBlurPatch.cs` + `EventTextBlurPatch.cs`（选项 90% 保留遗物图标） | 补丁审计 NAncientDialogueLine |
@@ -52,7 +52,7 @@
 | 1.1 奖励右键查看屏按获得场景（实机调整 2026-09-19 第二轮） | `Game/CardFogRenderer.cs`（NInspectCardScreen 源卡无牌堆 → 强制获得场景） | `CardContextClassifierTests` |
 | 1.7 认知修改器面板（2026-09-20，原"难度调整器"） | `Game/DifficultyPanel.cs` + `Game/DifficultyRuntime.cs`（user:// 配置持久化）+ `Core/Options/DifficultySettings.cs` | `DifficultySettingsTests` |
 | 1.7 选卡揭露 / 商店事件开关规则 | `Core/Options/SelectionRevealPlanner.cs`（随机槽位，确定性+盐值）+ `Core/Reveal/RevealRules.cs` + `Game/CardFogRenderer.cs`（槽位集合解析/刷新全场） | `SelectionRevealPlannerTests` + `RevealRulesTests` |
-| 1.7 同名揭露关闭 = 按副本记忆 | `Core/Reveal/InstanceIds.cs`/`DeckOrderBinding.cs` + `Game/CardInstanceRegistry.cs` + `Game/RevealPersistence.cs`（实例 ID + 牌序重绑） | `InstanceAndBindingTests` + `CardRevealTrackerTests` |
+| 1.7 同名揭露关闭 = 按副本记忆 | `Core/Reveal/InstanceIds.cs`/`DeckOrderBinding.cs`/**`CardIdentity.cs`**（战斗克隆体身份沿 `DeckVersion`/`CloneOf` 回溯本体） + `Game/CardInstanceRegistry.cs` + `Game/RevealPersistence.cs`（实例 ID + 牌序重绑） | `InstanceAndBindingTests` + `CardRevealTrackerTests` |
 | 1.7 实时状态/已拥有遗物/地图全路线（2026-09-20 第二批） | `Patches/HpSnapshotVisualPatch.cs`/`TopBarGoldSnapshotPatch.cs`/`PlayerHpBarHidePatch.cs`（实时）、`Patches/RelicHidePatch.cs`（RelicMasking 按拥有上下文）、`Game/MapFogController.cs`（RevealEverything）+ `Game/DifficultyRefresh.cs`（切换即时刷新） | `DifficultySettingsTests` |
 | 1.7 可见敌人意图（2026-09-19） | `Game/IntentGate.cs`（开关短路）、`Game/DifficultyRefresh.cs`（即时刷新） | 编译期 |
 | 1.4 敌人意图保持可读（2026-09-20） | `Game/GlobalTextBlurDriver.cs`（`NIntent` 子树豁免）、`Patches/HoverTipTextBlurPatch.cs`（意图悬停提示按标题识别豁免） | 编译期 |
@@ -60,7 +60,7 @@
 | 1.4 遗物不可见 | `Patches/RelicHidePatch.cs`（NRelic + RelicReward + 检视黑雾） | 补丁审计 |
 | 1.4 Boss 遗物三选一可见 | `EventTextBlurPatch` 对 `AncientEventModel` 豁免 | 补丁审计 |
 | 1.4 地图迷雾+画线禁用 | `Game/MapFogController.cs` + `Patches/MapFogPatch.cs` | 补丁审计 NMapScreen |
-| 1.4 事件 75% 固定模糊 | `Core/Text/EventTextBlurrer.cs` + `Patches/EventTextBlurPatch.cs` | `EventTextBlurrerTests` |
+| 1.4 事件 75% 模糊（同次启动内固定、每次启动随机，2026-09-20） | `Core/Text/EventTextBlurrer.cs` + `Core/Text/BlurSalt.cs` + `Patches/EventTextBlurPatch.cs` | `EventTextBlurrerTests` |
 | 1.5 仅单人守卫 | `Core/MultiplayerGuard.cs`、`ModRuntime`、`RunManagerMultiplayerGuardPatch` | `MultiplayerGuardTests` + 审计 |
 | 全局部件：异常边界 | `Game/PatchGuard.cs`（每 key 一次性 Error 日志），关键类入口与前缀补丁均包裹 | 编译期 |
 | 全局部件：新增文本字体 | `ApplyLocaleFontSubstitution`（濒危标签/加号标记，CJK 字体替换） | 编译期 |
@@ -103,5 +103,5 @@
 11. **战斗外**：遗物不可见（检视界面黑雾；宝箱/商店悬停无名称描述；遗物奖励行显示"未知遗物"）；Boss 遗物三选一：选项文字 90% 乱码（图标可见）；药水仅轮廓、名称与描述 50% 乱码且同一药水每次一致；地图仅当前/已走/下一层可见，画线按钮消失且右键无法画，**Boss 点显示"?"**（略小于原图标），**图例文字 70% 乱码**；事件文本 75% 乱码且每次进入一致；**先古之民（含建筑师）名称/描述/对话 90% 乱码（对话；名称描述 60%）、商人对话 90% 乱码**；标题界面与暂停菜单选项 75% 乱码（设置按钮可读）；**顶栏无阶段 Boss 图标（悬停描述同移除）**；**阶段横幅/前进按钮/火堆选项/所有提示介绍文字 60%**（全局扫描：结算"胜利/对建筑师造成…"、模式选择、角色选择、继续/主菜单按钮等）；标题 logo 与开场 logo 换为乱码文本；顶栏/地图 UI 描述 70% 乱码（设置/图鉴可读）；图鉴正常。
 12. **联机**：进入联机对局 → 日志提示 BrainFog 已禁用（本 mod 不做联机适配）。
 13. **异常自检**：若某功能未生效，日志搜索 `[BrainFog][` 前缀：`PatchGuard` 会记录首个失败点（补丁目标漂移的最小线索）。
-14. **认知修改器**（画面左侧面板，仅对局内）：选卡揭露切到"随机2张"→ 奖励界面固定随机两张显真牌面（重开界面不重掷）；"不揭露"→ 恢复全黑雾；商店/事件开关即时生效；"同名卡全部揭露"关闭后打出一张打击 → 仅该张揭示（重进存档后仍只揭示那一张）；"显示实时血量/金币"→ 顶栏数值随受伤/加钱即时变化且无灰色标注；"显示已拥有遗物"→ 库存与检视可见（奖励/商店仍遮蔽）；"显示地图所有路线"→ 地图全节点路线可见；设置重启游戏后保留。
+14. **认知修改器**（对局内面板，可拖动/收起，中/英文随游戏语言）：拖动标题栏到任意位置（重启后保留）；选卡揭露切到"随机2张"→ 奖励界面固定随机两张显真牌面（重开界面不重掷）；"不揭露"→ 恢复全黑雾；商店/事件开关即时生效；"同名卡全部揭露"关闭后打出一张打击 → 仅该张揭示（重进存档后仍只揭示那一张）；"显示实时血量/金币"→ 顶栏数值随受伤/加钱即时变化且无灰色标注；"显示已拥有遗物"→ 库存与检视可见（奖励/商店仍遮蔽）；"显示地图所有路线"→ 地图全节点路线可见；设置重启游戏后保留。
 15. **可见敌人意图**（认知修改器）：开启 → 战斗中每回合都显示敌人意图（不止首回合）；关闭 → 恢复"仅首回合"；切换即时生效（含切换后新入场的敌人）。意图数字与悬停提示**不被乱码**（保持可读，便于判断伤害）。

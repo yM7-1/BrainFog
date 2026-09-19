@@ -73,3 +73,64 @@ public class DeckOrderBindingTests
         Assert.Equal("duplicate instance id in saved order", error);
     }
 }
+
+public class CardIdentityTests
+{
+    private sealed class Node
+    {
+        public Node? Parent;
+    }
+
+    private static Node Resolve(Node card) =>
+        CardIdentity.Resolve(card, n => n.Parent);
+
+    [Fact]
+    public void Resolve_CombatClone_UsesDeckVersion()
+    {
+        var deckCard = new Node();
+        var clone = new Node { Parent = deckCard };
+        Assert.Same(deckCard, Resolve(clone));
+    }
+
+    [Fact]
+    public void Resolve_NoParent_UsesItself()
+    {
+        var card = new Node();
+        Assert.Same(card, Resolve(card));
+    }
+
+    [Fact]
+    public void Resolve_StableAcrossClonesOfTheSameDeckCard()
+    {
+        var deckCard = new Node();
+        Assert.Same(
+            Resolve(new Node { Parent = deckCard }),
+            Resolve(new Node { Parent = deckCard }));
+    }
+
+    [Fact]
+    public void Resolve_FollowsChains()
+    {
+        var deckCard = new Node();
+        var effectClone = new Node { Parent = new Node { Parent = deckCard } };
+        Assert.Same(deckCard, Resolve(effectClone));
+    }
+
+    [Fact]
+    public void Resolve_SelfCycle_Terminates()
+    {
+        var card = new Node();
+        card.Parent = card;
+        Assert.Same(card, Resolve(card));
+    }
+
+    [Fact]
+    public void Resolve_LongCycle_TerminatesAtDepthLimit()
+    {
+        var a = new Node();
+        var b = new Node { Parent = a };
+        a.Parent = b; // 2-cycle
+        var resolved = Resolve(b);
+        Assert.True(resolved == a || resolved == b);
+    }
+}

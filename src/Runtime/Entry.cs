@@ -70,7 +70,7 @@ public static class Entry
             var harmony = new Harmony("BrainFog");
             harmony.PatchAll(typeof(Entry).Assembly);
             var gameVersion = typeof(MegaCrit.Sts2.Core.Runs.RunManager).Assembly.GetName().Version?.ToString() ?? "unknown";
-            Log.Info($"[BrainFog] loaded (v0.2.1) against game assembly {gameVersion}");
+            Log.Info($"[BrainFog] loaded (v0.2.2) against game assembly {gameVersion}");
             ModRuntime.DumpState("loaded");
             Game.DifficultyRuntime.Load();
             TryAttachTextBlurDriver();

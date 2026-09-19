@@ -24,7 +24,6 @@ internal static class CardFogRenderer
     private const string HiddenPartMeta = "BrainFogHiddenPart";
     private const string PlusNodeName = "BrainFogPlusMarker";
     private const string RuleMeta = "BrainFogRule";
-    private const string BlurredTextMeta = "BrainFogBlurredText";
     private const string ContextMeta = "BrainFogContext";
     private const string ContextParentMeta = "BrainFogContextParent";
 
@@ -178,9 +177,10 @@ internal static class CardFogRenderer
         if (previous == rule)
         {
             // Same rule: the game may have re-shown face parts (UpdateVisuals).
+            // Card text is blurred at the source (CardFaceTextBlurPatch), so no
+            // text re-work is needed here (perf 2026-09-20).
             if (rule == CardVisualRule.FullFace)
             {
-                BlurFaceText(card); // only the text needs re-enforcement
                 return;
             }
             HideVisibleFaceParts(card);
@@ -208,79 +208,9 @@ internal static class CardFogRenderer
         {
             RestoreFaceParts(card);
             fog.Visible = false;
-            BlurFaceText(card);
+            // Text blur happens at the source (CardFaceTextBlurPatch); the game
+            // re-renders the labels right after this, and the prefix blurs them.
         }
-    }
-
-    /// <summary>Revealed cards keep their art but every text on the face is
-    /// garbled at 85% (user change 2026-09-19). The compendium stays clean.</summary>
-    private static void BlurFaceText(NCard card)
-    {
-        if (IsCompendiumCard(card))
-        {
-            return;
-        }
-        foreach (var label in TextFaceParts(card))
-        {
-            BlurText(label);
-        }
-    }
-
-    private static bool IsCompendiumCard(NCard card)
-    {
-        for (var node = card.GetParent(); node != null; node = node.GetParent())
-        {
-            if (node is NCardLibrary)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static void BlurText(CanvasItem? part)
-    {
-        if (part == null || !GodotObject.IsInstanceValid(part))
-        {
-            return;
-        }
-
-        var current = part switch
-        {
-            RichTextLabel rich => rich.Text,
-            Label plain => plain.Text,
-            _ => null,
-        };
-        if (string.IsNullOrEmpty(current))
-        {
-            return;
-        }
-        if (part.HasMeta(BlurredTextMeta) && part.GetMeta(BlurredTextMeta).AsString() == current)
-        {
-            return;
-        }
-
-        var blurred = EventTextBlurrer.Blur(current, TextBlurPercents.CardFaceText);
-        part.SetMeta(BlurredTextMeta, blurred);
-        switch (part)
-        {
-            case RichTextLabel rich:
-                rich.Text = blurred;
-                break;
-            case Label plain:
-                plain.Text = blurred;
-                break;
-        }
-    }
-
-    private static IEnumerable<CanvasItem?> TextFaceParts(NCard card)
-    {
-        yield return card._titleLabel;
-        yield return card._descriptionLabel;
-        yield return card._typeLabel;
-        yield return card._energyLabel;
-        yield return card._starLabel;
-        yield return card._enchantmentLabel;
     }
 
     private static void EnsureFogPlacement(NCard card, ColorRect fog)
