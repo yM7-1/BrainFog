@@ -12,7 +12,7 @@ public enum SelectionRevealOption
 }
 
 /// <summary>
-/// Player-facing difficulty options (in-game adjuster panel).
+/// Player-facing cognition-modifier options (in-game panel).
 /// Pure model: storage encoding and index rules are testable without Godot.
 /// </summary>
 public sealed class DifficultySettings
@@ -34,6 +34,9 @@ public sealed class DifficultySettings
 
     /// <summary>Show every map node and route instead of the fogged frontier.</summary>
     public bool ShowAllMapRoutes { get; set; }
+
+    /// <summary>Enemy intents stay visible every turn instead of only the first round.</summary>
+    public bool ShowEnemyIntents { get; set; }
 
     public static string ToStorage(SelectionRevealOption option) => option switch
     {

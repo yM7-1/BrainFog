@@ -37,6 +37,7 @@ internal static class DifficultyRuntime
             Current.ShowLiveStatus = config.GetValue(Section, "show_live_status", false).AsBool();
             Current.ShowOwnedRelics = config.GetValue(Section, "show_owned_relics", false).AsBool();
             Current.ShowAllMapRoutes = config.GetValue(Section, "show_map_routes", false).AsBool();
+            Current.ShowEnemyIntents = config.GetValue(Section, "show_intents", false).AsBool();
             PanelCollapsed = config.GetValue(UiSection, "collapsed", false).AsBool();
         }
         catch (Exception ex)
@@ -56,6 +57,7 @@ internal static class DifficultyRuntime
             config.SetValue(Section, "show_live_status", Current.ShowLiveStatus);
             config.SetValue(Section, "show_owned_relics", Current.ShowOwnedRelics);
             config.SetValue(Section, "show_map_routes", Current.ShowAllMapRoutes);
+            config.SetValue(Section, "show_intents", Current.ShowEnemyIntents);
             config.SetValue(UiSection, "collapsed", PanelCollapsed);
             config.Save(SettingsPath);
         });

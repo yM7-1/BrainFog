@@ -48,10 +48,32 @@ internal static class DifficultyRefresh
             case NBossMapPoint boss:
                 Patches.BossMapPointMaskPatch.Refresh(boss);
                 break;
+            case NIntent intent:
+                RefreshIntent(intent);
+                break;
         }
         foreach (var child in node.GetChildren())
         {
             Walk(child, depth + 1);
+        }
+    }
+
+    private static void RefreshIntent(NIntent intent)
+    {
+        if (DifficultyRuntime.Current.ShowEnemyIntents)
+        {
+            intent.Visible = true;
+            return;
+        }
+
+        var node = intent.GetParent();
+        while (node != null && node is not NCreature)
+        {
+            node = node.GetParent();
+        }
+        if (node is NCreature { Entity: { } entity })
+        {
+            intent.Visible = IntentGate.ShouldShow(entity, entity.CombatState?.RoundNumber ?? 1);
         }
     }
 }

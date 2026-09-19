@@ -25,6 +25,48 @@ internal static class HoverTipTextBlurPatch
         Default,
     }
 
+    /// <summary>Intent hover-tip titles (eng + zhs) of the "intents" table.</summary>
+    private static readonly string[] IntentTitles =
+    {
+        "Aggressive", "Empower", "Malicious", "Death Blow", "Strategic", "Defensive",
+        "Cowardly", "Heal", "Sleeping", "Stunned", "Summon",
+        "攻势", "强化", "恶意", "濒死一击", "策略", "守势", "懦弱", "回复", "沉睡", "击晕", "召唤",
+    };
+
+    /// <summary>True for hover tips built from the intent tables (enemy intent numbers).</summary>
+    private static bool IsIntentHoverTip(NHoverTipSet set)
+    {
+        var owner = set._owner;
+        if (owner == null || !GodotObject.IsInstanceValid(owner))
+        {
+            return false;
+        }
+        return owner.GetType().Name == "NIntent";
+    }
+
+    private static bool LooksLikeIntentTip(NHoverTipSet set)
+    {
+        var container = set._textHoverTipContainer;
+        if (container == null)
+        {
+            return false;
+        }
+        foreach (var child in container.GetChildren())
+        {
+            if (child is not Control tip)
+            {
+                continue;
+            }
+            var title = tip.GetNodeOrNull<Label>("%Title");
+            var name = title?.Text;
+            if (!string.IsNullOrEmpty(name) && IntentTitles.Contains(name, StringComparer.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     [HarmonyPostfix]
     private static void Postfix(NHoverTipSet __instance)
     {
@@ -32,6 +74,13 @@ internal static class HoverTipTextBlurPatch
         {
             if (ModRuntime.Disabled || __instance._textHoverTipContainer == null
                 || !GodotObject.IsInstanceValid(__instance._textHoverTipContainer))
+            {
+                return;
+            }
+
+            // Intent numbers stay readable (user rule 2026-09-20): "visible
+            // enemy intents" must not show garbled attack values.
+            if (IsIntentHoverTip(__instance) || LooksLikeIntentTip(__instance))
             {
                 return;
             }

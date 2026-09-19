@@ -35,6 +35,10 @@ internal static class IntentGate
         {
             return false;
         }
+        if (DifficultyRuntime.Current.ShowEnemyIntents)
+        {
+            return true;
+        }
         var entry = Map.GetOrCreateValue(owner);
         return entry.Gate.ShouldShow(roundNumber, entry.IsInitialCombatant);
     }

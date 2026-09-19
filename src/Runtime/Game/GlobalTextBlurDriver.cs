@@ -128,6 +128,13 @@ internal sealed partial class GlobalTextBlurDriver : Node
             return Context.Skip;
         }
 
+        // Enemy intents stay readable (user rule 2026-09-20): the "visible
+        // enemy intents" modifier must not show garbled attack numbers.
+        if (typeName == "NIntent")
+        {
+            return Context.Skip;
+        }
+
         if (typeName.StartsWith("NTopBar", StringComparison.Ordinal)
             || node is MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen
             || typeName.StartsWith("NMap", StringComparison.Ordinal))

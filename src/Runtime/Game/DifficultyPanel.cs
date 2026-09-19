@@ -5,7 +5,7 @@ using MegaCrit.Sts2.Core.Localization.Fonts;
 namespace BrainFog.Game;
 
 /// <summary>
-/// Left-side in-run difficulty adjuster (user request 2026-09-20):
+/// Left-side in-run cognition modifier (renamed from "difficulty adjuster" 2026-09-20):
 /// - selection-screen reveal count (none / 1 / 2 / 3 / all)
 /// - shop &amp; event card faces on/off
 /// - same-name reveal on/off (off = only the played copy is revealed)
@@ -22,6 +22,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     private CheckButton _liveStatus = null!;
     private CheckButton _ownedRelics = null!;
     private CheckButton _mapRoutes = null!;
+    private CheckButton _intents = null!;
     private Button _collapse = null!;
 
     private bool _placed;
@@ -78,7 +79,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         root.AddThemeConstantOverride("separation", 6);
 
         var header = new HBoxContainer();
-        var title = new Label { Text = "难度调整" };
+        var title = new Label { Text = "认知修改器" };
         title.AddThemeFontSizeOverride("font_size", 17);
         header.AddChild(title);
         var spacer = new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -125,6 +126,10 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _mapRoutes.Toggled += OnMapRoutesToggled;
         _body.AddChild(_mapRoutes);
 
+        _intents = new CheckButton { Text = "可见敌人意图" };
+        _intents.Toggled += OnIntentsToggled;
+        _body.AddChild(_intents);
+
         root.AddChild(_body);
         _panel.AddChild(root);
         AddChild(_panel);
@@ -132,7 +137,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         foreach (var control in new Control[]
                  {
                      title, selectionLabel, _selection, _shopEvent, _sameName,
-                     _liveStatus, _ownedRelics, _mapRoutes, _collapse,
+                     _liveStatus, _ownedRelics, _mapRoutes, _intents, _collapse,
                  })
         {
             control.ApplyLocaleFontSubstitution(FontType.Regular, "font");
@@ -157,6 +162,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             _liveStatus.ButtonPressed = settings.ShowLiveStatus;
             _ownedRelics.ButtonPressed = settings.ShowOwnedRelics;
             _mapRoutes.ButtonPressed = settings.ShowAllMapRoutes;
+            _intents.ButtonPressed = settings.ShowEnemyIntents;
             _body.Visible = !DifficultyRuntime.PanelCollapsed;
             _collapse.Text = DifficultyRuntime.PanelCollapsed ? "▶" : "◀";
         }
@@ -223,6 +229,16 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             return;
         }
         DifficultyRuntime.Current.ShowAllMapRoutes = pressed;
+        DifficultyRuntime.NotifyChanged();
+    }
+
+    private void OnIntentsToggled(bool pressed)
+    {
+        if (_applying)
+        {
+            return;
+        }
+        DifficultyRuntime.Current.ShowEnemyIntents = pressed;
         DifficultyRuntime.NotifyChanged();
     }
 

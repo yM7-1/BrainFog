@@ -15,6 +15,7 @@ public class DifficultySettingsTests
         Assert.False(settings.ShowLiveStatus);
         Assert.False(settings.ShowOwnedRelics);
         Assert.False(settings.ShowAllMapRoutes);
+        Assert.False(settings.ShowEnemyIntents);
     }
 
     [Theory]
