@@ -84,6 +84,6 @@ GitHub: https://github.com/yM7-1/BrainFog
 ░% STS2 v0.111.0 ※ RitsuLib 0.6.2；仅※█；卸载◇恢复%＊。
 Github链接：https://github.com/yM7-1/BrainFog
 "
-	"changenote"		"v0.2.5：感知模块新增「血量数/金币数恢复正常显示」——开启后顶栏血量数、金币数与自己战斗血条的血量数不再乱码（默认关；实时/失忆模式不受影响）"
+	"changenote"		"v0.2.6：修复「血量数/金币数恢复正常显示」切换时把主标题界面等其它乱码文本误还原为正常的问题；选项功能不变"
 	"visibility"		"0"
 }

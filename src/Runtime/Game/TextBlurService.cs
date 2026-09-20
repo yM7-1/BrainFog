@@ -133,8 +133,9 @@ internal static class TextBlurService
     }
 
     /// <summary>Re-applies the blur ratio to every label that has a stored
-    /// original (panel slider); labels exempt from the blur are restored to
-    /// their original text instead (readable HP/gold numbers, 2026-09-21).</summary>
+    /// original (panel slider). Only the readable-status-number labels are
+    /// restored to their original text (2026-09-21); everything else keeps its
+    /// blur, including contexts owned by dedicated patches.</summary>
     public static void ReapplyAllText(int percent) =>
         PatchGuard.Run("TextBlur.ReapplyAll", () =>
         {
@@ -153,13 +154,16 @@ internal static class TextBlurService
         }
         if (node is CanvasItem item && item.HasMeta(InputMeta))
         {
-            if (GlobalTextBlurSource.ShouldBlur(item))
+            if (GlobalTextBlurSource.IsReadableStatusNumber(item))
             {
-                Reapply(item, percent);
+                Restore(item);
             }
             else
             {
-                Restore(item);
+                // Everything else that carries a stored original keeps its blur,
+                // including contexts owned by dedicated patches (main menu,
+                // cards, dialogue): those stay garbled, never restored.
+                Reapply(item, percent);
             }
         }
         foreach (var child in node.GetChildren())

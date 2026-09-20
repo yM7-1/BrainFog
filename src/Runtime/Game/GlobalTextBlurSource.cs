@@ -88,7 +88,7 @@ internal static class GlobalTextBlurSource
     /// owns it or it must stay readable otherwise).</summary>
     public static bool ShouldBlur(CanvasItem label)
     {
-        if (DifficultyRuntime.Current.ReadableStatusNumbers && IsStatusNumberLabel(label))
+        if (IsReadableStatusNumber(label))
         {
             return false; // panel option: HP/gold numbers stay readable
         }
@@ -136,14 +136,18 @@ internal static class GlobalTextBlurSource
         return GlobalTextBlurRules.IsStatusNumberLabel(types, name, localPlayerHealthBar: false);
     }
 
+    /// <summary>True only when this label is exempt because of the panel's
+    /// readable-status-numbers option (never true for labels that another patch
+    /// owns and deliberately blurs, e.g. main-menu buttons).</summary>
+    public static bool IsReadableStatusNumber(CanvasItem label) =>
+        DifficultyRuntime.Current.ReadableStatusNumbers && IsStatusNumberLabel(label);
+
     /// <summary>While a status-number label stays readable, keep its stored
     /// original in sync so re-enabling the blur garbles the current value
     /// immediately instead of waiting for the next game write.</summary>
     private static void SyncReadableStatusNumber(CanvasItem label, string text)
     {
-        if (!DifficultyRuntime.Current.ReadableStatusNumbers
-            || !GlobalTextBlurRules.IsStatusNumberName(label.Name.ToString())
-            || !IsStatusNumberLabel(label))
+        if (!IsReadableStatusNumber(label))
         {
             return;
         }
