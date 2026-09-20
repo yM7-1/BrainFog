@@ -34,6 +34,7 @@ internal static class RevealPersistence
         {
             ModRuntime.Tracker.Load(data.RevealedCards, data.RevealedInstances);
             PendingDeckOrder.AddRange(data.DeckOrderIds);
+            BindDeckFromSave(state, data);
         }
         else
         {
@@ -42,6 +43,51 @@ internal static class RevealPersistence
         MegaCrit.Sts2.Core.Logging.Log.Info(
             $"[BrainFog][Persistence] run started: revealed={ModRuntime.Tracker.RevealedCount} savedDeck={PendingDeckOrder.Count}");
         ModRuntime.DumpState("run-started");
+    }
+
+    /// <summary>Rebinds saved instance ids to the loaded deck immediately
+    /// (save/load fix 2026-09-21). Rendering consults the registry right away,
+    /// so lazy binding at reveal time was too late and every instance reveal
+    /// looked unknown after a reload.</summary>
+    private static void BindDeckFromSave(RunState state, BrainFogRunData data)
+    {
+        if (data.DeckOrderIds.Count == 0 || state.Players.Count == 0)
+        {
+            return;
+        }
+
+        var bound = 0;
+        foreach (var player in state.Players)
+        {
+            var deck = player.Deck.Cards;
+            if (deck.Count == 0)
+            {
+                continue;
+            }
+
+            var keys = new List<string>(deck.Count);
+            foreach (var card in deck)
+            {
+                keys.Add(RevealKeys.Of(card));
+            }
+
+            foreach (var binding in DeckRebinder.Align(keys, data.DeckOrderIds, data.DeckOrderKeys))
+            {
+                if (binding.DeckIndex >= 0 && binding.DeckIndex < deck.Count)
+                {
+                    CardInstanceRegistry.Bind(deck[binding.DeckIndex], binding.InstanceId);
+                    bound++;
+                }
+            }
+        }
+
+        if (bound > 0)
+        {
+            // Eager binding covered the saved order; disable index-based lazy
+            // rebinding so genuinely new cards mint fresh ids instead of
+            // stealing a saved slot.
+            PendingDeckOrder.Clear();
+        }
     }
 
     /// <summary>Rebinds an instance id from the saved deck order (index-aligned).</summary>
@@ -84,16 +130,24 @@ internal static class RevealPersistence
         try
         {
             var ids = new List<string>();
+            var keys = new List<string>();
             foreach (var card in owner.Deck.Cards)
             {
                 ids.Add(CardInstanceRegistry.PeekOrBindNew(card));
+                keys.Add(RevealKeys.Of(card));
             }
 
-            if (_slot.TryGet(state, out var current) && DeckOrderEquals(current.DeckOrderIds, ids))
+            if (_slot.TryGet(state, out var current)
+                && ListEquals(current.DeckOrderIds, ids)
+                && ListEquals(current.DeckOrderKeys, keys))
             {
                 return; // nothing changed: avoid dirtying the run save
             }
-            _slot.Modify(state, data => data.DeckOrderIds = ids);
+            _slot.Modify(state, data =>
+            {
+                data.DeckOrderIds = ids;
+                data.DeckOrderKeys = keys;
+            });
         }
         finally
         {
@@ -101,7 +155,7 @@ internal static class RevealPersistence
         }
     }
 
-    private static bool DeckOrderEquals(List<string> a, List<string> b)
+    private static bool ListEquals(List<string> a, List<string> b)
     {
         if (a.Count != b.Count)
         {

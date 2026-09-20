@@ -63,6 +63,12 @@ public static class RevealRules
         DifficultySettings? settings = null,
         bool selectionSlotRevealed = false)
     {
+        // "Reveal all cards this run" wins over every masking rule (2026-09-21).
+        if (settings?.RevealAllCards == true)
+        {
+            return CardVisualRule.FullFace;
+        }
+
         // Acquisition shows rarity only by default (0.02 #5); difficulty options
         // can reveal the face (reward slot picked by SelectionRevealPlanner).
         if (IsAcquisition(context))

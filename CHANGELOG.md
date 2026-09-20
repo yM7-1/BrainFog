@@ -1,6 +1,28 @@
 # Changelog
 
-## 0.2.2（未发布：每次启动随机乱码 + 修改器面板美化）
+## 0.2.3（未发布：源头乱码 / 受击数字乱码 / 事件获得稀有度 / 全揭示 / 面板隐藏）
+
+### 全局文本乱码改为源头改写（2026-09-21）
+- 通用 UI 文本改为在 `MegaLabel.SetTextAutoSize` / `MegaRichTextLabel.SetTextAutoSize` 前缀统一乱码（`GlobalTextBlurSource` + Core `GlobalTextBlurRules`），取代 0.2s 场景扫描：新文本即时乱码，不再有"最多 0.2~0.4s 可读"的窗口，打牌热路径也无需全树扫描
+- 周期扫描仅保留为**非 Mega 控件**（少数原生 `Label`/`RichTextLabel`）的兜底；Mega 子树整棵跳过
+- 上下文规则与原扫描一致：卡面/悬停提示/事件/菜单/对话/设置/图鉴/模组面板各自由原补丁处理；顶栏与地图描述 70%，其余默认 60%
+- **受击/治疗/格挡数字改为乱码**（用户规则 2026-09-21，撤销"受击数字保留可读"）：`NDamageNumVfx`/`NHealNumVfx`/`NDamageBlockedVfx` 按默认 60% 乱码；其余 VFX 文本仍保持可读
+- 敌人意图保持可读：`NIntent` 子树豁免（意图数字），意图悬停提示继续豁免（行动/攻击说明不乱码）
+
+### 事件获得卡牌稀有度规则（2026-09-21）
+- 卡牌选择屏幕在创建时打"获得场景"标记（`CardAcquireScopePatch`：`NChooseACardSelectionScreen.ShowScreen`、`NSimpleCardSelectScreen.Create` 两个重载）；`CardFogRenderer` 命中标记即按获得场景处理（仅稀有度边框），闭合 `IMPLEMENTATION-MAP` §2.3 偏差
+
+### 认知修改器：卡牌本局全部揭示 + 边缘缩进（2026-09-21）
+- 新增「卡牌本局全部揭示」：本局所有卡牌直接显示真实牌面（文字仍按规则乱码），设置项 `reveal_all_cards`
+- 新增边缘缩进：标题栏 ◀/▶ 按钮把面板缩进到较近的屏幕左/右边缘，边缘留一个小按钮（▶/◀）点击弹出；缩进侧与垂直位置持久化（`docked`/`dock_side`/`dock_y`），原「收起/展开」保留
+- 面板提示行更新；中/英键新增 `panel_reveal_all`/`panel_hint_reveal_all`/`panel_dock_tooltip`/`panel_tab_tooltip`
+
+### 修复：SL（退出到主标题后重进）按副本揭示被重置（2026-09-21）
+- **根因**：按副本模式（`reveal_same_name=false`）的实例 ID 虽已写进存档（`RevealedInstances` + `DeckOrderIds`），但读档后没有把 ID 重新绑定到新载入的牌组对象；渲染走 `TryGetId` 得到 null → 全部卡牌显示未知。实测当前存档：牌组 14 张、保存牌序 13 条（最后一张为后来获得）
+- **修复**：`RunStarted` 时立即绑定——新增 `DeckOrderKeys`（每个牌序槽位的定义键），`Core/Reveal/DeckRebinder` 按定义键对齐（容忍新增/移除卡牌、重复定义按序匹配；重复/非法 ID fail-closed）；旧存档（无键）退回按索引绑定前 N 个槽位；绑定成功后关闭懒绑定，避免新卡抢占已保存槽位
+- 新增 `DeckRebinderTests`（11 用例：插入/移除/重复定义/重复 ID/非法 ID/旧存档回退等）
+
+## 0.2.2（2026-09-20 已上架创意工坊：每次启动随机乱码 + 修改器面板美化）
 
 ### 性能：打牌卡顿/音效延迟修复（2026-09-20）
 - **根因**：旧实现在游戏写完卡面文字**之后**再覆盖为乱码。游戏的 `MegaLabel/MegaRichTextLabel` 只在「新字符串 ≠ 当前字符串」时才重排文本，于是每次 `UpdateVisuals`（打牌动画期间高频调用）都触发「真文本→重排→乱码→重排」双份 BBCode 解析与字号自适应，造成可听/可见的卡顿

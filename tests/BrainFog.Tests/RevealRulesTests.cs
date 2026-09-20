@@ -100,4 +100,28 @@ public class RevealRulesTests
             CardVisualRule.FullFace,
             RevealRules.Resolve(CardDisplayContext.Hand, CardKnowledge.Revealed, revealAll, selectionSlotRevealed: true));
     }
+
+    [Fact]
+    public void RevealAllCards_WinsOverEveryContext()
+    {
+        var settings = new DifficultySettings { RevealAllCards = true };
+        foreach (var context in Enum.GetValues<CardDisplayContext>())
+        {
+            Assert.Equal(
+                CardVisualRule.FullFace,
+                RevealRules.Resolve(context, CardKnowledge.Unknown, settings));
+        }
+    }
+
+    [Fact]
+    public void RevealAllCards_Off_KeepsNormalRules()
+    {
+        var settings = new DifficultySettings { RevealAllCards = false };
+        Assert.Equal(
+            CardVisualRule.BlackFog,
+            RevealRules.Resolve(CardDisplayContext.Hand, CardKnowledge.Unknown, settings));
+        Assert.Equal(
+            CardVisualRule.RarityOnly,
+            RevealRules.Resolve(CardDisplayContext.Reward, CardKnowledge.Unknown, settings));
+    }
 }

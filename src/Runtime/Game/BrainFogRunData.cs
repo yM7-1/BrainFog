@@ -14,4 +14,8 @@ public sealed class BrainFogRunData
     public List<string> RevealedInstances = new();
 
     public List<string> DeckOrderIds = new();
+
+    /// <summary>Definition key per deck slot, parallel to <see cref="DeckOrderIds"/>;
+    /// lets a load re-align ids after cards were added/removed (2026-09-21).</summary>
+    public List<string> DeckOrderKeys = new();
 }

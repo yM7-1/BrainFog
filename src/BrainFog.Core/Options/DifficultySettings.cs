@@ -26,6 +26,10 @@ public sealed class DifficultySettings
     /// <summary>Playing/upgrading one copy reveals every copy of that card for the run.</summary>
     public bool RevealSameNameCards { get; set; } = true;
 
+    /// <summary>Reveal every card face for the run (no black fog anywhere;
+    /// card text still follows the normal blur rules).</summary>
+    public bool RevealAllCards { get; set; }
+
     /// <summary>Show live HP and gold instead of the stale snapshot.</summary>
     public bool ShowLiveStatus { get; set; }
 

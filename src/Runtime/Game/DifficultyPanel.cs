@@ -5,13 +5,16 @@ using MegaCrit.Sts2.Core.Localization.Fonts;
 namespace BrainFog.Game;
 
 /// <summary>
-/// In-run cognition modifier panel (draggable, collapsible):
+/// In-run cognition modifier panel (draggable, collapsible, dockable):
 /// - drag the title bar to move it anywhere (position persisted)
 /// - click the title bar (no drag) or the arrow to collapse/expand
+/// - the ◀/▶ button docks the panel to the nearer screen edge; a small edge
+///   tab brings it back (state persisted)
 /// - selection-screen reveal count (none / 1 / 2 / 3 / all)
 /// - shop &amp; event card faces on/off
 /// - same-name reveal on/off (off = only the played copy is revealed)
-/// All labels live under a "BrainFog*" named root, so the global text sweep
+/// - reveal every card face for the run
+/// All labels live under a "BrainFog*" named root, so the global text blur
 /// keeps the control readable.
 /// </summary>
 internal sealed partial class DifficultyPanel : CanvasLayer
@@ -34,11 +37,14 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     private OptionButton _selection = null!;
     private CheckButton _shopEvent = null!;
     private CheckButton _sameName = null!;
+    private CheckButton _revealAll = null!;
     private CheckButton _liveStatus = null!;
     private CheckButton _ownedRelics = null!;
     private CheckButton _mapRoutes = null!;
     private CheckButton _intents = null!;
     private Button _collapse = null!;
+    private Button _dock = null!;
+    private Button _tab = null!;
 
     private string _currentHintKey = "panel_hint_default";
     private string _lastLocale = string.Empty;
@@ -74,11 +80,37 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         PollLocale(delta);
         var runActive = MegaCrit.Sts2.Core.Nodes.NRun.Instance is { } run && GodotObject.IsInstanceValid(run);
         Visible = runActive;
-        if (runActive && !_placed && _panel.Size.Y > 1f)
+        UpdateDockVisuals();
+        if (runActive && !DifficultyRuntime.PanelDocked && !_placed && _panel.Size.Y > 1f)
         {
             Place();
             _placed = true;
         }
+    }
+
+    /// <summary>Panel visible unless docked; the edge tab is the reverse.</summary>
+    private void UpdateDockVisuals()
+    {
+        var docked = DifficultyRuntime.PanelDocked;
+        _panel.Visible = !docked;
+        _tab.Visible = docked;
+        if (docked)
+        {
+            PlaceTab();
+        }
+    }
+
+    private void PlaceTab()
+    {
+        var viewportSize = GetViewport()?.GetVisibleRect().Size ?? new Vector2(1920f, 1080f);
+        var height = Math.Max(1f, _tab.Size.Y);
+        var y = Math.Clamp(
+            DifficultyRuntime.PanelDockY * viewportSize.Y - height * 0.5f,
+            8f,
+            Math.Max(8f, viewportSize.Y - height - 8f));
+        var x = DifficultyRuntime.PanelDockSide == 1 ? viewportSize.X - _tab.Size.X : 0f;
+        _tab.Position = new Vector2(x, y);
+        _tab.Text = DifficultyRuntime.PanelDockSide == 1 ? "◀" : "▶";
     }
 
     /// <summary>The panel follows the game language (zhs -> Chinese, anything
@@ -162,6 +194,11 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _body.AddChild(_sameName);
         BindHint(_sameName, "panel_hint_same_name");
 
+        _revealAll = new CheckButton();
+        _revealAll.Toggled += OnRevealAllToggled;
+        _body.AddChild(_revealAll);
+        BindHint(_revealAll, "panel_hint_reveal_all");
+
         _sectionPerception = Section();
         _body.AddChild(_sectionPerception);
 
@@ -196,9 +233,38 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _panel.AddChild(root);
         AddChild(_panel);
 
+        _tab = new Button
+        {
+            Name = "BrainFogDockTab",
+            Text = "▶",
+            FocusMode = Control.FocusModeEnum.None,
+            CustomMinimumSize = new Vector2(26f, 64f),
+            Visible = false,
+        };
+        _tab.AddThemeFontSizeOverride("font_size", 14);
+        _tab.AddThemeColorOverride("font_color", Accent);
+        _tab.AddThemeColorOverride("font_hover_color", AccentBright);
+        _tab.AddThemeColorOverride("font_pressed_color", AccentBright);
+        _tab.AddThemeStyleboxOverride("normal", new StyleBoxFlat
+        {
+            BgColor = new Color(0.055f, 0.065f, 0.09f, 0.85f),
+            BorderColor = new Color(0.55f, 0.50f, 0.34f, 0.55f),
+            BorderWidthLeft = 1,
+            BorderWidthTop = 1,
+            BorderWidthRight = 1,
+            BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 6,
+            CornerRadiusTopRight = 6,
+            CornerRadiusBottomLeft = 6,
+            CornerRadiusBottomRight = 6,
+        });
+        _tab.Pressed += UndockPanel;
+        _tab.ApplyLocaleFontSubstitution(FontType.Regular, "font");
+        AddChild(_tab);
+
         foreach (var control in new Control[]
                  {
-                     _selectionLabel, _selection, _shopEvent, _sameName,
+                     _selectionLabel, _selection, _shopEvent, _sameName, _revealAll,
                      _liveStatus, _ownedRelics, _mapRoutes, _intents, _hint,
                  })
         {
@@ -229,10 +295,13 @@ internal sealed partial class DifficultyPanel : CanvasLayer
 
         _shopEvent.Text = T("panel_shop_event", zh ? "商店/事件卡面揭露" : "Reveal shop/event cards");
         _sameName.Text = T("panel_same_name", zh ? "同名卡全部揭露" : "Reveal all copies");
+        _revealAll.Text = T("panel_reveal_all", zh ? "卡牌本局全部揭示" : "Reveal all cards this run");
         _liveStatus.Text = T("panel_live_status", zh ? "显示实时血量/金币" : "Show live HP/gold");
         _ownedRelics.Text = T("panel_owned_relics", zh ? "显示已拥有遗物" : "Show owned relics");
         _mapRoutes.Text = T("panel_map_routes", zh ? "显示地图所有路线" : "Show all map routes");
         _intents.Text = T("panel_intents", zh ? "可见敌人意图" : "Show enemy intents");
+        _dock.TooltipText = T("panel_dock_tooltip", zh ? "缩进到屏幕边缘（点边缘小按钮恢复）" : "Dock to the screen edge (click the edge tab to restore)");
+        _tab.TooltipText = T("panel_tab_tooltip", zh ? "显示认知修改器" : "Show the cognition modifier");
         ShowHint(_currentHintKey);
 
         // Re-apply the locale font (no-op for Latin; swaps in the CJK font when
@@ -240,8 +309,8 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         foreach (var control in new Control[]
                  {
                      _title, _sectionCognition, _sectionPerception, _selectionLabel,
-                     _selection, _shopEvent, _sameName, _liveStatus, _ownedRelics,
-                     _mapRoutes, _intents, _hint,
+                     _selection, _shopEvent, _sameName, _revealAll, _liveStatus,
+                     _ownedRelics, _mapRoutes, _intents, _hint, _dock, _tab,
                  })
         {
             control.ApplyLocaleFontSubstitution(FontType.Regular, "font");
@@ -286,6 +355,21 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _collapse.Pressed += ToggleCollapsed;
         header.AddChild(_collapse);
 
+        _dock = new Button
+        {
+            Text = "▶",
+            Flat = true,
+            FocusMode = Control.FocusModeEnum.None,
+            CustomMinimumSize = new Vector2(24f, 0f),
+        };
+        _dock.AddThemeFontSizeOverride("font_size", 13);
+        _dock.AddThemeColorOverride("font_color", HintColor);
+        _dock.AddThemeColorOverride("font_hover_color", AccentBright);
+        _dock.AddThemeColorOverride("font_pressed_color", AccentBright);
+        _dock.ApplyLocaleFontSubstitution(FontType.Regular, "font");
+        _dock.Pressed += DockPanel;
+        header.AddChild(_dock);
+
         return header;
     }
 
@@ -318,6 +402,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             "panel_hint_selection" => zh ? "奖励界面随机揭露部分卡面（每次奖励固定）" : "Randomly reveal some card faces in reward screens (fixed per reward)",
             "panel_hint_shop_event" => zh ? "商店与事件获得的卡牌显示真实牌面" : "Show real card faces for cards from shops and events",
             "panel_hint_same_name" => zh ? "打出或升级一张后，同名卡全部揭示" : "After playing or upgrading one, reveal every copy of that card",
+            "panel_hint_reveal_all" => zh ? "本局所有卡牌直接显示真实牌面（文字仍按规则乱码）" : "Every card shows its real face for this run (text stays garbled)",
             "panel_hint_live_status" => zh ? "顶栏显示真实血量与金币" : "Show true HP and gold in the top bar",
             "panel_hint_owned_relics" => zh ? "库存与检视中显示已拥有遗物" : "Show owned relics in inventory and inspect screens",
             "panel_hint_map_routes" => zh ? "地图显示全部节点与路线" : "Show every map node and route",
@@ -414,6 +499,15 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _panel.Position = new Vector2(
             Math.Clamp(target.X, 0f, maxX),
             Math.Clamp(target.Y, 0f, maxY));
+        UpdateDockButton();
+    }
+
+    /// <summary>The dock button points at the edge the panel would dock to.</summary>
+    private void UpdateDockButton()
+    {
+        var viewportSize = GetViewport()?.GetVisibleRect().Size ?? new Vector2(1920f, 1080f);
+        var centerX = _panel.Position.X + _panel.Size.X * 0.5f;
+        _dock.Text = centerX < viewportSize.X * 0.5f ? "◀" : "▶";
     }
 
     private void PersistPosition()
@@ -435,6 +529,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             return;
         }
         _panel.Position = new Vector2(12f, Math.Max(12f, viewportSize.Y * 0.5f - _panel.Size.Y * 0.5f));
+        UpdateDockButton();
     }
 
     private void ApplyFromSettings()
@@ -446,12 +541,14 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             _selection.Selected = DifficultySettings.ToIndex(settings.SelectionReveal);
             _shopEvent.ButtonPressed = settings.RevealShopAndEventCards;
             _sameName.ButtonPressed = settings.RevealSameNameCards;
+            _revealAll.ButtonPressed = settings.RevealAllCards;
             _liveStatus.ButtonPressed = settings.ShowLiveStatus;
             _ownedRelics.ButtonPressed = settings.ShowOwnedRelics;
             _mapRoutes.ButtonPressed = settings.ShowAllMapRoutes;
             _intents.ButtonPressed = settings.ShowEnemyIntents;
             _body.Visible = !DifficultyRuntime.PanelCollapsed;
             _collapse.Text = DifficultyRuntime.PanelCollapsed ? "▸" : "▾";
+            UpdateDockVisuals();
         }
         finally
         {
@@ -486,6 +583,16 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             return;
         }
         DifficultyRuntime.Current.RevealSameNameCards = pressed;
+        DifficultyRuntime.NotifyChanged();
+    }
+
+    private void OnRevealAllToggled(bool pressed)
+    {
+        if (_applying)
+        {
+            return;
+        }
+        DifficultyRuntime.Current.RevealAllCards = pressed;
         DifficultyRuntime.NotifyChanged();
     }
 
@@ -536,6 +643,32 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _collapse.Text = collapsed ? "▸" : "▾";
         ResizePanel();
         DifficultyRuntime.SetPanelCollapsed(collapsed);
+    }
+
+    /// <summary>Docks the panel to the nearer screen edge (the edge tab
+    /// restores it); state and vertical position are persisted.</summary>
+    private void DockPanel()
+    {
+        var viewportSize = GetViewport()?.GetVisibleRect().Size ?? new Vector2(1920f, 1080f);
+        var centerX = _panel.Position.X + _panel.Size.X * 0.5f;
+        var side = centerX < viewportSize.X * 0.5f ? 0 : 1;
+        var normalizedY = Math.Clamp(
+            (_panel.Position.Y + _panel.Size.Y * 0.5f) / Math.Max(1f, viewportSize.Y),
+            0f,
+            1f);
+        DifficultyRuntime.SetPanelDocked(true, side, normalizedY);
+        UpdateDockVisuals();
+    }
+
+    private void UndockPanel()
+    {
+        DifficultyRuntime.SetPanelDocked(false, DifficultyRuntime.PanelDockSide, DifficultyRuntime.PanelDockY);
+        UpdateDockVisuals();
+        if (!_placed)
+        {
+            Place();
+            _placed = true;
+        }
     }
 
     private void ResizePanel()

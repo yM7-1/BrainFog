@@ -22,7 +22,7 @@ public class PatchTargetAuditTests
         StaticMethod,
     }
 
-    private sealed record MemberTarget(string Name, Kind Kind);
+    private sealed record MemberTarget(string Name, Kind Kind, string[]? ParameterTypes = null);
 
     private static readonly Dictionary<string, MemberTarget[]> PatchTargets = new()
     {
@@ -226,6 +226,24 @@ public class PatchTargetAuditTests
             new MemberTarget("_placeholderOutline", Kind.Field),
         },
 
+        ["MegaCrit.Sts2.Core.Nodes.Screens.CardSelection.NChooseACardSelectionScreen"] = new[]
+        {
+            new MemberTarget("ShowScreen", Kind.StaticMethod),
+            new MemberTarget("_Ready", Kind.Method),
+        },
+        ["MegaCrit.Sts2.Core.Nodes.Screens.CardSelection.NSimpleCardSelectScreen"] = new[]
+        {
+            new MemberTarget("Create", Kind.StaticMethod, new[]
+            {
+                "System.Collections.Generic.IReadOnlyList`1[MegaCrit.Sts2.Core.Models.CardModel]",
+                "MegaCrit.Sts2.Core.CardSelection.CardSelectorPrefs",
+            }),
+            new MemberTarget("Create", Kind.StaticMethod, new[]
+            {
+                "System.Collections.Generic.IReadOnlyList`1[MegaCrit.Sts2.Core.Entities.Cards.CardCreationResult]",
+                "MegaCrit.Sts2.Core.CardSelection.CardSelectorPrefs",
+            }),
+        },
         ["MegaCrit.Sts2.Core.Nodes.NActBanner"] = new[]
         {
             new MemberTarget("_Ready", Kind.Method),
@@ -333,6 +351,30 @@ public class PatchTargetAuditTests
         },
     };
 
+    /// <summary>Overload disambiguation: compare parameter types by their
+    /// metadata names (the load-context types are not reference-equal to the
+    /// compile-time ones).</summary>
+    private static bool Matches(MethodInfo method, MemberTarget member)
+    {
+        if (member.ParameterTypes == null)
+        {
+            return true;
+        }
+        var parameters = method.GetParameters();
+        if (parameters.Length != member.ParameterTypes.Length)
+        {
+            return false;
+        }
+        for (var i = 0; i < parameters.Length; i++)
+        {
+            if (parameters[i].ParameterType.ToString() != member.ParameterTypes[i])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static MetadataLoadContext CreateContext()
     {
         var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
@@ -386,7 +428,7 @@ public class PatchTargetAuditTests
                 {
                     Kind.Field => type.GetField(member.Name, flags) != null,
                     Kind.Property => type.GetProperty(member.Name, flags) != null,
-                    _ => type.GetMethod(member.Name, flags) != null,
+                    _ => type.GetMethods(flags).Any(m => m.Name == member.Name && Matches(m, member)),
                 };
                 if (!exists)
                 {

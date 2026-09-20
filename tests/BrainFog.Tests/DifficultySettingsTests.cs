@@ -12,6 +12,7 @@ public class DifficultySettingsTests
         Assert.Equal(SelectionRevealOption.None, settings.SelectionReveal);
         Assert.False(settings.RevealShopAndEventCards);
         Assert.True(settings.RevealSameNameCards);
+        Assert.False(settings.RevealAllCards);
         Assert.False(settings.ShowLiveStatus);
         Assert.False(settings.ShowOwnedRelics);
         Assert.False(settings.ShowAllMapRoutes);

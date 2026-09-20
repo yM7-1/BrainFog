@@ -21,6 +21,15 @@ internal static class DifficultyRuntime
 
     public static bool PanelCollapsed { get; private set; }
 
+    /// <summary>Panel docked to a screen edge (a small edge tab brings it back).</summary>
+    public static bool PanelDocked { get; private set; }
+
+    /// <summary>0 = left edge, 1 = right edge.</summary>
+    public static int PanelDockSide { get; private set; }
+
+    /// <summary>Docked tab position, normalized to the viewport (0..1).</summary>
+    public static float PanelDockY { get; private set; } = 0.5f;
+
     /// <summary>Dragged panel position, normalized to the viewport (0..1).</summary>
     public static bool HasPanelPosition { get; private set; }
     public static float PanelPositionX { get; private set; }
@@ -39,11 +48,15 @@ internal static class DifficultyRuntime
                 config.GetValue(Section, "selection_reveal", "none").AsString());
             Current.RevealShopAndEventCards = config.GetValue(Section, "reveal_shop_event", false).AsBool();
             Current.RevealSameNameCards = config.GetValue(Section, "reveal_same_name", true).AsBool();
+            Current.RevealAllCards = config.GetValue(Section, "reveal_all_cards", false).AsBool();
             Current.ShowLiveStatus = config.GetValue(Section, "show_live_status", false).AsBool();
             Current.ShowOwnedRelics = config.GetValue(Section, "show_owned_relics", false).AsBool();
             Current.ShowAllMapRoutes = config.GetValue(Section, "show_map_routes", false).AsBool();
             Current.ShowEnemyIntents = config.GetValue(Section, "show_intents", false).AsBool();
             PanelCollapsed = config.GetValue(UiSection, "collapsed", false).AsBool();
+            PanelDocked = config.GetValue(UiSection, "docked", false).AsBool();
+            PanelDockSide = config.GetValue(UiSection, "dock_side", 0).AsInt32() == 1 ? 1 : 0;
+            PanelDockY = Math.Clamp((float)config.GetValue(UiSection, "dock_y", 0.5).AsDouble(), 0f, 1f);
             var posX = config.GetValue(UiSection, "panel_x", -1.0).AsDouble();
             var posY = config.GetValue(UiSection, "panel_y", -1.0).AsDouble();
             if (posX >= 0.0 && posX <= 1.0 && posY >= 0.0 && posY <= 1.0)
@@ -67,11 +80,15 @@ internal static class DifficultyRuntime
             config.SetValue(Section, "selection_reveal", DifficultySettings.ToStorage(Current.SelectionReveal));
             config.SetValue(Section, "reveal_shop_event", Current.RevealShopAndEventCards);
             config.SetValue(Section, "reveal_same_name", Current.RevealSameNameCards);
+            config.SetValue(Section, "reveal_all_cards", Current.RevealAllCards);
             config.SetValue(Section, "show_live_status", Current.ShowLiveStatus);
             config.SetValue(Section, "show_owned_relics", Current.ShowOwnedRelics);
             config.SetValue(Section, "show_map_routes", Current.ShowAllMapRoutes);
             config.SetValue(Section, "show_intents", Current.ShowEnemyIntents);
             config.SetValue(UiSection, "collapsed", PanelCollapsed);
+            config.SetValue(UiSection, "docked", PanelDocked);
+            config.SetValue(UiSection, "dock_side", PanelDockSide);
+            config.SetValue(UiSection, "dock_y", PanelDockY);
             if (HasPanelPosition)
             {
                 config.SetValue(UiSection, "panel_x", PanelPositionX);
@@ -83,6 +100,15 @@ internal static class DifficultyRuntime
     public static void SetPanelCollapsed(bool collapsed)
     {
         PanelCollapsed = collapsed;
+        Save();
+    }
+
+    /// <summary>Docks the panel to a screen edge (the edge tab restores it).</summary>
+    public static void SetPanelDocked(bool docked, int side, float normalizedY)
+    {
+        PanelDocked = docked;
+        PanelDockSide = side == 1 ? 1 : 0;
+        PanelDockY = Math.Clamp(normalizedY, 0f, 1f);
         Save();
     }
 

@@ -238,7 +238,12 @@ internal static class CardFogRenderer
         while (node != null && names.Count < 16)
         {
             names.Add(node.GetType().Name);
-            if (node is NInspectCardScreen inspect)
+            if (node.HasMeta(CardAcquireScope.Meta))
+            {
+                // Acquisition screen (event/generated card choices): rarity only.
+                forceAcquisition = true;
+            }
+            else if (node is NInspectCardScreen inspect)
             {
                 ownedView = true;
                 forceAcquisition |= InspectSourceIsUnowned(inspect);
