@@ -19,6 +19,7 @@
 | 1.1 牌堆已揭示显示真牌面 | 通用黑雾规则（NCardPileScreen 使用 NCard） | `RevealRulesTests` |
 | 1.1 图鉴豁免 | `CardFogRenderer.ResolveContext`（NCardLibrary → FullFace） | 同上 |
 | 1.2 失忆显示（HP/金币，2026-09-21 改面板选项，默认关=实时；原名"快照模式"） | `Core/Status/StatusSnapshot.cs`、`Game/SnapshotDisplay.cs`、`Patches/HpSnapshotVisualPatch.cs`/`TopBarHpSnapshotPatch.cs`/`TopBarGoldSnapshotPatch.cs`/`PlayerHpBarHidePatch.cs` | `StatusSnapshotTests` |
+| 1.2 血量/金币数值可读开关（2026-09-21 追加，默认关） | `Core/Text/GlobalTextBlurRules.cs`（`IsStatusNumberLabel`：顶栏 `HpLabel`/`GoldLabel`）+ `Game/GlobalTextBlurSource.cs`（选项判定 + 本地玩家 `NHealthBar` 血条数字）+ `Game/TextBlurService.cs`（`Restore` 还原）+ `Game/DifficultyPanel.cs`（感知模块开关） | `GlobalTextBlurRulesTests` |
 | 1.2 休息刷新 HP+金币 | `Patches/HealRestSiteSnapshotPatch.cs` | 补丁审计 HealRestSiteOption |
 | 1.2 扣钱刷新金币 | `Patches/TopBarGoldSnapshotPatch.cs`（ShouldRefreshGold） | `StatusSnapshotTests` |
 | 1.2 濒危提示（真实HP<15%） | `Core/Status/LowHpHint.cs`、`Game/LowHpHintDisplay.cs` | `LowHpHintTests` |
@@ -121,6 +122,6 @@
     - 文字：**「乱码百分比」滑块：0% → 全可读 / 100% → 全乱码（豁免除外），拖动即时重应用**；**「乱码模式」固定混乱（重进不变）/ 混乱混乱（重进重掷，默认）**
     - 认知/获得卡牌：卡牌奖励 5 档（不揭示/随机1-3张/奖励全部揭示）；商店/事件卡面开关
     - 认知/卡牌记忆：**通晓万物**（全揭示）/ **好记性**（打出后同名卡含获得界面一并揭示）/ **坏记性**（n 次上手未打出即变回未揭示；n 可调，默认 1）/ **歪比巴卜**（永不揭示）
-    - 感知：**血量/金币失忆模式**（默认关 = 实时+乱码；开启 = 灰显停留）；显示已拥有遗物；显示地图所有路线；**可见敌人意图三档**
+    - 感知：**血量/金币失忆模式**（默认关 = 实时+乱码；开启 = 灰显停留）；**血量数/金币数恢复正常显示**（默认关；开启后顶栏与自己的战斗血条数值可读）；显示已拥有遗物；显示地图所有路线；**可见敌人意图三档**
     - **「重置为默认」按钮**；全部设置跨重进保留
 15. **可见敌人意图三档**：不可见（默认）→ 战斗中无意图；仅第一回合可见 → 首回合有、之后无（含新入场敌人不显示）；可见所有意图 → 每回合持续可见；切换即时生效。意图数字与悬停提示**不被乱码**（保持可读，便于判断伤害）。

@@ -1,5 +1,7 @@
 using BrainFog.Core.Text;
 using Godot;
+using MegaCrit.Sts2.Core.Context;
+using MegaCrit.Sts2.Core.Nodes.Combat;
 
 namespace BrainFog.Game;
 
@@ -55,6 +57,7 @@ internal static class GlobalTextBlurSource
 
             if (!ShouldBlur(label))
             {
+                SyncReadableStatusNumber(label, text);
                 return;
             }
 
@@ -85,6 +88,11 @@ internal static class GlobalTextBlurSource
     /// owns it or it must stay readable otherwise).</summary>
     public static bool ShouldBlur(CanvasItem label)
     {
+        if (DifficultyRuntime.Current.ReadableStatusNumbers && IsStatusNumberLabel(label))
+        {
+            return false; // panel option: HP/gold numbers stay readable
+        }
+
         var modOwned = IsModOwned(label.Name);
         var types = new List<string>(8);
         var parent = label.GetParent();
@@ -98,6 +106,49 @@ internal static class GlobalTextBlurSource
         }
 
         return GlobalTextBlurRules.ShouldBlur(types, modOwned);
+    }
+
+    /// <summary>True for the HP/gold value labels the panel's readable-status
+    /// option covers: the top-bar HP/gold numbers and the local player's combat
+    /// health-bar number (block numbers and enemy bars stay garbled).</summary>
+    public static bool IsStatusNumberLabel(CanvasItem label)
+    {
+        var name = label.Name.ToString();
+        if (!GlobalTextBlurRules.IsStatusNumberName(name))
+        {
+            return false;
+        }
+
+        var hp = name.Contains("HpLabel", StringComparison.Ordinal);
+        var types = new List<string>(8);
+        var parent = label.GetParent();
+        for (var i = 0; parent != null && i < MaxAncestorHops; i++, parent = parent.GetParent())
+        {
+            types.Add(parent.GetType().Name);
+            if (hp && parent is NHealthBar bar
+                && bar._creature is { IsPlayer: true } creature
+                && LocalContext.IsMe(creature))
+            {
+                return true;
+            }
+        }
+
+        return GlobalTextBlurRules.IsStatusNumberLabel(types, name, localPlayerHealthBar: false);
+    }
+
+    /// <summary>While a status-number label stays readable, keep its stored
+    /// original in sync so re-enabling the blur garbles the current value
+    /// immediately instead of waiting for the next game write.</summary>
+    private static void SyncReadableStatusNumber(CanvasItem label, string text)
+    {
+        if (!DifficultyRuntime.Current.ReadableStatusNumbers
+            || !GlobalTextBlurRules.IsStatusNumberName(label.Name.ToString())
+            || !IsStatusNumberLabel(label))
+        {
+            return;
+        }
+        label.SetMeta(TextBlurService.InputMeta, text);
+        label.SetMeta(TextBlurService.OutputMeta, text);
     }
 
     private static bool IsModOwned(StringName name) =>

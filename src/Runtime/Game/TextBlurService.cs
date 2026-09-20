@@ -98,8 +98,43 @@ internal static class TextBlurService
         }
     }
 
+    /// <summary>Restores a label's stored original text (it is exempt from the
+    /// blur, e.g. readable HP/gold numbers after a panel toggle). Returns true
+    /// when the visible text changed.</summary>
+    public static bool Restore(CanvasItem? node)
+    {
+        try
+        {
+            if (node == null || !GodotObject.IsInstanceValid(node) || !node.HasMeta(InputMeta))
+            {
+                return false;
+            }
+            var original = node.GetMeta(InputMeta).AsString();
+            if (string.IsNullOrEmpty(original) || Read(node) == original)
+            {
+                return false;
+            }
+            if (node.HasMeta(OutputMeta) && Read(node) != node.GetMeta(OutputMeta).AsString())
+            {
+                return false; // the game wrote new text: leave it to the normal path
+            }
+
+            Write(node, original);
+            // The readable text becomes the current output, so a later re-apply
+            // (option off / ratio change) blurs it again from the same original.
+            node.SetMeta(OutputMeta, original);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            PatchGuard.Run("TextBlur.Restore", () => throw ex);
+            return false;
+        }
+    }
+
     /// <summary>Re-applies the blur ratio to every label that has a stored
-    /// original (panel slider). One bounded tree walk per change.</summary>
+    /// original (panel slider); labels exempt from the blur are restored to
+    /// their original text instead (readable HP/gold numbers, 2026-09-21).</summary>
     public static void ReapplyAllText(int percent) =>
         PatchGuard.Run("TextBlur.ReapplyAll", () =>
         {
@@ -118,7 +153,14 @@ internal static class TextBlurService
         }
         if (node is CanvasItem item && item.HasMeta(InputMeta))
         {
-            Reapply(item, percent);
+            if (GlobalTextBlurSource.ShouldBlur(item))
+            {
+                Reapply(item, percent);
+            }
+            else
+            {
+                Restore(item);
+            }
         }
         foreach (var child in node.GetChildren())
         {

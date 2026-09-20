@@ -43,6 +43,10 @@ public sealed class DifficultySettings
     /// live values (default: live values, garbled like all text).</summary>
     public bool SnapshotStatus { get; set; }
 
+    /// <summary>Show HP/gold numbers without garbling (default: garbled like
+    /// all text; the display mode itself is still governed by SnapshotStatus).</summary>
+    public bool ReadableStatusNumbers { get; set; }
+
     /// <summary>Show relics the player already owns (inventory/inspect).</summary>
     public bool ShowOwnedRelics { get; set; }
 
@@ -66,6 +70,7 @@ public sealed class DifficultySettings
         MemoryMode = CardMemoryMode.BadMemory;
         BadMemoryThreshold = 1;
         SnapshotStatus = false;
+        ReadableStatusNumbers = false;
         ShowOwnedRelics = false;
         ShowAllMapRoutes = false;
         IntentMode = IntentVisibility.Hidden;

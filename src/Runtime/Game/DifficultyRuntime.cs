@@ -71,6 +71,7 @@ internal static class DifficultyRuntime
                 Current.BadMemoryThreshold = DifficultySettings.ClampBadMemoryThreshold(
                     config.GetValue(Section, "bad_memory_n", 1).AsInt32());
                 Current.SnapshotStatus = config.GetValue(Section, "snapshot_status", false).AsBool();
+                Current.ReadableStatusNumbers = config.GetValue(Section, "readable_status_numbers", false).AsBool();
                 Current.ShowOwnedRelics = config.GetValue(Section, "show_owned_relics", false).AsBool();
                 Current.ShowAllMapRoutes = config.GetValue(Section, "show_map_routes", false).AsBool();
                 Current.IntentMode = IntentVisibilityRules.Parse(
@@ -109,6 +110,7 @@ internal static class DifficultyRuntime
             config.SetValue(Section, "memory_mode", CardMemoryModeRules.ToStorage(Current.MemoryMode));
             config.SetValue(Section, "bad_memory_n", Current.BadMemoryThreshold);
             config.SetValue(Section, "snapshot_status", Current.SnapshotStatus);
+            config.SetValue(Section, "readable_status_numbers", Current.ReadableStatusNumbers);
             config.SetValue(Section, "show_owned_relics", Current.ShowOwnedRelics);
             config.SetValue(Section, "show_map_routes", Current.ShowAllMapRoutes);
             config.SetValue(Section, "intent_visibility", IntentVisibilityRules.ToStorage(Current.IntentMode));

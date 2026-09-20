@@ -17,6 +17,7 @@ namespace BrainFog.Game;
 /// - same-name reveal on/off (off = only the played copy is revealed)
 /// - reveal every card face for the run
 /// - HP/gold snapshot mode on/off (default: live values, garbled)
+/// - HP/gold numbers readable on/off (default: garbled like all text)
 /// All labels live under a "BrainFog*" named root, so the global text blur
 /// keeps the control readable.
 /// </summary>
@@ -41,6 +42,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     private OptionButton _selection = null!;
     private CheckButton _shopEvent = null!;
     private CheckButton _snapshotStatus = null!;
+    private CheckButton _statusNumbers = null!;
     private CheckButton _ownedRelics = null!;
     private CheckButton _mapRoutes = null!;
     private Label _sectionText = null!;
@@ -281,6 +283,11 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _body.AddChild(_snapshotStatus);
         BindHint(_snapshotStatus, "panel_hint_amnesia_status");
 
+        _statusNumbers = new CheckButton();
+        _statusNumbers.Toggled += OnStatusNumbersToggled;
+        _body.AddChild(_statusNumbers);
+        BindHint(_statusNumbers, "panel_hint_status_numbers");
+
         _ownedRelics = new CheckButton();
         _ownedRelics.Toggled += OnOwnedRelicsToggled;
         _body.AddChild(_ownedRelics);
@@ -387,7 +394,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         foreach (var control in new Control[]
                  {
                      _selectionLabel, _selection, _shopEvent,
-                     _snapshotStatus, _ownedRelics, _mapRoutes, _tip,
+                     _snapshotStatus, _statusNumbers, _ownedRelics, _mapRoutes, _tip,
                      _sectionText, _blurLabel, _saltLabel, _saltMode,
                      _memoryLabel, _memoryMode, _badNLabel, _badN,
                      _intentLabel, _intentMode, _reset,
@@ -443,6 +450,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _badNLabel.Text = T("panel_memory_n", zh ? "n =（卡牌上手n次未打出则失忆）" : "n = (forget after n unplayed draws)");
 
         _snapshotStatus.Text = T("panel_amnesia_status", zh ? "血量/金币失忆模式" : "HP/gold amnesia mode");
+        _statusNumbers.Text = T("panel_status_numbers", zh ? "血量数/金币数恢复正常显示" : "Readable HP/gold numbers");
         _ownedRelics.Text = T("panel_owned_relics", zh ? "显示已拥有遗物" : "Show owned relics");
         _mapRoutes.Text = T("panel_map_routes", zh ? "显示地图所有路线" : "Show all map routes");
 
@@ -467,7 +475,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         foreach (var control in new Control[]
                  {
                      _title, _sectionText, _sectionCognition, _sectionPerception, _selectionLabel,
-                     _selection, _shopEvent, _snapshotStatus, _ownedRelics, _mapRoutes,
+                     _selection, _shopEvent, _snapshotStatus, _statusNumbers, _ownedRelics, _mapRoutes,
                      _tip, _dock, _tab, _blurLabel, _saltLabel, _saltMode,
                      _memoryLabel, _memoryMode, _badNLabel, _badN, _intentLabel, _intentMode, _reset,
                  })
@@ -613,6 +621,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             "panel_hint_memory_nonsense" => zh ? "歪比巴卜：卡牌永不揭示" : "Nonsense: cards are never revealed",
             "panel_hint_salt" => zh ? "固定混乱：乱码不随重进变化；混乱混乱：每次重进游戏重新随机" : "Fixed: garbling never changes; Chaos: re-rolled on every launch",
             "panel_hint_amnesia_status" => zh ? "开启后血量与金币停留在上次休息时（灰显标注）" : "HP and gold stay at the values from your last rest (shown gray)",
+            "panel_hint_status_numbers" => zh ? "开启后血量数与金币数不再乱码（实时/失忆模式不受影响）" : "HP and gold numbers are no longer garbled (live/amnesia mode unchanged)",
             "panel_hint_blur" => zh ? "所有文本的乱码程度（0% 完全可读，豁免项除外）" : "Garbling level for all text (0% readable, exemptions aside)",
             "panel_hint_owned_relics" => zh ? "库存与检视中显示已拥有遗物" : "Show owned relics in inventory and inspect screens",
             "panel_hint_map_routes" => zh ? "地图显示全部节点与路线" : "Show every map node and route",
@@ -752,6 +761,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             _selection.Selected = DifficultySettings.ToIndex(settings.SelectionReveal);
             _shopEvent.ButtonPressed = settings.RevealShopAndEventCards;
             _snapshotStatus.ButtonPressed = settings.SnapshotStatus;
+            _statusNumbers.ButtonPressed = settings.ReadableStatusNumbers;
             _blurSlider.Value = settings.TextBlurPercent;
             _saltMode.Selected = BlurSaltModeRules.ToIndex(settings.SaltMode);
             _memoryMode.Selected = CardMemoryModeRules.ToIndex(settings.MemoryMode);
@@ -865,6 +875,17 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             return;
         }
         DifficultyRuntime.Current.SnapshotStatus = pressed;
+        DifficultyRuntime.NotifyChanged();
+    }
+
+    private void OnStatusNumbersToggled(bool pressed)
+    {
+        if (_applying)
+        {
+            return;
+        }
+        DifficultyRuntime.Current.ReadableStatusNumbers = pressed;
+        _blurPending = true; // restore / re-blur the HP and gold numbers
         DifficultyRuntime.NotifyChanged();
     }
 

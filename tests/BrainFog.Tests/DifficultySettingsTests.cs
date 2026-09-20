@@ -14,6 +14,7 @@ public class DifficultySettingsTests
         Assert.Equal(CardMemoryMode.BadMemory, settings.MemoryMode);
         Assert.Equal(1, settings.BadMemoryThreshold);
         Assert.False(settings.SnapshotStatus);
+        Assert.False(settings.ReadableStatusNumbers);
         Assert.Equal(50, settings.TextBlurPercent);
         Assert.Equal(BlurSaltMode.PerLaunch, settings.SaltMode);
         Assert.False(settings.ShowOwnedRelics);
@@ -31,6 +32,7 @@ public class DifficultySettingsTests
             MemoryMode = CardMemoryMode.Omniscient,
             BadMemoryThreshold = 7,
             SnapshotStatus = true,
+            ReadableStatusNumbers = true,
             TextBlurPercent = 99,
             SaltMode = BlurSaltMode.Fixed,
             ShowOwnedRelics = true,
@@ -45,6 +47,7 @@ public class DifficultySettingsTests
         Assert.Equal(CardMemoryMode.BadMemory, settings.MemoryMode);
         Assert.Equal(1, settings.BadMemoryThreshold);
         Assert.False(settings.SnapshotStatus);
+        Assert.False(settings.ReadableStatusNumbers);
         Assert.Equal(50, settings.TextBlurPercent);
         Assert.Equal(BlurSaltMode.PerLaunch, settings.SaltMode);
         Assert.False(settings.ShowOwnedRelics);
