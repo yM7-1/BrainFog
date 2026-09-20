@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.3（未发布：源头乱码 / 受击数字乱码 / 事件获得稀有度 / 全揭示 / 面板隐藏）
+## 0.2.3（2026-09-21 已上架创意工坊：源头乱码 / 受击数字乱码 / 事件获得稀有度 / 全揭示 / 边缘缩进 / SL 揭示保留）
 
 ### 全局文本乱码改为源头改写（2026-09-21）
 - 通用 UI 文本改为在 `MegaLabel.SetTextAutoSize` / `MegaRichTextLabel.SetTextAutoSize` 前缀统一乱码（`GlobalTextBlurSource` + Core `GlobalTextBlurRules`），取代 0.2s 场景扫描：新文本即时乱码，不再有"最多 0.2~0.4s 可读"的窗口，打牌热路径也无需全树扫描
