@@ -5,8 +5,8 @@ using MegaCrit.sts2.Core.Nodes.TopBar;
 namespace BrainFog.Patches;
 
 /// <summary>
-/// Top-bar gold shows the stale snapshot: only deductions refresh it,
-/// gains are not shown (spec 0.02 #3, 0.03 c).
+/// Snapshot mode (panel option, default off): top-bar gold shows the stale
+/// snapshot, only deductions refresh it. Default (off) shows live gold.
 /// </summary>
 [HarmonyPatch(typeof(NTopBarGold))]
 internal static class TopBarGoldSnapshotPatch
@@ -35,23 +35,20 @@ internal static class TopBarGoldSnapshotPatch
             return true;
         }
 
-        if (Game.DifficultyRuntime.Current.ShowLiveStatus)
-        {
-            return true; // real-time display
-        }
-
+        // Deductions refresh the remembered snapshot in both modes; only
+        // suppress live label updates while snapshot mode is on.
         if (Game.SnapshotDisplay.Snapshot.ShouldRefreshGold(player.Gold))
         {
             Game.SnapshotDisplay.OnGoldChanged(player.Gold);
             return true;
         }
-        return false;
+        return !Game.DifficultyRuntime.Current.SnapshotStatus;
     }
 
     /// <summary>Re-renders the gold label for the current display mode.</summary>
     internal static void Refresh(NTopBarGold bar)
     {
-        if (Game.DifficultyRuntime.Current.ShowLiveStatus)
+        if (!Game.DifficultyRuntime.Current.SnapshotStatus)
         {
             bar.UpdateGold();
             return;

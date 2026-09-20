@@ -1,3 +1,5 @@
+using BrainFog.Core.Text;
+
 namespace BrainFog.Core.Options;
 
 /// <summary>How many of the offered cards in a card-reward selection screen are
@@ -17,21 +19,29 @@ public enum SelectionRevealOption
 /// </summary>
 public sealed class DifficultySettings
 {
+    /// <summary>Unified blur ratio for every garbled text (0 = fully readable,
+    /// 100 = fully garbled); adjusted with the panel slider.</summary>
+    public int TextBlurPercent { get; set; } = TextBlurPercents.Default;
+
+    /// <summary>Fixed garbling vs re-rolled on every launch (2026-09-21).</summary>
+    public BlurSaltMode SaltMode { get; set; } = BlurSaltMode.PerLaunch;
+
     /// <summary>Reveal the first N offered cards in card-reward selection screens.</summary>
     public SelectionRevealOption SelectionReveal { get; set; } = SelectionRevealOption.None;
 
     /// <summary>Reveal card faces in shop stock and event acquisition screens.</summary>
     public bool RevealShopAndEventCards { get; set; }
 
-    /// <summary>Playing/upgrading one copy reveals every copy of that card for the run.</summary>
-    public bool RevealSameNameCards { get; set; } = true;
+    /// <summary>Card memory mode (通晓万物 / 好记性 / 坏记性 / 歪比巴卜).</summary>
+    public CardMemoryMode MemoryMode { get; set; } = CardMemoryMode.BadMemory;
 
-    /// <summary>Reveal every card face for the run (no black fog anywhere;
-    /// card text still follows the normal blur rules).</summary>
-    public bool RevealAllCards { get; set; }
+    /// <summary>"Bad memory" threshold n (≥1): unplayed hand entries before a
+    /// revealed copy reverts to unknown.</summary>
+    public int BadMemoryThreshold { get; set; } = 1;
 
-    /// <summary>Show live HP and gold instead of the stale snapshot.</summary>
-    public bool ShowLiveStatus { get; set; }
+    /// <summary>HP/gold show the stale "state at last rest" snapshot instead of
+    /// live values (default: live values, garbled like all text).</summary>
+    public bool SnapshotStatus { get; set; }
 
     /// <summary>Show relics the player already owns (inventory/inspect).</summary>
     public bool ShowOwnedRelics { get; set; }
@@ -39,8 +49,27 @@ public sealed class DifficultySettings
     /// <summary>Show every map node and route instead of the fogged frontier.</summary>
     public bool ShowAllMapRoutes { get; set; }
 
-    /// <summary>Enemy intents stay visible every turn instead of only the first round.</summary>
-    public bool ShowEnemyIntents { get; set; }
+    /// <summary>Enemy intent visibility: all rounds / first round only / hidden.</summary>
+    public IntentVisibility IntentMode { get; set; } = IntentVisibility.Hidden;
+
+    public static int ClampBlurPercent(int value) => Math.Clamp(value, 0, 100);
+
+    public static int ClampBadMemoryThreshold(int value) => Math.Clamp(value, 1, 99);
+
+    /// <summary>Restores every option to its documented default (reset button).</summary>
+    public void ApplyDefaults()
+    {
+        TextBlurPercent = TextBlurPercents.Default;
+        SaltMode = BlurSaltMode.PerLaunch;
+        SelectionReveal = SelectionRevealOption.None;
+        RevealShopAndEventCards = false;
+        MemoryMode = CardMemoryMode.BadMemory;
+        BadMemoryThreshold = 1;
+        SnapshotStatus = false;
+        ShowOwnedRelics = false;
+        ShowAllMapRoutes = false;
+        IntentMode = IntentVisibility.Hidden;
+    }
 
     public static string ToStorage(SelectionRevealOption option) => option switch
     {

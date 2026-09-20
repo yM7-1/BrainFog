@@ -1,3 +1,4 @@
+using BrainFog.Core.Options;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 
@@ -5,8 +6,9 @@ namespace BrainFog.Patches;
 
 /// <summary>
 /// Upgrades (smith, events, relics) reveal the true face even if never played
-/// (spec 0.03 a), following the same difficulty scope as play reveals:
-/// whole definition when "same-name reveal" is on, else only that copy.
+/// (spec 0.03 a), following the same memory mode as play reveals (user change
+/// 2026-09-21): whole definition in "good memory", only that copy in "bad
+/// memory", nothing in "omniscient"/"nonsense".
 /// Preview clones and save deserialization upgrades (no pile) never count.
 /// Repeated upgrades are a cheap no-op; visuals refresh deferred one frame.
 /// </summary>
@@ -38,23 +40,31 @@ internal static class CardModelUpgradeRevealPatch
     /// <summary>Returns true when new knowledge was recorded.</summary>
     private static bool RevealCore(CardModel card)
     {
-        if (Game.DifficultyRuntime.Current.RevealSameNameCards)
+        switch (Game.DifficultyRuntime.Current.MemoryMode)
         {
-            var key = Game.RevealKeys.Of(card);
-            if (!ModRuntime.Tracker.RevealByUpgrade(key))
-            {
+            case CardMemoryMode.Omniscient:
+            case CardMemoryMode.Nonsense:
                 return false;
+            case CardMemoryMode.BadMemory:
+            {
+                var id = Game.CardInstanceRegistry.GetOrCreateId(card);
+                if (string.IsNullOrEmpty(id) || !ModRuntime.Tracker.RevealInstanceByUpgrade(id))
+                {
+                    return false;
+                }
+                Game.RevealPersistence.OnInstanceRevealed(card, id);
+                return true;
             }
-            Game.RevealPersistence.OnRevealed(key);
-            return true;
+            default:
+            {
+                var key = Game.RevealKeys.Of(card);
+                if (!ModRuntime.Tracker.RevealByUpgrade(key))
+                {
+                    return false;
+                }
+                Game.RevealPersistence.OnRevealed(key);
+                return true;
+            }
         }
-
-        var id = Game.CardInstanceRegistry.GetOrCreateId(card);
-        if (string.IsNullOrEmpty(id) || !ModRuntime.Tracker.RevealInstanceByUpgrade(id))
-        {
-            return false;
-        }
-        Game.RevealPersistence.OnInstanceRevealed(card, id);
-        return true;
     }
 }

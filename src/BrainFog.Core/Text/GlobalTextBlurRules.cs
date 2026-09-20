@@ -1,16 +1,15 @@
 namespace BrainFog.Core.Text;
 
 /// <summary>
-/// Catch-all blur policy for text that has no dedicated rule (user rule
-/// 2026-09-19: unspecified text defaults to 60%). Pure classification over the
-/// label's ancestor type names (nearest first), so it is unit-testable without
-/// Godot.
+/// Catch-all policy for text that has no dedicated patch: everything that is
+/// not deliberately exempt is garbled at the unified ratio (user change
+/// 2026-09-21). Pure classification over the label's ancestor type names
+/// (nearest first), so it is unit-testable without Godot.
 ///
-/// Contexts with their own patch (cards, hover tips, events, menus, dialogue,
-/// intents, settings, compendium, mod-owned UI) return null = leave the text to
-/// that patch. Top bar / map descriptions use 70%. Combat number VFX (damage /
-/// heal / blocked) are garbled like everything else (user change 2026-09-21);
-/// all other VFX text stays readable.
+/// Exemptions: enemy intents (numbers and tooltips stay readable), the settings
+/// screen, the card compendium, the mod's own UI, and contexts with a dedicated
+/// patch (cards, hover tips, menus, dialogue). Combat number VFX (damage / heal
+/// / blocked) are garbled; all other VFX text stays readable.
 /// </summary>
 public static class GlobalTextBlurRules
 {
@@ -22,7 +21,6 @@ public static class GlobalTextBlurRules
     private static readonly string[] OwnedContexts =
     {
         // Owned by dedicated patches or deliberately readable.
-        "NEventLayout", "NEventOptionButton",
         "NCard", "NHoverTipSet", "NCardLibrary",
         "NIntent",
         "NMainMenuTextButton", "NPauseMenuButton",
@@ -34,43 +32,35 @@ public static class GlobalTextBlurRules
         "NDamageNumVfx", "NHealNumVfx", "NDamageBlockedVfx",
     };
 
-    /// <summary>Percent to blur at, or null when this label is handled elsewhere.</summary>
-    public static int? ResolvePercent(
-        IReadOnlyList<string> ancestorTypeNames,
-        bool modOwned,
-        bool topBarValueLabel)
+    /// <summary>True when this label is covered by the catch-all blur rule.</summary>
+    public static bool ShouldBlur(IReadOnlyList<string> ancestorTypeNames, bool modOwned)
     {
-        if (modOwned || topBarValueLabel)
+        if (modOwned)
         {
-            return null;
+            return false;
         }
 
         foreach (var typeName in ancestorTypeNames)
         {
             if (OwnedContexts.Contains(typeName, StringComparer.Ordinal))
             {
-                return null;
+                return false;
             }
             if (CombatNumberVfx.Contains(typeName, StringComparer.Ordinal))
             {
-                return TextBlurPercents.Default;
+                return true;
             }
             if (typeName.Contains("Settings", StringComparison.Ordinal))
             {
-                return null;
+                return false;
             }
             if (IsVfxMarker(typeName))
             {
-                return null;
-            }
-            if (typeName.StartsWith("NTopBar", StringComparison.Ordinal)
-                || typeName.StartsWith("NMap", StringComparison.Ordinal))
-            {
-                return TextBlurPercents.UiDescription;
+                return false;
             }
         }
 
-        return TextBlurPercents.Default;
+        return true;
     }
 
     private static bool IsVfxMarker(string typeName)

@@ -20,7 +20,7 @@ internal static class AncientDialogueBlurPatch
                 return;
             }
             var text = __instance.GetNodeOrNull<RichTextLabel>("%Text");
-            Game.TextBlurService.BlurNode(text, TextBlurPercents.Dialogue);
+            Game.TextBlurService.BlurNode(text, Game.DifficultyRuntime.TextBlurPercent);
         }
         catch (Exception ex)
         {

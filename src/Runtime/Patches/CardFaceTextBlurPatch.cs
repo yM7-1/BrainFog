@@ -42,10 +42,6 @@ internal static class CardFaceTextBlur
     /// results are re-checked because pooled cards move between screens.</summary>
     private const string CompendiumMeta = "BrainFogCardBlurCompendium";
 
-    /// <summary>Last input string, paired with TextBlurService.OutputMeta.
-    /// Repeated UpdateVisuals passes with identical text skip the hash/RNG walk.</summary>
-    private const string InputMeta = "BrainFogCardBlurInput";
-
     public static void Apply(CanvasItem label, ref string text)
     {
         try
@@ -61,8 +57,8 @@ internal static class CardFaceTextBlur
                 return;
             }
 
-            if (label.HasMeta(InputMeta)
-                && label.GetMeta(InputMeta).AsString() == text
+            if (label.HasMeta(Game.TextBlurService.InputMeta)
+                && label.GetMeta(Game.TextBlurService.InputMeta).AsString() == text
                 && label.HasMeta(Game.TextBlurService.OutputMeta))
             {
                 // Same input as last time: reuse the memoized output so the
@@ -71,8 +67,14 @@ internal static class CardFaceTextBlur
                 return;
             }
 
-            var blurred = EventTextBlurrer.Blur(text, TextBlurPercents.CardFaceText, BlurSalt.Current);
-            label.SetMeta(InputMeta, text);
+            if (label.HasMeta(Game.TextBlurService.OutputMeta)
+                && label.GetMeta(Game.TextBlurService.OutputMeta).AsString() == text)
+            {
+                return; // already our output (re-apply / repeated render)
+            }
+
+            var blurred = EventTextBlurrer.Blur(text, Game.DifficultyRuntime.TextBlurPercent, BlurSalt.Current);
+            label.SetMeta(Game.TextBlurService.InputMeta, text);
             Game.TextBlurService.MarkOutput(label, blurred);
             if (!string.Equals(blurred, text, StringComparison.Ordinal))
             {

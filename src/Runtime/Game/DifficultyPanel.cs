@@ -1,4 +1,5 @@
 using BrainFog.Core.Options;
+using BrainFog.Core.Text;
 using Godot;
 using MegaCrit.Sts2.Core.Localization.Fonts;
 
@@ -10,10 +11,12 @@ namespace BrainFog.Game;
 /// - click the title bar (no drag) or the arrow to collapse/expand
 /// - the ◀/▶ button docks the panel to the nearer screen edge; a small edge
 ///   tab brings it back (state persisted)
+/// - unified blur ratio slider (0–100%, 1% steps) with live re-apply
 /// - selection-screen reveal count (none / 1 / 2 / 3 / all)
 /// - shop &amp; event card faces on/off
 /// - same-name reveal on/off (off = only the played copy is revealed)
 /// - reveal every card face for the run
+/// - HP/gold snapshot mode on/off (default: live values, garbled)
 /// All labels live under a "BrainFog*" named root, so the global text blur
 /// keeps the control readable.
 /// </summary>
@@ -33,15 +36,25 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     private Label _sectionCognition = null!;
     private Label _sectionPerception = null!;
     private Label _selectionLabel = null!;
-    private Label _hint = null!;
+    private Label _tip = null!;
+    private Control? _tipAnchor;
     private OptionButton _selection = null!;
     private CheckButton _shopEvent = null!;
-    private CheckButton _sameName = null!;
-    private CheckButton _revealAll = null!;
-    private CheckButton _liveStatus = null!;
+    private CheckButton _snapshotStatus = null!;
     private CheckButton _ownedRelics = null!;
     private CheckButton _mapRoutes = null!;
-    private CheckButton _intents = null!;
+    private Label _sectionText = null!;
+    private Label _blurLabel = null!;
+    private HSlider _blurSlider = null!;
+    private Label _saltLabel = null!;
+    private OptionButton _saltMode = null!;
+    private Label _memoryLabel = null!;
+    private OptionButton _memoryMode = null!;
+    private Label _badNLabel = null!;
+    private SpinBox _badN = null!;
+    private Label _intentLabel = null!;
+    private OptionButton _intentMode = null!;
+    private Button _reset = null!;
     private Button _collapse = null!;
     private Button _dock = null!;
     private Button _tab = null!;
@@ -52,6 +65,9 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     private bool _placed;
     private bool _applying;
     private bool _dragging;
+    private bool _blurDirty;
+    private bool _blurPending;
+    private double _blurSaveTimer;
     private float _dragDistance;
     private Vector2 _dragOffset;
 
@@ -78,10 +94,24 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             return;
         }
         PollLocale(delta);
-        var runActive = MegaCrit.Sts2.Core.Nodes.NRun.Instance is { } run && GodotObject.IsInstanceValid(run);
-        Visible = runActive;
+        if (_blurPending)
+        {
+            // Coalesce slider drags: re-apply at most once per frame.
+            _blurPending = false;
+            Game.TextBlurService.ReapplyAllText(DifficultyRuntime.TextBlurPercent);
+        }
+        if (_blurDirty)
+        {
+            // Debounce the config write while the slider is being dragged.
+            _blurSaveTimer += delta;
+            if (_blurSaveTimer >= 0.4)
+            {
+                SaveBlur();
+            }
+        }
+        Visible = true; // also usable on the main title screen (user change 2026-09-21)
         UpdateDockVisuals();
-        if (runActive && !DifficultyRuntime.PanelDocked && !_placed && _panel.Size.Y > 1f)
+        if (!DifficultyRuntime.PanelDocked && !_placed && _panel.Size.Y > 1f)
         {
             Place();
             _placed = true;
@@ -170,6 +200,34 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _body.AddThemeConstantOverride("separation", 7);
 
         _body.AddChild(Divider());
+        _sectionText = Section();
+        _body.AddChild(_sectionText);
+
+        _blurLabel = new Label();
+        _body.AddChild(_blurLabel);
+
+        _blurSlider = new HSlider
+        {
+            MinValue = 0,
+            MaxValue = 100,
+            Step = 1,
+            FocusMode = Control.FocusModeEnum.None,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        _blurSlider.ValueChanged += OnBlurChanged;
+        _blurSlider.DragEnded += _ => SaveBlur();
+        _body.AddChild(_blurSlider);
+        BindHint(_blurSlider, "panel_hint_blur");
+
+        _saltLabel = new Label();
+        _body.AddChild(_saltLabel);
+        _saltMode = new OptionButton { FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _saltMode.AddItem(string.Empty);
+        _saltMode.AddItem(string.Empty);
+        _saltMode.ItemSelected += OnSaltModeSelected;
+        _body.AddChild(_saltMode);
+        BindHint(_saltMode, "panel_hint_salt");
+
         _sectionCognition = Section();
         _body.AddChild(_sectionCognition);
 
@@ -189,23 +247,39 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _body.AddChild(_shopEvent);
         BindHint(_shopEvent, "panel_hint_shop_event");
 
-        _sameName = new CheckButton();
-        _sameName.Toggled += OnSameNameToggled;
-        _body.AddChild(_sameName);
-        BindHint(_sameName, "panel_hint_same_name");
+        _memoryLabel = new Label();
+        _body.AddChild(_memoryLabel);
+        _memoryMode = new OptionButton { FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        for (var i = 0; i < 4; i++)
+        {
+            _memoryMode.AddItem(string.Empty);
+        }
+        _memoryMode.ItemSelected += OnMemoryModeSelected;
+        _body.AddChild(_memoryMode);
+        _memoryMode.MouseEntered += () => ShowTip(_memoryMode, MemoryHintKey());
+        _memoryMode.MouseExited += HideTip;
 
-        _revealAll = new CheckButton();
-        _revealAll.Toggled += OnRevealAllToggled;
-        _body.AddChild(_revealAll);
-        BindHint(_revealAll, "panel_hint_reveal_all");
+        _badNLabel = new Label();
+        _body.AddChild(_badNLabel);
+        _badN = new SpinBox
+        {
+            MinValue = 1,
+            MaxValue = 99,
+            Step = 1,
+            FocusMode = Control.FocusModeEnum.None,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        _badN.ValueChanged += OnBadNChanged;
+        _body.AddChild(_badN);
+        BindHint(_badN, "panel_hint_memory_bad");
 
         _sectionPerception = Section();
         _body.AddChild(_sectionPerception);
 
-        _liveStatus = new CheckButton();
-        _liveStatus.Toggled += OnLiveStatusToggled;
-        _body.AddChild(_liveStatus);
-        BindHint(_liveStatus, "panel_hint_live_status");
+        _snapshotStatus = new CheckButton();
+        _snapshotStatus.Toggled += OnSnapshotStatusToggled;
+        _body.AddChild(_snapshotStatus);
+        BindHint(_snapshotStatus, "panel_hint_amnesia_status");
 
         _ownedRelics = new CheckButton();
         _ownedRelics.Toggled += OnOwnedRelicsToggled;
@@ -217,21 +291,69 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _body.AddChild(_mapRoutes);
         BindHint(_mapRoutes, "panel_hint_map_routes");
 
-        _intents = new CheckButton();
-        _intents.Toggled += OnIntentsToggled;
-        _body.AddChild(_intents);
-        BindHint(_intents, "panel_hint_intents");
+        _intentLabel = new Label();
+        _body.AddChild(_intentLabel);
+        _intentMode = new OptionButton { FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        for (var i = 0; i < 3; i++)
+        {
+            _intentMode.AddItem(string.Empty);
+        }
+        _intentMode.ItemSelected += OnIntentModeSelected;
+        _body.AddChild(_intentMode);
+        BindHint(_intentMode, "panel_hint_intent");
 
         _body.AddChild(Divider());
 
-        _hint = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
-        _hint.AddThemeFontSizeOverride("font_size", 11);
-        _hint.AddThemeColorOverride("font_color", HintColor);
-        _body.AddChild(_hint);
+        _reset = new Button
+        {
+            Text = "Reset",
+            FocusMode = Control.FocusModeEnum.None,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        _reset.ApplyLocaleFontSubstitution(FontType.Regular, "font");
+        _reset.Pressed += OnReset;
+        _body.AddChild(_reset);
+        BindHint(_reset, "panel_hint_reset");
+
+        _body.AddChild(Divider());
 
         root.AddChild(_body);
         _panel.AddChild(root);
         AddChild(_panel);
+
+        // Option description shown as a floating card next to the hovered
+        // control (user change 2026-09-21; replaces the bottom hint line).
+        _tip = new Label
+        {
+            Name = "BrainFogTip",
+            Visible = false,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            ZIndex = 10,
+        };
+        _tip.AddThemeFontSizeOverride("font_size", 16);
+        _tip.AddThemeColorOverride("font_color", new Color(0.96f, 0.94f, 0.86f));
+        _tip.AddThemeStyleboxOverride("normal", new StyleBoxFlat
+        {
+            BgColor = new Color(0.045f, 0.055f, 0.08f, 0.97f),
+            BorderColor = new Color(0.62f, 0.55f, 0.36f, 0.85f),
+            BorderWidthLeft = 1,
+            BorderWidthTop = 1,
+            BorderWidthRight = 1,
+            BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 8,
+            CornerRadiusTopRight = 8,
+            CornerRadiusBottomLeft = 8,
+            CornerRadiusBottomRight = 8,
+            ContentMarginLeft = 12f,
+            ContentMarginRight = 12f,
+            ContentMarginTop = 8f,
+            ContentMarginBottom = 8f,
+            ShadowColor = new Color(0f, 0f, 0f, 0.45f),
+            ShadowSize = 6,
+            ShadowOffset = new Vector2(0f, 2f),
+        });
+        _tip.ApplyLocaleFontSubstitution(FontType.Regular, "font");
+        AddChild(_tip);
 
         _tab = new Button
         {
@@ -264,8 +386,11 @@ internal sealed partial class DifficultyPanel : CanvasLayer
 
         foreach (var control in new Control[]
                  {
-                     _selectionLabel, _selection, _shopEvent, _sameName, _revealAll,
-                     _liveStatus, _ownedRelics, _mapRoutes, _intents, _hint,
+                     _selectionLabel, _selection, _shopEvent,
+                     _snapshotStatus, _ownedRelics, _mapRoutes, _tip,
+                     _sectionText, _blurLabel, _saltLabel, _saltMode,
+                     _memoryLabel, _memoryMode, _badNLabel, _badN,
+                     _intentLabel, _intentMode, _reset,
                  })
         {
             control.ApplyLocaleFontSubstitution(FontType.Regular, "font");
@@ -280,13 +405,24 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         var zh = ModLocalization.IsChinese;
 
         _title.Text = T("panel_title", zh ? "认知修改器" : "Cognition Modifier");
+        _sectionText.Text = T("panel_section_text", zh ? "文字" : "Text");
         _sectionCognition.Text = T("panel_section_cognition", zh ? "认知" : "Cognition");
         _sectionPerception.Text = T("panel_section_perception", zh ? "感知" : "Perception");
-        _selectionLabel.Text = T("panel_selection_label", zh ? "选卡界面揭露" : "Reveal in card rewards");
 
+        _saltLabel.Text = T("panel_salt_label", zh ? "乱码模式" : "Blur mode");
+        var saltOptions = zh
+            ? new[] { "固定混乱", "混乱混乱" }
+            : new[] { "Fixed chaos", "Chaos chaos" };
+        var saltKeys = new[] { "panel_salt_0", "panel_salt_1" };
+        for (var i = 0; i < saltOptions.Length; i++)
+        {
+            _saltMode.SetItemText(i, T(saltKeys[i], saltOptions[i]));
+        }
+
+        _selectionLabel.Text = T("panel_selection_label", zh ? "卡牌奖励" : "Card rewards");
         var options = zh
-            ? new[] { "不揭露", "随机1张", "随机2张", "随机3张", "全部" }
-            : new[] { "None", "Random 1", "Random 2", "Random 3", "All" };
+            ? new[] { "不揭示", "随机揭示1张", "随机揭示2张", "随机揭示3张", "卡牌奖励全部揭示" }
+            : new[] { "None", "Random 1", "Random 2", "Random 3", "Reveal all reward cards" };
         var keys = new[] { "panel_selection_0", "panel_selection_1", "panel_selection_2", "panel_selection_3", "panel_selection_all" };
         for (var i = 0; i < options.Length; i++)
         {
@@ -294,23 +430,46 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         }
 
         _shopEvent.Text = T("panel_shop_event", zh ? "商店/事件卡面揭露" : "Reveal shop/event cards");
-        _sameName.Text = T("panel_same_name", zh ? "同名卡全部揭露" : "Reveal all copies");
-        _revealAll.Text = T("panel_reveal_all", zh ? "卡牌本局全部揭示" : "Reveal all cards this run");
-        _liveStatus.Text = T("panel_live_status", zh ? "显示实时血量/金币" : "Show live HP/gold");
+
+        _memoryLabel.Text = T("panel_memory_label", zh ? "卡牌记忆设置" : "Card memory");
+        var memoryOptions = zh
+            ? new[] { "通晓万物", "好记性", "坏记性", "歪比巴卜" }
+            : new[] { "Omniscience", "Good memory", "Bad memory", "Nonsense" };
+        var memoryKeys = new[] { "panel_memory_0", "panel_memory_1", "panel_memory_2", "panel_memory_3" };
+        for (var i = 0; i < memoryOptions.Length; i++)
+        {
+            _memoryMode.SetItemText(i, T(memoryKeys[i], memoryOptions[i]));
+        }
+        _badNLabel.Text = T("panel_memory_n", zh ? "n =（卡牌上手n次未打出则失忆）" : "n = (forget after n unplayed draws)");
+
+        _snapshotStatus.Text = T("panel_amnesia_status", zh ? "血量/金币失忆模式" : "HP/gold amnesia mode");
         _ownedRelics.Text = T("panel_owned_relics", zh ? "显示已拥有遗物" : "Show owned relics");
         _mapRoutes.Text = T("panel_map_routes", zh ? "显示地图所有路线" : "Show all map routes");
-        _intents.Text = T("panel_intents", zh ? "可见敌人意图" : "Show enemy intents");
+
+        _intentLabel.Text = T("panel_intent_label", zh ? "可见敌人意图" : "Enemy intents");
+        var intentOptions = zh
+            ? new[] { "不可见", "仅第一回合可见", "可见所有意图" }
+            : new[] { "Hidden", "First round only", "Always visible" };
+        var intentKeys = new[] { "panel_intent_0", "panel_intent_1", "panel_intent_2" };
+        for (var i = 0; i < intentOptions.Length; i++)
+        {
+            _intentMode.SetItemText(i, T(intentKeys[i], intentOptions[i]));
+        }
+
+        _reset.Text = T("panel_reset", zh ? "重置为默认" : "Reset to defaults");
         _dock.TooltipText = T("panel_dock_tooltip", zh ? "缩进到屏幕边缘（点边缘小按钮恢复）" : "Dock to the screen edge (click the edge tab to restore)");
         _tab.TooltipText = T("panel_tab_tooltip", zh ? "显示认知修改器" : "Show the cognition modifier");
-        ShowHint(_currentHintKey);
+        UpdateBlurLabel();
+        RefreshTip();
 
         // Re-apply the locale font (no-op for Latin; swaps in the CJK font when
         // the player switches to Chinese at runtime).
         foreach (var control in new Control[]
                  {
-                     _title, _sectionCognition, _sectionPerception, _selectionLabel,
-                     _selection, _shopEvent, _sameName, _revealAll, _liveStatus,
-                     _ownedRelics, _mapRoutes, _intents, _hint, _dock, _tab,
+                     _title, _sectionText, _sectionCognition, _sectionPerception, _selectionLabel,
+                     _selection, _shopEvent, _snapshotStatus, _ownedRelics, _mapRoutes,
+                     _tip, _dock, _tab, _blurLabel, _saltLabel, _saltMode,
+                     _memoryLabel, _memoryMode, _badNLabel, _badN, _intentLabel, _intentMode, _reset,
                  })
         {
             control.ApplyLocaleFontSubstitution(FontType.Regular, "font");
@@ -389,27 +548,79 @@ internal sealed partial class DifficultyPanel : CanvasLayer
 
     private void BindHint(Control control, string hintKey)
     {
-        control.MouseEntered += () => ShowHint(hintKey);
-        control.MouseExited += () => ShowHint("panel_hint_default");
+        control.MouseEntered += () => ShowTip(control, hintKey);
+        control.MouseExited += HideTip;
     }
 
-    private void ShowHint(string hintKey)
+    /// <summary>Shows the description card next to the hovered control.</summary>
+    private void ShowTip(Control anchor, string hintKey)
     {
-        _currentHintKey = hintKey;
+        try
+        {
+            _currentHintKey = hintKey;
+            _tipAnchor = anchor;
+            _tip.Text = ResolveHintText(hintKey);
+            _tip.Visible = true;
+            _tip.ResetSize();
+            PlaceTip(anchor);
+        }
+        catch (Exception ex)
+        {
+            PatchGuard.Run("DifficultyPanel.Tip", () => throw ex);
+        }
+    }
+
+    private void HideTip()
+    {
+        _tip.Visible = false;
+        _tipAnchor = null;
+    }
+
+    /// <summary>Re-shows the visible tip after a language change.</summary>
+    private void RefreshTip()
+    {
+        if (_tip.Visible && _tipAnchor is { } anchor && GodotObject.IsInstanceValid(anchor))
+        {
+            ShowTip(anchor, _currentHintKey);
+        }
+    }
+
+    private void PlaceTip(Control anchor)
+    {
+        var viewportSize = GetViewport()?.GetVisibleRect().Size ?? new Vector2(1920f, 1080f);
+        var size = _tip.Size;
+        var x = _panel.Position.X + _panel.Size.X + 10f;
+        if (x + size.X > viewportSize.X - 8f)
+        {
+            x = _panel.Position.X - size.X - 10f;
+        }
+        x = Math.Max(8f, x);
+        var anchorY = anchor.GetGlobalRect().Position.Y;
+        var y = Math.Clamp(anchorY, 8f, Math.Max(8f, viewportSize.Y - size.Y - 8f));
+        _tip.Position = new Vector2(x, y);
+    }
+
+    private string ResolveHintText(string hintKey)
+    {
         var zh = ModLocalization.IsChinese;
         var fallback = hintKey switch
         {
-            "panel_hint_selection" => zh ? "奖励界面随机揭露部分卡面（每次奖励固定）" : "Randomly reveal some card faces in reward screens (fixed per reward)",
+            "panel_hint_selection" => zh ? "奖励界面随机揭示部分卡面（每次奖励固定）" : "Randomly reveal some card faces in reward screens (fixed per reward)",
             "panel_hint_shop_event" => zh ? "商店与事件获得的卡牌显示真实牌面" : "Show real card faces for cards from shops and events",
-            "panel_hint_same_name" => zh ? "打出或升级一张后，同名卡全部揭示" : "After playing or upgrading one, reveal every copy of that card",
-            "panel_hint_reveal_all" => zh ? "本局所有卡牌直接显示真实牌面（文字仍按规则乱码）" : "Every card shows its real face for this run (text stays garbled)",
-            "panel_hint_live_status" => zh ? "顶栏显示真实血量与金币" : "Show true HP and gold in the top bar",
+            "panel_hint_memory_good" => zh ? "好记性：打出一张后本局永久揭示卡面；同名卡（含奖励/商店/事件）一并揭示" : "Good memory: playing a card reveals it for the run, including its copies in rewards/shops/events",
+            "panel_hint_memory_bad" => zh ? "坏记性：某张卡每 n 次上手却未被打出，就变回未揭示状态" : "Bad memory: a copy drawn n times without being played reverts to unknown",
+            "panel_hint_memory_omniscient" => zh ? "通晓万物：全部卡牌全局揭示" : "Omniscience: every card is revealed everywhere",
+            "panel_hint_memory_nonsense" => zh ? "歪比巴卜：卡牌永不揭示" : "Nonsense: cards are never revealed",
+            "panel_hint_salt" => zh ? "固定混乱：乱码不随重进变化；混乱混乱：每次重进游戏重新随机" : "Fixed: garbling never changes; Chaos: re-rolled on every launch",
+            "panel_hint_amnesia_status" => zh ? "开启后血量与金币停留在上次休息时（灰显标注）" : "HP and gold stay at the values from your last rest (shown gray)",
+            "panel_hint_blur" => zh ? "所有文本的乱码程度（0% 完全可读，豁免项除外）" : "Garbling level for all text (0% readable, exemptions aside)",
             "panel_hint_owned_relics" => zh ? "库存与检视中显示已拥有遗物" : "Show owned relics in inventory and inspect screens",
             "panel_hint_map_routes" => zh ? "地图显示全部节点与路线" : "Show every map node and route",
-            "panel_hint_intents" => zh ? "敌人意图每回合持续可见" : "Enemy intents stay visible every turn",
+            "panel_hint_intent" => zh ? "敌人意图：不可见 / 仅第一回合 / 每回合可见" : "Enemy intents: hidden / first round only / every round",
+            "panel_hint_reset" => zh ? "把全部修改器选项恢复为默认值" : "Restore every modifier option to its default",
             _ => zh ? "拖动标题栏可移动 · 修改即时生效" : "Drag the title bar to move · changes apply instantly",
         };
-        _hint.Text = T(hintKey, fallback);
+        return T(hintKey, fallback);
     }
 
     private void OnHeaderInput(InputEvent @event)
@@ -540,12 +751,16 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             var settings = DifficultyRuntime.Current;
             _selection.Selected = DifficultySettings.ToIndex(settings.SelectionReveal);
             _shopEvent.ButtonPressed = settings.RevealShopAndEventCards;
-            _sameName.ButtonPressed = settings.RevealSameNameCards;
-            _revealAll.ButtonPressed = settings.RevealAllCards;
-            _liveStatus.ButtonPressed = settings.ShowLiveStatus;
+            _snapshotStatus.ButtonPressed = settings.SnapshotStatus;
+            _blurSlider.Value = settings.TextBlurPercent;
+            _saltMode.Selected = BlurSaltModeRules.ToIndex(settings.SaltMode);
+            _memoryMode.Selected = CardMemoryModeRules.ToIndex(settings.MemoryMode);
+            _badN.Value = settings.BadMemoryThreshold;
+            UpdateBadNVisibility();
             _ownedRelics.ButtonPressed = settings.ShowOwnedRelics;
             _mapRoutes.ButtonPressed = settings.ShowAllMapRoutes;
-            _intents.ButtonPressed = settings.ShowEnemyIntents;
+            _intentMode.Selected = IntentVisibilityRules.ToIndex(settings.IntentMode);
+            UpdateBlurLabel();
             _body.Visible = !DifficultyRuntime.PanelCollapsed;
             _collapse.Text = DifficultyRuntime.PanelCollapsed ? "▸" : "▾";
             UpdateDockVisuals();
@@ -576,34 +791,109 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         DifficultyRuntime.NotifyChanged();
     }
 
-    private void OnSameNameToggled(bool pressed)
+    private void OnSaltModeSelected(long index)
     {
         if (_applying)
         {
             return;
         }
-        DifficultyRuntime.Current.RevealSameNameCards = pressed;
+        DifficultyRuntime.Current.SaltMode = BlurSaltModeRules.FromIndex((int)index);
+        BlurSalt.PerLaunch = DifficultyRuntime.Current.SaltMode == BlurSaltMode.PerLaunch;
+        _blurPending = true; // re-apply with the new salt
+        DifficultyRuntime.Save();
+    }
+
+    private void OnMemoryModeSelected(long index)
+    {
+        if (_applying)
+        {
+            return;
+        }
+        DifficultyRuntime.Current.MemoryMode = CardMemoryModeRules.FromIndex((int)index);
+        UpdateBadNVisibility();
         DifficultyRuntime.NotifyChanged();
     }
 
-    private void OnRevealAllToggled(bool pressed)
+    private void OnBadNChanged(double value)
     {
         if (_applying)
         {
             return;
         }
-        DifficultyRuntime.Current.RevealAllCards = pressed;
+        DifficultyRuntime.Current.BadMemoryThreshold = DifficultySettings.ClampBadMemoryThreshold((int)value);
+        DifficultyRuntime.Save();
+    }
+
+    private void OnIntentModeSelected(long index)
+    {
+        if (_applying)
+        {
+            return;
+        }
+        DifficultyRuntime.Current.IntentMode = IntentVisibilityRules.FromIndex((int)index);
         DifficultyRuntime.NotifyChanged();
     }
 
-    private void OnLiveStatusToggled(bool pressed)
+    private void OnReset()
+    {
+        DifficultyRuntime.Current.ApplyDefaults();
+        BlurSalt.PerLaunch = true;
+        ApplyFromSettings();
+        _blurPending = true;
+        DifficultyRuntime.NotifyChanged();
+    }
+
+    private void UpdateBadNVisibility()
+    {
+        var bad = DifficultyRuntime.Current.MemoryMode == CardMemoryMode.BadMemory;
+        _badNLabel.Visible = bad;
+        _badN.Visible = bad;
+    }
+
+    private static string MemoryHintKey() => DifficultyRuntime.Current.MemoryMode switch
+    {
+        CardMemoryMode.Omniscient => "panel_hint_memory_omniscient",
+        CardMemoryMode.BadMemory => "panel_hint_memory_bad",
+        CardMemoryMode.Nonsense => "panel_hint_memory_nonsense",
+        _ => "panel_hint_memory_good",
+    };
+
+    private void OnSnapshotStatusToggled(bool pressed)
     {
         if (_applying)
         {
             return;
         }
-        DifficultyRuntime.Current.ShowLiveStatus = pressed;
+        DifficultyRuntime.Current.SnapshotStatus = pressed;
         DifficultyRuntime.NotifyChanged();
+    }
+
+    private void OnBlurChanged(double value)
+    {
+        if (_applying)
+        {
+            return;
+        }
+        var percent = DifficultySettings.ClampBlurPercent((int)value);
+        DifficultyRuntime.Current.TextBlurPercent = percent;
+        UpdateBlurLabel();
+        _blurDirty = true;
+        _blurSaveTimer = 0;
+        _blurPending = true;
+    }
+
+    private void UpdateBlurLabel()
+    {
+        var zh = ModLocalization.IsChinese;
+        var label = T("panel_blur_label", zh ? "乱码百分比" : "Blur percentage");
+        var percent = DifficultyRuntime.TextBlurPercent;
+        _blurLabel.Text = zh ? $"{label}：{percent}%" : $"{label}: {percent}%";
+    }
+
+    private void SaveBlur()
+    {
+        _blurDirty = false;
+        DifficultyRuntime.Save();
     }
 
     private void OnOwnedRelicsToggled(bool pressed)
@@ -626,18 +916,9 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         DifficultyRuntime.NotifyChanged();
     }
 
-    private void OnIntentsToggled(bool pressed)
-    {
-        if (_applying)
-        {
-            return;
-        }
-        DifficultyRuntime.Current.ShowEnemyIntents = pressed;
-        DifficultyRuntime.NotifyChanged();
-    }
-
     private void ToggleCollapsed()
     {
+        HideTip();
         var collapsed = _body.Visible;
         _body.Visible = !collapsed;
         _collapse.Text = collapsed ? "▸" : "▾";
@@ -649,6 +930,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     /// restores it); state and vertical position are persisted.</summary>
     private void DockPanel()
     {
+        HideTip();
         var viewportSize = GetViewport()?.GetVisibleRect().Size ?? new Vector2(1920f, 1080f);
         var centerX = _panel.Position.X + _panel.Size.X * 0.5f;
         var side = centerX < viewportSize.X * 0.5f ? 0 : 1;

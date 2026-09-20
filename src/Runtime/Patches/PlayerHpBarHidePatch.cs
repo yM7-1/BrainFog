@@ -5,9 +5,10 @@ using MegaCrit.Sts2.Core.Nodes.Combat;
 namespace BrainFog.Patches;
 
 /// <summary>
-/// The local player's combat health bar must not show true HP (leak fix
-/// 2026-09-19): the HP number and bar fill are hidden, the top bar keeps
-/// showing the stale snapshot (spec 0.02 #3). Block UI stays visible.
+/// Snapshot mode only (panel option, default off): the local player's combat
+/// health bar hides true HP (number and fill), the top bar keeps the snapshot.
+/// Default (live) lets the game show the bar; its numbers are garbled by the
+/// unified blur ratio. Block UI stays visible.
 /// </summary>
 [HarmonyPatch(typeof(NHealthBar))]
 internal static class PlayerHpBarHidePatch
@@ -24,7 +25,7 @@ internal static class PlayerHpBarHidePatch
                 return;
             }
 
-            if (Game.DifficultyRuntime.Current.ShowLiveStatus)
+            if (!Game.DifficultyRuntime.Current.SnapshotStatus)
             {
                 return; // real-time display: let the game manage the bar
             }

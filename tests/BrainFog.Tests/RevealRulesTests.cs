@@ -102,9 +102,9 @@ public class RevealRulesTests
     }
 
     [Fact]
-    public void RevealAllCards_WinsOverEveryContext()
+    public void Omniscient_RevealsEveryContext()
     {
-        var settings = new DifficultySettings { RevealAllCards = true };
+        var settings = new DifficultySettings { MemoryMode = CardMemoryMode.Omniscient };
         foreach (var context in Enum.GetValues<CardDisplayContext>())
         {
             Assert.Equal(
@@ -114,14 +114,62 @@ public class RevealRulesTests
     }
 
     [Fact]
-    public void RevealAllCards_Off_KeepsNormalRules()
+    public void Nonsense_NeverReveals()
     {
-        var settings = new DifficultySettings { RevealAllCards = false };
+        var settings = new DifficultySettings
+        {
+            MemoryMode = CardMemoryMode.Nonsense,
+            RevealShopAndEventCards = true,
+        };
         Assert.Equal(
             CardVisualRule.BlackFog,
-            RevealRules.Resolve(CardDisplayContext.Hand, CardKnowledge.Unknown, settings));
+            RevealRules.Resolve(CardDisplayContext.Hand, CardKnowledge.Revealed, settings));
+        // Acquisition keeps the rarity border but never the face, even with the
+        // reveal toggles on (mode overrides them).
+        Assert.Equal(
+            CardVisualRule.RarityOnly,
+            RevealRules.Resolve(CardDisplayContext.Reward, CardKnowledge.Revealed, settings, selectionSlotRevealed: true));
+        Assert.Equal(
+            CardVisualRule.RarityOnly,
+            RevealRules.Resolve(CardDisplayContext.Shop, CardKnowledge.Revealed, settings));
+        // The compendium stays readable.
+        Assert.Equal(
+            CardVisualRule.FullFace,
+            RevealRules.Resolve(CardDisplayContext.CardLibrary, CardKnowledge.Unknown, settings));
+    }
+
+    [Fact]
+    public void GoodMemory_KnownCardShowsFaceInAcquisition()
+    {
+        var settings = new DifficultySettings { MemoryMode = CardMemoryMode.GoodMemory };
+        Assert.Equal(
+            CardVisualRule.FullFace,
+            RevealRules.Resolve(CardDisplayContext.Reward, CardKnowledge.Revealed, settings));
+        Assert.Equal(
+            CardVisualRule.FullFace,
+            RevealRules.Resolve(CardDisplayContext.Shop, CardKnowledge.Revealed, settings));
+        Assert.Equal(
+            CardVisualRule.FullFace,
+            RevealRules.Resolve(CardDisplayContext.EventAcquisition, CardKnowledge.Revealed, settings));
+        // Unknown cards still follow the acquisition settings.
         Assert.Equal(
             CardVisualRule.RarityOnly,
             RevealRules.Resolve(CardDisplayContext.Reward, CardKnowledge.Unknown, settings));
+    }
+
+    [Fact]
+    public void BadMemory_DoesNotOverrideAcquisitionSettings()
+    {
+        var settings = new DifficultySettings
+        {
+            MemoryMode = CardMemoryMode.BadMemory,
+            RevealShopAndEventCards = true,
+        };
+        Assert.Equal(
+            CardVisualRule.FullFace,
+            RevealRules.Resolve(CardDisplayContext.Shop, CardKnowledge.Revealed, settings));
+        Assert.Equal(
+            CardVisualRule.BlackFog,
+            RevealRules.Resolve(CardDisplayContext.Hand, CardKnowledge.Unknown, settings));
     }
 }

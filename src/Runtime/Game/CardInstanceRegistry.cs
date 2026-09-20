@@ -30,6 +30,9 @@ internal static class CardInstanceRegistry
     private static CardModel IdentityOwner(CardModel card) =>
         CardIdentity.Resolve(card, c => c.DeckVersion ?? c.CloneOf);
 
+    /// <summary>Identity owner for other systems (bad-memory counters).</summary>
+    internal static CardModel ResolveIdentity(CardModel card) => IdentityOwner(card);
+
     /// <summary>Existing id for a card, or null when it was never registered.</summary>
     public static string? TryGetId(CardModel card) =>
         Map.TryGetValue(IdentityOwner(card), out var holder) ? holder.Id : null;

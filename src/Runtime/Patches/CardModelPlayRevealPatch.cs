@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using BrainFog.Core.Options;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
@@ -6,10 +7,13 @@ using MegaCrit.Sts2.Core.Models;
 namespace BrainFog.Patches;
 
 /// <summary>
-/// Playing a card reveals knowledge according to the difficulty option:
-/// - "same-name reveal" on (default): the whole card definition is revealed for
-///   the run (every copy, including upgraded ones);
-/// - off: only the played instance is revealed (persisted by deck order).
+/// Playing a card reveals knowledge according to the memory mode (user change
+/// 2026-09-21):
+/// - "good memory": the whole card definition is revealed for the run (every
+///   copy, including upgraded ones, and acquisition screens);
+/// - "bad memory": only the played copy is revealed (persisted by deck order);
+/// - "omniscient" / "nonsense": nothing to record.
+/// The prefix also marks the card as played for the bad-memory counter.
 /// Work only happens on the first reveal of the scope; repeated plays are a
 /// cheap no-op (perf: card-play hitch fix 2026-09-20). Visual refresh is
 /// deferred one frame so it never competes with the play animation start.
@@ -17,6 +21,15 @@ namespace BrainFog.Patches;
 [HarmonyPatch(typeof(CardModel), "OnPlayWrapper")]
 internal static class CardModelPlayRevealPatch
 {
+    [HarmonyPrefix]
+    private static void Prefix(CardModel __instance)
+    {
+        if (!ModRuntime.Disabled)
+        {
+            Game.BadMemoryTracker.OnPlayed(__instance);
+        }
+    }
+
     [HarmonyPostfix]
     private static void Postfix(CardModel __instance)
     {
@@ -53,23 +66,31 @@ internal static class CardModelPlayRevealPatch
     /// <summary>Returns true when new knowledge was recorded (visuals need a refresh).</summary>
     private static bool RevealCore(CardModel card)
     {
-        if (Game.DifficultyRuntime.Current.RevealSameNameCards)
+        switch (Game.DifficultyRuntime.Current.MemoryMode)
         {
-            var key = Game.RevealKeys.Of(card);
-            if (!ModRuntime.Tracker.RevealByPlay(key))
+            case CardMemoryMode.Omniscient:
+            case CardMemoryMode.Nonsense:
+                return false;
+            case CardMemoryMode.BadMemory:
             {
-                return false; // already known: nothing to persist or refresh
+                var id = Game.CardInstanceRegistry.GetOrCreateId(card);
+                if (string.IsNullOrEmpty(id) || !ModRuntime.Tracker.RevealInstanceByPlay(id))
+                {
+                    return false;
+                }
+                Game.RevealPersistence.OnInstanceRevealed(card, id);
+                return true;
             }
-            Game.RevealPersistence.OnRevealed(key);
-            return true;
+            default:
+            {
+                var key = Game.RevealKeys.Of(card);
+                if (!ModRuntime.Tracker.RevealByPlay(key))
+                {
+                    return false; // already known: nothing to persist or refresh
+                }
+                Game.RevealPersistence.OnRevealed(key);
+                return true;
+            }
         }
-
-        var id = Game.CardInstanceRegistry.GetOrCreateId(card);
-        if (string.IsNullOrEmpty(id) || !ModRuntime.Tracker.RevealInstanceByPlay(id))
-        {
-            return false;
-        }
-        Game.RevealPersistence.OnInstanceRevealed(card, id);
-        return true;
     }
 }

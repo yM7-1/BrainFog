@@ -12,20 +12,15 @@ namespace BrainFog.Game;
 /// renders and removes the old 0.2s scene-sweep latency. The sweep is kept only
 /// as a fallback for the rare plain <c>Label</c>/<c>RichTextLabel</c> controls.
 ///
-/// Context is classified by ancestor type names via <see cref="GlobalTextBlurRules"/>:
-/// cards, hover tips, events, menus, dialogue, intents, settings, the compendium
-/// and mod-owned labels are left to their own patches. Combat number VFX are
-/// garbled; other VFX text stays readable.
+/// The ratio comes from the cognition modifier slider (unified 0–100%); context
+/// is classified by ancestor type names via <see cref="GlobalTextBlurRules"/>
+/// (cards, hover tips, menus, dialogue, intents, settings, the compendium and
+/// mod-owned labels are left to their own patches).
 /// </summary>
 internal static class GlobalTextBlurSource
 {
     private const int MaxAncestorHops = 24;
     private const string PendingHookMeta = "BrainFogPendingTreeEntered";
-
-    /// <summary>Last real input, paired with the output metadata: repeated
-    /// renders with identical text skip the hash/RNG walk (perf, like the
-    /// card-face patch).</summary>
-    private const string InputMeta = "BrainFogGlobalBlurInput";
 
     /// <summary>Rewrites the incoming text with its blurred form when the
     /// label's context is covered by the catch-all rule.</summary>
@@ -44,8 +39,8 @@ internal static class GlobalTextBlurSource
                 return; // already blurred (source or fallback)
             }
 
-            if (label.HasMeta(InputMeta)
-                && label.GetMeta(InputMeta).AsString() == text
+            if (label.HasMeta(TextBlurService.InputMeta)
+                && label.GetMeta(TextBlurService.InputMeta).AsString() == text
                 && label.HasMeta(TextBlurService.OutputMeta))
             {
                 // Same input as last time: reuse the memoized output so the
@@ -58,8 +53,7 @@ internal static class GlobalTextBlurSource
                 return;
             }
 
-            var percent = ResolvePercent(label);
-            if (percent == null)
+            if (!ShouldBlur(label))
             {
                 return;
             }
@@ -72,8 +66,9 @@ internal static class GlobalTextBlurSource
                 return;
             }
 
-            var blurred = EventTextBlurrer.Blur(text, percent.Value, BlurSalt.Current);
-            label.SetMeta(InputMeta, text);
+            var percent = DifficultyRuntime.TextBlurPercent;
+            var blurred = EventTextBlurrer.Blur(text, percent, BlurSalt.Current);
+            label.SetMeta(TextBlurService.InputMeta, text);
             TextBlurService.MarkOutput(label, blurred);
             if (!string.Equals(blurred, text, StringComparison.Ordinal))
             {
@@ -86,9 +81,9 @@ internal static class GlobalTextBlurSource
         }
     }
 
-    /// <summary>Percent for this label, or null when another patch owns it
-    /// (or it must stay readable).</summary>
-    public static int? ResolvePercent(CanvasItem label)
+    /// <summary>True when the catch-all rule covers this label (another patch
+    /// owns it or it must stay readable otherwise).</summary>
+    public static bool ShouldBlur(CanvasItem label)
     {
         var modOwned = IsModOwned(label.Name);
         var types = new List<string>(8);
@@ -102,31 +97,11 @@ internal static class GlobalTextBlurSource
             types.Add(parent.GetType().Name);
         }
 
-        return GlobalTextBlurRules.ResolvePercent(types, modOwned, IsTopBarValueLabel(label));
+        return GlobalTextBlurRules.ShouldBlur(types, modOwned);
     }
 
     private static bool IsModOwned(StringName name) =>
         name.ToString().StartsWith("BrainFog", StringComparison.Ordinal);
-
-    /// <summary>Top-bar HP/gold numbers stay readable (user change 2026-09-19);
-    /// only their description texts are garbled.</summary>
-    private static bool IsTopBarValueLabel(CanvasItem label)
-    {
-        if (label.Name.ToString() is not ("HpLabel" or "GoldLabel"))
-        {
-            return false;
-        }
-        var parent = label.GetParent();
-        for (var i = 0; i < 4 && parent != null; i++, parent = parent.GetParent())
-        {
-            var typeName = parent.GetType().Name;
-            if (typeName is "NTopBarHp" or "NTopBarGold")
-            {
-                return true;
-            }
-        }
-        return false;
-    }
 
     private static void SchedulePending(CanvasItem label)
     {
@@ -150,10 +125,9 @@ internal static class GlobalTextBlurSource
                 return;
             }
             label.RemoveMeta(PendingHookMeta);
-            var percent = ResolvePercent(label);
-            if (percent != null)
+            if (ShouldBlur(label))
             {
-                TextBlurService.BlurNode(label, percent.Value);
+                TextBlurService.BlurNode(label, DifficultyRuntime.TextBlurPercent);
             }
         }
         catch (Exception ex)

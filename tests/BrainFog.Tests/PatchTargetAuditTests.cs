@@ -88,17 +88,21 @@ public class PatchTargetAuditTests
         ["MegaCrit.Sts2.Core.Nodes.Events.NEventLayout"] = new[]
         {
             new MemberTarget("SetTitle", Kind.Method),
-            new MemberTarget("SetDescription", Kind.Method),
-            new MemberTarget("_description", Kind.Field),
+            new MemberTarget("_title", Kind.Field),
         },
         ["MegaCrit.Sts2.Core.Nodes.Events.NEventOptionButton"] = new[]
         {
             new MemberTarget("_Ready", Kind.Method),
             new MemberTarget("RefreshVotes", Kind.Method),
             new MemberTarget("FlashConfirmation", Kind.Method),
-            new MemberTarget("OnFocus", Kind.Method),
-            new MemberTarget("_label", Kind.Field),
         },
+        ["MegaCrit.Sts2.Core.Entities.Cards.CardPile"] = new[]
+        {
+            new MemberTarget("AddInternal", Kind.Method),
+            new MemberTarget("RemoveInternal", Kind.Method),
+            new MemberTarget("Type", Kind.Property),
+        },
+        ["MegaCrit.Sts2.Core.Entities.Cards.PileType"] = Array.Empty<MemberTarget>(),
         ["MegaCrit.Sts2.Core.Nodes.Screens.CardSelection.NCardRewardSelectionScreen"] = Array.Empty<MemberTarget>(),
         ["MegaCrit.Sts2.Core.Nodes.Screens.Shops.NMerchantInventory"] = Array.Empty<MemberTarget>(),
         ["MegaCrit.Sts2.Core.Nodes.Screens.Shops.NMerchantCard"] = new[]

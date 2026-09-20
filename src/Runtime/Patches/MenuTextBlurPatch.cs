@@ -46,7 +46,7 @@ internal static class MainMenuTextBlurPatch
     }
 
     private static void Blur(Label? label) =>
-        Game.TextBlurService.BlurNode(label, TextBlurPercents.Menu);
+        Game.TextBlurService.BlurNode(label, Game.DifficultyRuntime.TextBlurPercent);
 }
 
 [HarmonyPatch(typeof(NPauseMenu), "RefreshLabels")]
@@ -69,7 +69,7 @@ internal static class PauseMenuTextBlurPatch
                     continue;
                 }
                 var label = button.GetNodeOrNull<Label>("Label");
-                Game.TextBlurService.BlurNode(label, TextBlurPercents.Menu);
+                Game.TextBlurService.BlurNode(label, Game.DifficultyRuntime.TextBlurPercent);
             }
         }
         catch (Exception ex)

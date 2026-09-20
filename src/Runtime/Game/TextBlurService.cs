@@ -4,16 +4,20 @@ using Godot;
 namespace BrainFog.Game;
 
 /// <summary>
-/// Shared, idempotent label blur. The last blurred output is stored in node
-/// metadata, so repeated calls (timer sweep + per-screen patches) never
-/// double-blur and re-blur automatically once the game writes new text.
+/// Shared, idempotent label blur. The original text and the last blurred output
+/// are stored in node metadata, so repeated calls never double-blur, a game
+/// rewrite is re-blurred automatically, and a blur-ratio change can re-apply
+/// from the original (slider, 2026-09-21).
 /// </summary>
 internal static class TextBlurService
 {
     public const string OutputMeta = "BrainFogBlurOutput";
 
-    /// <summary>Blurs the node's text in place. Returns true when the text
-    /// changed (drives the sweep backoff).</summary>
+    /// <summary>Original (ungarbled) text, kept so the ratio can change later.</summary>
+    public const string InputMeta = "BrainFogBlurInput";
+
+    /// <summary>Blurs the node's text in place at the given ratio. Returns true
+    /// when the visible text changed.</summary>
     public static bool BlurNode(CanvasItem? node, int percent)
     {
         try
@@ -33,7 +37,12 @@ internal static class TextBlurService
             }
 
             var blurred = EventTextBlurrer.Blur(current, percent, BlurSalt.Current);
+            node.SetMeta(InputMeta, current);
             node.SetMeta(OutputMeta, blurred);
+            if (string.Equals(blurred, current, StringComparison.Ordinal))
+            {
+                return false;
+            }
             Write(node, blurred);
             return true;
         }
@@ -44,28 +53,76 @@ internal static class TextBlurService
         }
     }
 
-    /// <summary>Marks a node whose text was blurred at the source, so the
-    /// timer sweep leaves it alone.</summary>
-    public static void Mark(CanvasItem? node)
-    {
-        if (node == null || !GodotObject.IsInstanceValid(node))
-        {
-            return;
-        }
-        var current = Read(node);
-        if (!string.IsNullOrEmpty(current))
-        {
-            node.SetMeta(OutputMeta, current);
-        }
-    }
-
     /// <summary>Marks a node with the blur output that is about to be applied
-    /// (source-side blur in a SetTextAutoSize prefix).</summary>
+    /// (source-side blur in a setter prefix).</summary>
     public static void MarkOutput(CanvasItem? node, string output)
     {
         if (node != null && GodotObject.IsInstanceValid(node))
         {
             node.SetMeta(OutputMeta, output);
+        }
+    }
+
+    /// <summary>Re-blurs one node from its stored original at a new ratio
+    /// (no-op when the game owns the current text or no original is known).</summary>
+    public static bool Reapply(CanvasItem? node, int percent)
+    {
+        try
+        {
+            if (node == null || !GodotObject.IsInstanceValid(node) || !node.HasMeta(InputMeta))
+            {
+                return false;
+            }
+            var original = node.GetMeta(InputMeta).AsString();
+            if (string.IsNullOrEmpty(original))
+            {
+                return false;
+            }
+            if (node.HasMeta(OutputMeta) && Read(node) != node.GetMeta(OutputMeta).AsString())
+            {
+                return false; // the game wrote new text: leave it to the normal path
+            }
+
+            var blurred = EventTextBlurrer.Blur(original, percent, BlurSalt.Current);
+            node.SetMeta(OutputMeta, blurred);
+            if (!string.Equals(Read(node), blurred, StringComparison.Ordinal))
+            {
+                Write(node, blurred);
+            }
+            return true;
+        }
+        catch (Exception ex)
+        {
+            PatchGuard.Run("TextBlur.Reapply", () => throw ex);
+            return false;
+        }
+    }
+
+    /// <summary>Re-applies the blur ratio to every label that has a stored
+    /// original (panel slider). One bounded tree walk per change.</summary>
+    public static void ReapplyAllText(int percent) =>
+        PatchGuard.Run("TextBlur.ReapplyAll", () =>
+        {
+            if (Engine.GetMainLoop() is not SceneTree tree || tree.Root == null)
+            {
+                return;
+            }
+            Walk(tree.Root, percent, 0);
+        });
+
+    private static void Walk(Node node, int percent, int depth)
+    {
+        if (depth > 64)
+        {
+            return;
+        }
+        if (node is CanvasItem item && item.HasMeta(InputMeta))
+        {
+            Reapply(item, percent);
+        }
+        foreach (var child in node.GetChildren())
+        {
+            Walk(child, percent, depth + 1);
         }
     }
 

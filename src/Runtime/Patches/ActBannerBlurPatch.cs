@@ -18,8 +18,8 @@ internal static class ActBannerBlurPatch
             {
                 return;
             }
-            Game.TextBlurService.BlurNode(__instance._actNumber, TextBlurPercents.Default);
-            Game.TextBlurService.BlurNode(__instance._actName, TextBlurPercents.Default);
+            Game.TextBlurService.BlurNode(__instance._actNumber, Game.DifficultyRuntime.TextBlurPercent);
+            Game.TextBlurService.BlurNode(__instance._actName, Game.DifficultyRuntime.TextBlurPercent);
         }
         catch (Exception ex)
         {

@@ -18,4 +18,8 @@ public sealed class BrainFogRunData
     /// <summary>Definition key per deck slot, parallel to <see cref="DeckOrderIds"/>;
     /// lets a load re-align ids after cards were added/removed (2026-09-21).</summary>
     public List<string> DeckOrderKeys = new();
+
+    /// <summary>"Bad memory" mode counters per card copy (instance id → unplayed
+    /// hand entries), persisted with the run (2026-09-21).</summary>
+    public Dictionary<string, int> BadMemoryCounts = new();
 }

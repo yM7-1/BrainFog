@@ -63,16 +63,35 @@ public static class RevealRules
         DifficultySettings? settings = null,
         bool selectionSlotRevealed = false)
     {
-        // "Reveal all cards this run" wins over every masking rule (2026-09-21).
-        if (settings?.RevealAllCards == true)
+        // The compendium is never fogged (0.03 j).
+        if (context == CardDisplayContext.CardLibrary)
         {
             return CardVisualRule.FullFace;
+        }
+
+        if (settings != null)
+        {
+            switch (settings.MemoryMode)
+            {
+                case CardMemoryMode.Omniscient:
+                    return CardVisualRule.FullFace;
+                case CardMemoryMode.Nonsense:
+                    // Cards never reveal (overrides the acquisition settings too).
+                    return IsAcquisition(context) ? CardVisualRule.RarityOnly : CardVisualRule.BlackFog;
+            }
         }
 
         // Acquisition shows rarity only by default (0.02 #5); difficulty options
         // can reveal the face (reward slot picked by SelectionRevealPlanner).
         if (IsAcquisition(context))
         {
+            // "Good memory" (2026-09-21): a known card shows its face everywhere,
+            // including rewards/shops/events (overrides the settings above).
+            if (settings is { MemoryMode: CardMemoryMode.GoodMemory } && knowledge == CardKnowledge.Revealed)
+            {
+                return CardVisualRule.FullFace;
+            }
+
             if (settings != null)
             {
                 if (context == CardDisplayContext.Reward && selectionSlotRevealed)
@@ -86,12 +105,6 @@ public static class RevealRules
                 }
             }
             return CardVisualRule.RarityOnly;
-        }
-
-        // The compendium is never fogged (0.03 j).
-        if (context == CardDisplayContext.CardLibrary)
-        {
-            return CardVisualRule.FullFace;
         }
 
         return knowledge == CardKnowledge.Revealed

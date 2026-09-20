@@ -19,7 +19,7 @@ internal static class MerchantDialogueBlurPatch
             {
                 return;
             }
-            Game.TextBlurService.BlurNode(__instance._label, TextBlurPercents.Dialogue);
+            Game.TextBlurService.BlurNode(__instance._label, Game.DifficultyRuntime.TextBlurPercent);
         }
         catch (Exception ex)
         {

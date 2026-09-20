@@ -101,12 +101,11 @@ internal sealed partial class GlobalTextBlurDriver : Node
 
         if (node is Label or RichTextLabel)
         {
-            var percent = GlobalTextBlurSource.ResolvePercent((CanvasItem)node);
-            if (percent == null)
+            if (!GlobalTextBlurSource.ShouldBlur((CanvasItem)node))
             {
                 return false; // owned by another patch or deliberately readable
             }
-            return TextBlurService.BlurNode(node as CanvasItem, percent.Value);
+            return TextBlurService.BlurNode((CanvasItem)node, DifficultyRuntime.TextBlurPercent);
         }
 
         var changed = false;

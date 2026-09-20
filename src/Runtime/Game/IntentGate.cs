@@ -1,11 +1,14 @@
 using System.Runtime.CompilerServices;
 using BrainFog.Core.Combat;
+using BrainFog.Core.Options;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 
 namespace BrainFog.Game;
 
 /// <summary>
 /// Per-creature intent gates (spec 0.03 f); semantics live in IntentRevealGate.
+/// The user-facing mode (2026-09-21) selects: all rounds / first round only /
+/// hidden.
 /// </summary>
 internal static class IntentGate
 {
@@ -35,11 +38,18 @@ internal static class IntentGate
         {
             return false;
         }
-        if (DifficultyRuntime.Current.ShowEnemyIntents)
+
+        switch (DifficultyRuntime.Current.IntentMode)
         {
-            return true;
+            case IntentVisibility.All:
+                return true;
+            case IntentVisibility.Hidden:
+                return false;
+            default:
+            {
+                var entry = Map.GetOrCreateValue(owner);
+                return entry.Gate.ShouldShow(roundNumber, entry.IsInitialCombatant);
+            }
         }
-        var entry = Map.GetOrCreateValue(owner);
-        return entry.Gate.ShouldShow(roundNumber, entry.IsInitialCombatant);
     }
 }

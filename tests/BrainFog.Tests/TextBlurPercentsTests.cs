@@ -1,3 +1,4 @@
+using BrainFog.Core.Options;
 using BrainFog.Core.Text;
 using Xunit;
 
@@ -6,45 +7,20 @@ namespace BrainFog.Tests;
 public class TextBlurPercentsTests
 {
     [Fact]
-    public void Default_IsSixty()
+    public void Default_IsFifty()
     {
-        Assert.Equal(60, TextBlurPercents.Default);
+        Assert.Equal(50, TextBlurPercents.Default);
+        Assert.Equal(TextBlurPercents.Default, new DifficultySettings().TextBlurPercent);
     }
 
-    [Fact]
-    public void ExplicitPercents_AreWithinRange()
+    [Theory]
+    [InlineData(-20, 0)]
+    [InlineData(0, 0)]
+    [InlineData(37, 37)]
+    [InlineData(100, 100)]
+    [InlineData(140, 100)]
+    public void ClampBlurPercent_ClampsToSliderRange(int input, int expected)
     {
-        var percents = new[]
-        {
-            TextBlurPercents.Potion,
-            TextBlurPercents.CardViewTips,
-            TextBlurPercents.Event,
-            TextBlurPercents.Menu,
-            TextBlurPercents.UiDescription,
-            TextBlurPercents.CardFaceText,
-            TextBlurPercents.Dialogue,
-        };
-        foreach (var percent in percents)
-        {
-            Assert.InRange(percent, 1, 99);
-        }
-    }
-
-    [Fact]
-    public void ExplicitPercents_FollowTheUserRules()
-    {
-        Assert.Equal(50, TextBlurPercents.Potion);
-        Assert.Equal(50, TextBlurPercents.CardViewTips);
-        Assert.Equal(75, TextBlurPercents.Event);
-        Assert.Equal(75, TextBlurPercents.Menu);
-        Assert.Equal(70, TextBlurPercents.UiDescription);
-        Assert.Equal(85, TextBlurPercents.CardFaceText);
-        Assert.Equal(90, TextBlurPercents.Dialogue);
-    }
-
-    [Fact]
-    public void PotionBlurrer_UsesTheSharedConstant()
-    {
-        Assert.Equal(TextBlurPercents.Potion, PotionTextBlurrer.BlurPercent);
+        Assert.Equal(expected, DifficultySettings.ClampBlurPercent(input));
     }
 }

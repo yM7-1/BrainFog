@@ -6,9 +6,9 @@ namespace BrainFog.Tests;
 public class GlobalTextBlurRulesTests
 {
     [Fact]
-    public void NoAncestors_DefaultsToSixty()
+    public void NoAncestors_IsBlurred()
     {
-        Assert.Equal(TextBlurPercents.Default, GlobalTextBlurRules.ResolvePercent(Array.Empty<string>(), false, false));
+        Assert.True(GlobalTextBlurRules.ShouldBlur(Array.Empty<string>(), modOwned: false));
     }
 
     [Theory]
@@ -17,9 +17,10 @@ public class GlobalTextBlurRulesTests
     [InlineData("NMapScreen")]
     [InlineData("NMapLegendItem")]
     [InlineData("NMapPoint")]
-    public void TopBarAndMap_UseSeventy(string ancestor)
+    public void TopBarAndMap_AreBlurred(string ancestor)
     {
-        Assert.Equal(TextBlurPercents.UiDescription, GlobalTextBlurRules.ResolvePercent(new[] { ancestor }, false, false));
+        // The unified ratio covers HP/gold values and map UI too (2026-09-21).
+        Assert.True(GlobalTextBlurRules.ShouldBlur(new[] { ancestor }, modOwned: false));
     }
 
     [Theory]
@@ -28,49 +29,43 @@ public class GlobalTextBlurRulesTests
     [InlineData("NCardLibrary")]
     [InlineData("NIntent")]
     [InlineData("NSettingsScreen")]
-    [InlineData("NEventLayout")]
-    [InlineData("NEventOptionButton")]
     [InlineData("NMainMenuTextButton")]
     [InlineData("NPauseMenuButton")]
     [InlineData("NMerchantDialogue")]
     [InlineData("NAncientDialogueLine")]
     public void OwnedContexts_AreSkipped(string ancestor)
     {
-        Assert.Null(GlobalTextBlurRules.ResolvePercent(new[] { ancestor }, false, false));
+        Assert.False(GlobalTextBlurRules.ShouldBlur(new[] { ancestor }, modOwned: false));
     }
 
     [Theory]
     [InlineData("NDamageNumVfx")]
     [InlineData("NHealNumVfx")]
     [InlineData("NDamageBlockedVfx")]
-    public void CombatNumberVfx_AreGarbled(string ancestor)
+    public void CombatNumberVfx_AreBlurred(string ancestor)
     {
-        Assert.Equal(TextBlurPercents.Default, GlobalTextBlurRules.ResolvePercent(new[] { ancestor }, false, false));
+        Assert.True(GlobalTextBlurRules.ShouldBlur(new[] { ancestor }, modOwned: false));
     }
 
     [Theory]
     [InlineData("NFullscreenTextVfx")]
     [InlineData("NSpeechBubbleVfx")]
     [InlineData("NGainEpochVfx")]
-    public void OtherVfx_StaysReadable(string ancestor)
+    public void OtherVfx_StayReadable(string ancestor)
     {
-        Assert.Null(GlobalTextBlurRules.ResolvePercent(new[] { ancestor }, false, false));
+        Assert.False(GlobalTextBlurRules.ShouldBlur(new[] { ancestor }, modOwned: false));
     }
 
     [Fact]
-    public void ModOwnedAndTopBarValues_AreSkipped()
+    public void ModOwned_IsSkipped()
     {
-        Assert.Null(GlobalTextBlurRules.ResolvePercent(new[] { "NTopBarHp" }, modOwned: true, topBarValueLabel: false));
-        Assert.Null(GlobalTextBlurRules.ResolvePercent(new[] { "NTopBarHp" }, modOwned: false, topBarValueLabel: true));
+        Assert.False(GlobalTextBlurRules.ShouldBlur(new[] { "NTopBarHp" }, modOwned: true));
     }
 
     [Fact]
     public void NearestAncestorWins()
     {
-        // A card label inside the top bar keeps its own (skip) rule.
-        Assert.Null(GlobalTextBlurRules.ResolvePercent(new[] { "NCard", "NTopBarHp" }, false, false));
-        Assert.Equal(
-            TextBlurPercents.Default,
-            GlobalTextBlurRules.ResolvePercent(new[] { "NDamageNumVfx", "NCombatRoom" }, false, false));
+        Assert.False(GlobalTextBlurRules.ShouldBlur(new[] { "NCard", "NTopBarHp" }, modOwned: false));
+        Assert.True(GlobalTextBlurRules.ShouldBlur(new[] { "NDamageNumVfx", "NCombatRoom" }, modOwned: false));
     }
 }

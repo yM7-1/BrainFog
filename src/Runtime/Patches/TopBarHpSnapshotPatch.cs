@@ -5,8 +5,8 @@ using MegaCrit.sts2.Core.Nodes.TopBar;
 namespace BrainFog.Patches;
 
 /// <summary>
-/// Top-bar HP shows the stale snapshot: live changes are suppressed unless a
-/// refresh trigger (rest) requested one (spec 0.02 #3, 0.03 c).
+/// Snapshot mode (panel option, default off): top-bar HP suppresses live
+/// changes and shows the last rest value. Default (off) shows live HP.
 /// Low-HP warning is driven by TRUE hp on every change (spec 0.03 d).
 /// </summary>
 [HarmonyPatch(typeof(NTopBarHp))]
@@ -39,16 +39,13 @@ internal static class TopBarHpSnapshotPatch
         var creature = player.Creature;
         Game.LowHpHintDisplay.Evaluate(player, creature.CurrentHp, creature.MaxHp);
 
-        if (Game.DifficultyRuntime.Current.ShowLiveStatus)
-        {
-            return true; // real-time display
-        }
-
+        // Keep the snapshot data fresh on rest in both modes; only suppress the
+        // label update while snapshot mode is on.
         if (Game.SnapshotDisplay.ConsumeHpRefresh())
         {
             Game.SnapshotDisplay.OnHpChanged(creature.CurrentHp, creature.MaxHp);
             return true;
         }
-        return false;
+        return !Game.DifficultyRuntime.Current.SnapshotStatus;
     }
 }

@@ -18,7 +18,7 @@ internal static class CombatStartBannerBlurPatch
             {
                 return;
             }
-            Game.TextBlurService.BlurNode(__instance._label, TextBlurPercents.Default);
+            Game.TextBlurService.BlurNode(__instance._label, Game.DifficultyRuntime.TextBlurPercent);
         }
         catch (Exception ex)
         {

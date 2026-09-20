@@ -20,7 +20,7 @@ internal static class MapLegendTextBlurPatch
                 return;
             }
             var label = __instance.GetNodeOrNull<MegaLabel>("MegaLabel");
-            Game.TextBlurService.BlurNode(label, TextBlurPercents.UiDescription);
+            Game.TextBlurService.BlurNode(label, Game.DifficultyRuntime.TextBlurPercent);
         }
         catch (Exception ex)
         {

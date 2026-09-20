@@ -27,6 +27,16 @@ public sealed class CardRevealTracker
             ? CardKnowledge.Revealed
             : CardKnowledge.Unknown;
 
+    /// <summary>Definition-scope knowledge ("good memory" mode).</summary>
+    public CardKnowledge GetDefinitionKnowledge(string definitionKey) =>
+        _revealed.Contains(definitionKey) ? CardKnowledge.Revealed : CardKnowledge.Unknown;
+
+    /// <summary>Per-copy knowledge ("bad memory" mode).</summary>
+    public CardKnowledge GetInstanceKnowledge(string? instanceId) =>
+        !string.IsNullOrEmpty(instanceId) && _revealedInstances.Contains(instanceId)
+            ? CardKnowledge.Revealed
+            : CardKnowledge.Unknown;
+
     public bool IsRevealed(string definitionKey) => _revealed.Contains(definitionKey);
 
     public bool IsInstanceRevealed(string instanceId) => _revealedInstances.Contains(instanceId);
@@ -41,6 +51,9 @@ public sealed class CardRevealTracker
     public bool RevealByUpgrade(string definitionKey) => _revealed.Add(definitionKey);
 
     public bool RevealInstanceByUpgrade(string instanceId) => _revealedInstances.Add(instanceId);
+
+    /// <summary>"Bad memory": hides a copy again (its counter reached n).</summary>
+    public bool HideInstance(string instanceId) => _revealedInstances.Remove(instanceId);
 
     /// <summary>Restores persisted state (per-run scope).</summary>
     public void Load(IEnumerable<string>? definitionKeys) => Load(definitionKeys, null);

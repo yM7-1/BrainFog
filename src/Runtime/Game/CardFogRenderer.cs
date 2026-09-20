@@ -38,10 +38,16 @@ internal static class CardFogRenderer
         }
 
         var context = ResolveContextCached(card, model);
-        var knowledge = ModRuntime.Tracker.GetKnowledge(
-            RevealKeys.Of(model),
-            CardInstanceRegistry.TryGetId(model));
         var settings = DifficultyRuntime.Current;
+        var knowledge = settings.MemoryMode switch
+        {
+            CardMemoryMode.Omniscient => CardKnowledge.Revealed,
+            CardMemoryMode.Nonsense => CardKnowledge.Unknown,
+            // "Bad memory" tracks copies; "good memory" the whole definition.
+            CardMemoryMode.BadMemory => ModRuntime.Tracker.GetInstanceKnowledge(
+                CardInstanceRegistry.TryGetId(model)),
+            _ => ModRuntime.Tracker.GetDefinitionKnowledge(RevealKeys.Of(model)),
+        };
         var slotRevealed = context == CardDisplayContext.Reward && IsRewardSlotRevealed(card, settings);
         return RevealRules.Resolve(context, knowledge, settings, slotRevealed);
     }

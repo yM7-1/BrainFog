@@ -1,4 +1,3 @@
-using BrainFog.Core.Text;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
@@ -6,25 +5,14 @@ using MegaCrit.Sts2.Core.Nodes.HoverTips;
 namespace BrainFog.Patches;
 
 /// <summary>
-/// Unified hover-tip blur policy (user rules 2026-09-19):
-/// - card-view / upgrade screens: keyword descriptions 50%
-/// - potion slots / popup / merchant: titles+descriptions 50%
-/// - top bar / map / legend / share UI: titles+descriptions 70%
-/// - everything else (unspecified): titles+descriptions 60%
-/// Exempt: settings screens and the card compendium (stay readable).
+/// Hover tips follow the unified blur ratio (user change 2026-09-21): titles
+/// and descriptions are garbled like all other text.
+/// Exempt: enemy intent tooltips (attack numbers/actions stay readable), the
+/// settings screens and the card compendium.
 /// </summary>
 [HarmonyPatch(typeof(NHoverTipSet), "Init")]
 internal static class HoverTipTextBlurPatch
 {
-    private enum Policy
-    {
-        Skip,
-        CardViewDescriptions,
-        Potion,
-        UiDescriptions,
-        Default,
-    }
-
     /// <summary>Intent hover-tip titles (eng + zhs) of the "intents" table.</summary>
     private static readonly string[] IntentTitles =
     {
@@ -85,32 +73,20 @@ internal static class HoverTipTextBlurPatch
                 return;
             }
 
-            var policy = ResolvePolicy(__instance);
-            if (policy == Policy.Skip)
+            if (IsExempt(__instance))
             {
                 return;
             }
 
-            var both = policy != Policy.CardViewDescriptions;
-            var percent = policy switch
-            {
-                Policy.CardViewDescriptions => TextBlurPercents.CardViewTips,
-                Policy.Potion => TextBlurPercents.Potion,
-                Policy.UiDescriptions => TextBlurPercents.UiDescription,
-                _ => TextBlurPercents.Default,
-            };
-
+            var percent = Game.DifficultyRuntime.TextBlurPercent;
             foreach (var child in __instance._textHoverTipContainer.GetChildren())
             {
                 if (child is not Control tip)
                 {
                     continue;
                 }
-                if (both)
-                {
-                    Blur(tip.GetNodeOrNull<Label>("%Title"), percent);
-                }
-                Blur(tip.GetNodeOrNull<RichTextLabel>("%Description"), percent);
+                Game.TextBlurService.BlurNode(tip.GetNodeOrNull<Label>("%Title"), percent);
+                Game.TextBlurService.BlurNode(tip.GetNodeOrNull<RichTextLabel>("%Description"), percent);
             }
         }
         catch (Exception ex)
@@ -119,55 +95,16 @@ internal static class HoverTipTextBlurPatch
         }
     }
 
-    private static void Blur(Control? label, int percent) =>
-        Game.TextBlurService.BlurNode(label, percent);
-
-    private static Policy ResolvePolicy(NHoverTipSet set)
+    private static bool IsExempt(NHoverTipSet set)
     {
-        var inCardView = false;
-        var inTopBar = false;
-        var inMapUi = false;
-        var inPotion = false;
-
         for (Node? node = set._owner; node != null; node = node.GetParent())
         {
             var typeName = node.GetType().Name;
             if (typeName is "NSettingsScreen" or "NCardLibrary")
             {
-                return Policy.Skip;
-            }
-            if (typeName is "NPotionHolder" or "NPotionPopup" or "NMerchantPotion")
-            {
-                inPotion = true;
-            }
-            if (typeName is "NInspectCardScreen" or "NDeckUpgradeSelectScreen" or "NUpgradePreview")
-            {
-                inCardView = true;
-            }
-            if (typeName.StartsWith("NTopBar", StringComparison.Ordinal))
-            {
-                inTopBar = true;
-            }
-            if (typeName is "NMapScreen" or "NMapLegendItem" or "NMapShareButton"
-                or "NShareButton" or "NShareStatsButton" or "NBossMapPoint" or "NMapPoint"
-                or "NNormalMapPoint" or "NAncientMapPoint")
-            {
-                inMapUi = true;
+                return true;
             }
         }
-
-        if (inCardView)
-        {
-            return Policy.CardViewDescriptions;
-        }
-        if (inPotion)
-        {
-            return Policy.Potion;
-        }
-        if (inTopBar || inMapUi)
-        {
-            return Policy.UiDescriptions;
-        }
-        return Policy.Default;
+        return false;
     }
 }

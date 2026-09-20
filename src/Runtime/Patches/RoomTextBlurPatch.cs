@@ -17,7 +17,7 @@ internal static class ProceedButtonTextBlurPatch
         {
             if (!ModRuntime.Disabled)
             {
-                Game.TextBlurService.BlurNode(__instance._label, TextBlurPercents.Default);
+                Game.TextBlurService.BlurNode(__instance._label, Game.DifficultyRuntime.TextBlurPercent);
             }
         }
         catch (Exception ex)
@@ -37,7 +37,7 @@ internal static class RestSiteButtonTextBlurPatch
         {
             if (!ModRuntime.Disabled)
             {
-                Game.TextBlurService.BlurNode(__instance._label, TextBlurPercents.Default);
+                Game.TextBlurService.BlurNode(__instance._label, Game.DifficultyRuntime.TextBlurPercent);
             }
         }
         catch (Exception ex)

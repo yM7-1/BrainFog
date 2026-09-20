@@ -60,10 +60,14 @@ internal static class DifficultyRefresh
 
     private static void RefreshIntent(NIntent intent)
     {
-        if (DifficultyRuntime.Current.ShowEnemyIntents)
+        switch (DifficultyRuntime.Current.IntentMode)
         {
-            intent.Visible = true;
-            return;
+            case Core.Options.IntentVisibility.All:
+                intent.Visible = true;
+                return;
+            case Core.Options.IntentVisibility.Hidden:
+                intent.Visible = false;
+                return;
         }
 
         var node = intent.GetParent();

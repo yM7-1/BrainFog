@@ -35,10 +35,12 @@ internal static class RevealPersistence
             ModRuntime.Tracker.Load(data.RevealedCards, data.RevealedInstances);
             PendingDeckOrder.AddRange(data.DeckOrderIds);
             BindDeckFromSave(state, data);
+            BadMemoryTracker.OnRunLoaded(data.BadMemoryCounts);
         }
         else
         {
             ModRuntime.Tracker.Reset();
+            BadMemoryTracker.OnRunLoaded(null);
         }
         MegaCrit.Sts2.Core.Logging.Log.Info(
             $"[BrainFog][Persistence] run started: revealed={ModRuntime.Tracker.RevealedCount} savedDeck={PendingDeckOrder.Count}");
@@ -218,6 +220,49 @@ internal static class RevealPersistence
             {
                 data.RevealedInstances.Add(instanceId);
             }
+        });
+    }
+
+    /// <summary>Persists a "bad memory" counter (0 removes the entry).</summary>
+    public static void SetBadMemoryCounter(string instanceId, int count) =>
+        PatchGuard.Run("Persistence.BadMemory", () => SetBadMemoryCounterCore(instanceId, count));
+
+    private static void SetBadMemoryCounterCore(string instanceId, int count)
+    {
+        if (_slot == null || _runStateRef == null || !_runStateRef.TryGetTarget(out var state))
+        {
+            return;
+        }
+
+        _slot.Modify(state, data =>
+        {
+            data.BadMemoryCounts ??= new Dictionary<string, int>();
+            if (count <= 0)
+            {
+                data.BadMemoryCounts.Remove(instanceId);
+            }
+            else
+            {
+                data.BadMemoryCounts[instanceId] = count;
+            }
+        });
+    }
+
+    /// <summary>"Bad memory": the copy reverted to unknown; drop it from the save.</summary>
+    public static void OnInstanceHidden(string instanceId) =>
+        PatchGuard.Run("Persistence.InstanceHidden", () => OnInstanceHiddenCore(instanceId));
+
+    private static void OnInstanceHiddenCore(string instanceId)
+    {
+        if (_slot == null || _runStateRef == null || !_runStateRef.TryGetTarget(out var state))
+        {
+            return;
+        }
+
+        _slot.Modify(state, data =>
+        {
+            data.RevealedInstances.Remove(instanceId);
+            data.BadMemoryCounts?.Remove(instanceId);
         });
     }
 }

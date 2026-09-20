@@ -7,8 +7,9 @@ using MegaCrit.sts2.Core.Nodes.TopBar;
 namespace BrainFog.Patches;
 
 /// <summary>
-/// The top-bar HP is a stale snapshot, so it renders gray and carries a tag +
-/// hint explaining that it is the state at the last rest (user change 2026-09-19).
+/// Snapshot mode (panel option, default off): the top-bar HP renders gray and
+/// carries a tag + hint explaining that it is the state at the last rest.
+/// Default (off) shows live HP, garbled by the unified blur ratio.
 /// </summary>
 [HarmonyPatch(typeof(NTopBarHp))]
 internal static class HpSnapshotVisualPatch
@@ -41,7 +42,7 @@ internal static class HpSnapshotVisualPatch
                 return;
             }
 
-            if (Game.DifficultyRuntime.Current.ShowLiveStatus)
+            if (!Game.DifficultyRuntime.Current.SnapshotStatus)
             {
                 // Live display: no gray, no snapshot tag/hint.
                 bar._hpLabel.RemoveThemeColorOverride(ThemeConstants.Label.FontColor);
@@ -75,7 +76,7 @@ internal static class HpSnapshotVisualPatch
     /// <summary>Re-renders the HP label for the current display mode.</summary>
     internal static void Refresh(NTopBarHp bar)
     {
-        if (Game.DifficultyRuntime.Current.ShowLiveStatus)
+        if (!Game.DifficultyRuntime.Current.SnapshotStatus)
         {
             if (bar._player is { } player)
             {
