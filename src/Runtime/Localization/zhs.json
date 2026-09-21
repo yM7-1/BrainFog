@@ -40,6 +40,8 @@
   "panel_intent_1": "仅第一回合可见",
   "panel_intent_2": "可见所有意图",
   "panel_reset": "重置为默认",
+  "panel_save_default": "当前设置为默认",
+  "panel_saved_default": "已保存为默认",
   "panel_dock_tooltip": "缩进到屏幕边缘（点边缘小按钮恢复）",
   "panel_tab_tooltip": "显示认知修改器",
   "panel_hint_default": "拖动标题栏可移动 · 修改即时生效",
@@ -59,5 +61,6 @@
   "panel_hint_map_routes": "地图显示全部节点与路线",
   "panel_hint_intent": "敌人意图：不可见 / 仅第一回合 / 每回合可见",
   "panel_hint_reset": "把全部修改器选项恢复为默认值",
+  "panel_hint_save_default": "把当前修改器设置保存为默认：之后「重置为默认」将恢复这些值（跨重进保留）",
   "panel_hint_relics": "恢复所有遗物的显示：已拥有/奖励/商店/宝箱/检视等（图鉴本就可见）"
 }

@@ -40,6 +40,8 @@
   "panel_intent_1": "First round only",
   "panel_intent_2": "Always visible",
   "panel_reset": "Reset to defaults",
+  "panel_save_default": "Set current as default",
+  "panel_saved_default": "Saved as default",
   "panel_dock_tooltip": "Dock to the screen edge (click the edge tab to restore)",
   "panel_tab_tooltip": "Show the cognition modifier",
   "panel_hint_default": "Drag the title bar to move · changes apply instantly",
@@ -59,5 +61,6 @@
   "panel_hint_map_routes": "Show every map node and route",
   "panel_hint_intent": "Enemy intents: hidden / first round only / every round",
   "panel_hint_reset": "Restore every modifier option to its default",
+  "panel_hint_save_default": "Save the current modifier settings as your defaults: Reset to defaults will restore these (kept across launches)",
   "panel_hint_relics": "Restore every relic display: owned, rewards, shops, chests, inspect (compendium already visible)"
 }

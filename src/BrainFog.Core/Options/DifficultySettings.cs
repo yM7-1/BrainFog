@@ -26,11 +26,13 @@ public sealed class DifficultySettings
     /// <summary>Fixed garbling vs re-rolled on every launch (2026-09-21).</summary>
     public BlurSaltMode SaltMode { get; set; } = BlurSaltMode.PerLaunch;
 
-    /// <summary>Reveal the first N offered cards in card-reward selection screens.</summary>
-    public SelectionRevealOption SelectionReveal { get; set; } = SelectionRevealOption.None;
+    /// <summary>Card-reward reveal level (default: reveal every reward card,
+    /// user change 2026-09-21).</summary>
+    public SelectionRevealOption SelectionReveal { get; set; } = SelectionRevealOption.All;
 
-    /// <summary>Reveal card faces in shop stock and event acquisition screens.</summary>
-    public bool RevealShopAndEventCards { get; set; }
+    /// <summary>Reveal card faces in shop stock and event acquisition screens
+    /// (default on, user change 2026-09-21).</summary>
+    public bool RevealShopAndEventCards { get; set; } = true;
 
     /// <summary>Card memory mode (通晓万物 / 好记性 / 坏记性 / 歪比巴卜).</summary>
     public CardMemoryMode MemoryMode { get; set; } = CardMemoryMode.BadMemory;
@@ -52,46 +54,58 @@ public sealed class DifficultySettings
     /// live values (default: live values, garbled like all text).</summary>
     public bool SnapshotStatus { get; set; }
 
-    /// <summary>Show HP/gold numbers without garbling (default: garbled like
-    /// all text; the display mode itself is still governed by SnapshotStatus).</summary>
-    public bool ReadableStatusNumbers { get; set; }
+    /// <summary>Show HP/gold numbers without garbling (default on, user change
+    /// 2026-09-21; the display mode itself is still governed by SnapshotStatus).</summary>
+    public bool ReadableStatusNumbers { get; set; } = true;
 
     /// <summary>Show relics everywhere (user change 2026-09-21, was "show owned
-    /// relics"): owned inventory/inspect, rewards, shops, chests, run history.</summary>
-    public bool ShowRelics { get; set; }
+    /// relics"): owned inventory/inspect, rewards, shops, chests, run history.
+    /// Default on (user change 2026-09-21).</summary>
+    public bool ShowRelics { get; set; } = true;
 
-    /// <summary>Show every map node and route instead of the fogged frontier.</summary>
-    public bool ShowAllMapRoutes { get; set; }
+    /// <summary>Show every map node and route instead of the fogged frontier
+    /// (default on, user change 2026-09-21).</summary>
+    public bool ShowAllMapRoutes { get; set; } = true;
 
-    /// <summary>Enemy intent visibility: all rounds / first round only / hidden.</summary>
-    public IntentVisibility IntentMode { get; set; } = IntentVisibility.Hidden;
+    /// <summary>Enemy intent visibility: all rounds / first round only / hidden
+    /// (default: always visible, user change 2026-09-21).</summary>
+    public IntentVisibility IntentMode { get; set; } = IntentVisibility.All;
 
     /// <summary>Show real enemy models instead of the breathing-box mask
-    /// (user change 2026-09-21; default off = masked).</summary>
-    public bool EnemyModelsVisible { get; set; }
+    /// (default on, user change 2026-09-21).</summary>
+    public bool EnemyModelsVisible { get; set; } = true;
 
     public static int ClampBlurPercent(int value) => Math.Clamp(value, 0, 100);
 
     public static int ClampBadMemoryThreshold(int value) => Math.Clamp(value, 1, 99);
 
-    /// <summary>Restores every option to its documented default (reset button).</summary>
-    public void ApplyDefaults()
+    /// <summary>Factory defaults of the current build (used when the player has
+    /// not saved their own defaults yet).</summary>
+    private static readonly DifficultySettings FactoryDefaults = new();
+
+    /// <summary>Copies every option from another settings instance (used for
+    /// the "save current as default" button and for resetting).</summary>
+    public void CopyFrom(DifficultySettings other)
     {
-        TextBlurPercent = TextBlurPercents.Default;
-        SaltMode = BlurSaltMode.PerLaunch;
-        SelectionReveal = SelectionRevealOption.None;
-        RevealShopAndEventCards = false;
-        MemoryMode = CardMemoryMode.BadMemory;
-        BadMemoryThreshold = 2;
-        MemoryFade = true;
-        PlayCounter = false;
-        SnapshotStatus = false;
-        ReadableStatusNumbers = false;
-        ShowRelics = false;
-        ShowAllMapRoutes = false;
-        IntentMode = IntentVisibility.Hidden;
-        EnemyModelsVisible = false;
+        TextBlurPercent = other.TextBlurPercent;
+        SaltMode = other.SaltMode;
+        SelectionReveal = other.SelectionReveal;
+        RevealShopAndEventCards = other.RevealShopAndEventCards;
+        MemoryMode = other.MemoryMode;
+        BadMemoryThreshold = other.BadMemoryThreshold;
+        MemoryFade = other.MemoryFade;
+        PlayCounter = other.PlayCounter;
+        SnapshotStatus = other.SnapshotStatus;
+        ReadableStatusNumbers = other.ReadableStatusNumbers;
+        ShowRelics = other.ShowRelics;
+        ShowAllMapRoutes = other.ShowAllMapRoutes;
+        IntentMode = other.IntentMode;
+        EnemyModelsVisible = other.EnemyModelsVisible;
     }
+
+    /// <summary>Restores every option to the factory default (fallback when the
+    /// player never saved custom defaults).</summary>
+    public void ApplyDefaults() => CopyFrom(FactoryDefaults);
 
     public static string ToStorage(SelectionRevealOption option) => option switch
     {

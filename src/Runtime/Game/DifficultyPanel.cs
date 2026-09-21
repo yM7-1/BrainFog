@@ -59,6 +59,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     private CheckButton _enemyModels = null!;
     private Label _intentLabel = null!;
     private OptionButton _intentMode = null!;
+    private Button _saveDefault = null!;
     private Button _reset = null!;
     private Button _collapse = null!;
     private Button _dock = null!;
@@ -329,6 +330,17 @@ internal sealed partial class DifficultyPanel : CanvasLayer
 
         _body.AddChild(Divider());
 
+        _saveDefault = new Button
+        {
+            Text = "Save as default",
+            FocusMode = Control.FocusModeEnum.None,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        _saveDefault.ApplyLocaleFontSubstitution(FontType.Regular, "font");
+        _saveDefault.Pressed += OnSaveAsDefault;
+        _body.AddChild(_saveDefault);
+        BindHint(_saveDefault, "panel_hint_save_default");
+
         _reset = new Button
         {
             Text = "Reset",
@@ -415,7 +427,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
                      _snapshotStatus, _statusNumbers, _relics, _mapRoutes, _enemyModels, _tip,
                      _sectionText, _blurLabel, _saltLabel, _saltMode,
                      _memoryLabel, _memoryMode, _badNLabel, _badN, _memoryFade, _playCounter,
-                     _intentLabel, _intentMode, _reset,
+                     _intentLabel, _intentMode, _saveDefault, _reset,
                  })
         {
             control.ApplyLocaleFontSubstitution(FontType.Regular, "font");
@@ -486,6 +498,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             _intentMode.SetItemText(i, T(intentKeys[i], intentOptions[i]));
         }
 
+        _saveDefault.Text = T("panel_save_default", zh ? "当前设置为默认" : "Set current as default");
         _reset.Text = T("panel_reset", zh ? "重置为默认" : "Reset to defaults");
         _dock.TooltipText = T("panel_dock_tooltip", zh ? "缩进到屏幕边缘（点边缘小按钮恢复）" : "Dock to the screen edge (click the edge tab to restore)");
         _tab.TooltipText = T("panel_tab_tooltip", zh ? "显示认知修改器" : "Show the cognition modifier");
@@ -500,7 +513,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
                      _selection, _shopEvent, _snapshotStatus, _statusNumbers, _relics, _mapRoutes, _enemyModels,
                      _tip, _dock, _tab, _blurLabel, _saltLabel, _saltMode,
                      _memoryLabel, _memoryMode, _badNLabel, _badN, _memoryFade, _playCounter,
-                     _intentLabel, _intentMode, _reset,
+                     _intentLabel, _intentMode, _saveDefault, _reset,
                  })
         {
             control.ApplyLocaleFontSubstitution(FontType.Regular, "font");
@@ -652,7 +665,8 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             "panel_hint_relics" => zh ? "恢复所有遗物的显示：已拥有/奖励/商店/宝箱/检视等（图鉴本就可见）" : "Restore every relic display: owned, rewards, shops, chests, inspect (compendium already visible)",
             "panel_hint_map_routes" => zh ? "地图显示全部节点与路线" : "Show every map node and route",
             "panel_hint_intent" => zh ? "敌人意图：不可见 / 仅第一回合 / 每回合可见" : "Enemy intents: hidden / first round only / every round",
-            "panel_hint_reset" => zh ? "把全部修改器选项恢复为默认值" : "Restore every modifier option to its default",
+            "panel_hint_save_default" => zh ? "把当前修改器设置保存为默认：之后「重置为默认」将恢复这些值（跨重进保留）" : "Save the current modifier settings as your defaults: Reset to defaults will restore these (kept across launches)",
+            "panel_hint_reset" => zh ? "把全部修改器选项恢复为默认值（你自己保存的默认，或出厂默认）" : "Restore every modifier option (your saved defaults, or the factory defaults)",
             _ => zh ? "拖动标题栏可移动 · 修改即时生效" : "Drag the title bar to move · changes apply instantly",
         };
         return T(hintKey, fallback);
@@ -904,14 +918,42 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         DifficultyRuntime.NotifyChanged();
     }
 
+    private void OnSaveAsDefault()
+    {
+        DifficultyRuntime.SaveCurrentAsDefaults();
+        ShowSavedFeedback();
+    }
+
+    private void ShowSavedFeedback()
+    {
+        try
+        {
+            var zh = ModLocalization.IsChinese;
+            _saveDefault.Text = T("panel_saved_default", zh ? "已保存为默认" : "Saved as default");
+            var timer = GetTree()?.CreateTimer(1.5);
+            if (timer != null)
+            {
+                timer.Timeout += () =>
+                {
+                    if (GodotObject.IsInstanceValid(this))
+                    {
+                        Localize();
+                    }
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            PatchGuard.Run("DifficultyPanel.SaveDefault", () => throw ex);
+        }
+    }
+
     private void OnReset()
     {
-        DifficultyRuntime.Current.ApplyDefaults();
-        BlurSalt.PerLaunch = true;
+        DifficultyRuntime.ResetToDefaults();
         ApplyFromSettings();
         _blurPending = true;
         PlayCounterTracker.OnSettingChanged();
-        DifficultyRuntime.NotifyChanged();
     }
 
     private void UpdateBadNVisibility()

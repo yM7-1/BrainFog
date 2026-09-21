@@ -9,20 +9,20 @@ public class DifficultySettingsTests
     public void Defaults_MatchTheDocumentedState()
     {
         var settings = new DifficultySettings();
-        Assert.Equal(SelectionRevealOption.None, settings.SelectionReveal);
-        Assert.False(settings.RevealShopAndEventCards);
+        Assert.Equal(SelectionRevealOption.All, settings.SelectionReveal);
+        Assert.True(settings.RevealShopAndEventCards);
         Assert.Equal(CardMemoryMode.BadMemory, settings.MemoryMode);
         Assert.Equal(2, settings.BadMemoryThreshold);
         Assert.True(settings.MemoryFade);
         Assert.False(settings.PlayCounter);
         Assert.False(settings.SnapshotStatus);
-        Assert.False(settings.ReadableStatusNumbers);
+        Assert.True(settings.ReadableStatusNumbers);
         Assert.Equal(50, settings.TextBlurPercent);
         Assert.Equal(BlurSaltMode.PerLaunch, settings.SaltMode);
-        Assert.False(settings.ShowRelics);
-        Assert.False(settings.ShowAllMapRoutes);
-        Assert.Equal(IntentVisibility.Hidden, settings.IntentMode);
-        Assert.False(settings.EnemyModelsVisible);
+        Assert.True(settings.ShowRelics);
+        Assert.True(settings.ShowAllMapRoutes);
+        Assert.Equal(IntentVisibility.All, settings.IntentMode);
+        Assert.True(settings.EnemyModelsVisible);
     }
 
     [Fact]
@@ -30,38 +30,38 @@ public class DifficultySettingsTests
     {
         var settings = new DifficultySettings
         {
-            SelectionReveal = SelectionRevealOption.All,
-            RevealShopAndEventCards = true,
+            SelectionReveal = SelectionRevealOption.None,
+            RevealShopAndEventCards = false,
             MemoryMode = CardMemoryMode.Omniscient,
             BadMemoryThreshold = 7,
             MemoryFade = false,
             PlayCounter = true,
             SnapshotStatus = true,
-            ReadableStatusNumbers = true,
+            ReadableStatusNumbers = false,
             TextBlurPercent = 99,
             SaltMode = BlurSaltMode.Fixed,
-            ShowRelics = true,
-            ShowAllMapRoutes = true,
-            IntentMode = IntentVisibility.All,
-            EnemyModelsVisible = true,
+            ShowRelics = false,
+            ShowAllMapRoutes = false,
+            IntentMode = IntentVisibility.Hidden,
+            EnemyModelsVisible = false,
         };
 
         settings.ApplyDefaults();
 
-        Assert.Equal(SelectionRevealOption.None, settings.SelectionReveal);
-        Assert.False(settings.RevealShopAndEventCards);
+        Assert.Equal(SelectionRevealOption.All, settings.SelectionReveal);
+        Assert.True(settings.RevealShopAndEventCards);
         Assert.Equal(CardMemoryMode.BadMemory, settings.MemoryMode);
         Assert.Equal(2, settings.BadMemoryThreshold);
         Assert.True(settings.MemoryFade);
         Assert.False(settings.PlayCounter);
         Assert.False(settings.SnapshotStatus);
-        Assert.False(settings.ReadableStatusNumbers);
+        Assert.True(settings.ReadableStatusNumbers);
         Assert.Equal(50, settings.TextBlurPercent);
         Assert.Equal(BlurSaltMode.PerLaunch, settings.SaltMode);
-        Assert.False(settings.ShowRelics);
-        Assert.False(settings.ShowAllMapRoutes);
-        Assert.Equal(IntentVisibility.Hidden, settings.IntentMode);
-        Assert.False(settings.EnemyModelsVisible);
+        Assert.True(settings.ShowRelics);
+        Assert.True(settings.ShowAllMapRoutes);
+        Assert.Equal(IntentVisibility.All, settings.IntentMode);
+        Assert.True(settings.EnemyModelsVisible);
     }
 
     [Theory]
@@ -150,4 +150,47 @@ public class DifficultySettingsTests
             Assert.Equal(index, DifficultySettings.ToIndex(DifficultySettings.FromIndex(index)));
         }
     }
+    [Fact]
+    public void CopyFrom_ClonesEveryOption()
+    {
+        var source = new DifficultySettings
+        {
+            SelectionReveal = SelectionRevealOption.RandomTwo,
+            RevealShopAndEventCards = false,
+            MemoryMode = CardMemoryMode.Nonsense,
+            BadMemoryThreshold = 5,
+            MemoryFade = false,
+            PlayCounter = true,
+            SnapshotStatus = true,
+            ReadableStatusNumbers = false,
+            TextBlurPercent = 73,
+            SaltMode = BlurSaltMode.Fixed,
+            ShowRelics = false,
+            ShowAllMapRoutes = false,
+            IntentMode = IntentVisibility.FirstRoundOnly,
+            EnemyModelsVisible = false,
+        };
+        var target = new DifficultySettings();
+
+        target.CopyFrom(source);
+
+        Assert.Equal(SelectionRevealOption.RandomTwo, target.SelectionReveal);
+        Assert.False(target.RevealShopAndEventCards);
+        Assert.Equal(CardMemoryMode.Nonsense, target.MemoryMode);
+        Assert.Equal(5, target.BadMemoryThreshold);
+        Assert.False(target.MemoryFade);
+        Assert.True(target.PlayCounter);
+        Assert.True(target.SnapshotStatus);
+        Assert.False(target.ReadableStatusNumbers);
+        Assert.Equal(73, target.TextBlurPercent);
+        Assert.Equal(BlurSaltMode.Fixed, target.SaltMode);
+        Assert.False(target.ShowRelics);
+        Assert.False(target.ShowAllMapRoutes);
+        Assert.Equal(IntentVisibility.FirstRoundOnly, target.IntentMode);
+        Assert.False(target.EnemyModelsVisible);
+
+        source.TextBlurPercent = 1;
+        Assert.Equal(73, target.TextBlurPercent); // independent copy
+    }
+
 }

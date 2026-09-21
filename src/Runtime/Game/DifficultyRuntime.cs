@@ -13,9 +13,13 @@ internal static class DifficultyRuntime
     private const string SettingsPath = "user://BrainFog/settings.cfg";
     private const string SettingsDir = "user://BrainFog";
     private const string Section = "difficulty";
+    private const string DefaultsSection = "defaults";
     private const string UiSection = "ui";
 
     public static DifficultySettings Current { get; } = new();
+
+    /// <summary>What the reset button restores (custom defaults or factory).</summary>
+    public static DifficultySettings Defaults { get; } = new();
 
     /// <summary>Unified blur ratio for every garbled text (0–100).</summary>
     public static int TextBlurPercent => DifficultySettings.ClampBlurPercent(Current.TextBlurPercent);
@@ -52,44 +56,38 @@ internal static class DifficultyRuntime
                 return;
             }
 
+            var factory = new DifficultySettings();
+
+            // Defaults the "reset" button restores: the player's saved custom
+            // defaults when present (user change 2026-09-21), else factory.
+            CustomDefaults = config.HasSectionKey(DefaultsSection, "memory_mode");
+            if (CustomDefaults)
+            {
+                ReadInto(Defaults, config, DefaultsSection, factory);
+            }
+
             // Pre-0.2.4 configs had per-context options (same-name/reveal-all/
             // intent toggle): start from the documented defaults instead of
             // carrying those obsolete values over (2026-09-21).
             if (!config.HasSectionKey(Section, "memory_mode"))
             {
-                Current.ApplyDefaults();
-                BlurSalt.PerLaunch = true;
+                Current.CopyFrom(Defaults);
             }
             else
             {
-                Current.SelectionReveal = DifficultySettings.ParseSelectionReveal(
-                    config.GetValue(Section, "selection_reveal", "none").AsString());
-                Current.RevealShopAndEventCards = config.GetValue(Section, "reveal_shop_event", false).AsBool();
-                Current.TextBlurPercent = DifficultySettings.ClampBlurPercent(
-                    config.GetValue(Section, "text_blur_percent", TextBlurPercents.Default).AsInt32());
-                Current.SaltMode = BlurSaltModeRules.Parse(
-                    config.GetValue(Section, "blur_salt_mode", "per-launch").AsString());
-                Current.MemoryMode = CardMemoryModeRules.Parse(
-                    config.GetValue(Section, "memory_mode", "bad").AsString());
-                Current.BadMemoryThreshold = DifficultySettings.ClampBadMemoryThreshold(
-                    config.GetValue(Section, "bad_memory_n", 2).AsInt32());
-                Current.MemoryFade = config.GetValue(Section, "memory_fade", true).AsBool();
-                Current.PlayCounter = config.GetValue(Section, "play_counter", false).AsBool();
-                Current.SnapshotStatus = config.GetValue(Section, "snapshot_status", false).AsBool();
-                Current.ReadableStatusNumbers = config.GetValue(Section, "readable_status_numbers", false).AsBool();
                 // "show_relics" (2026-09-21) replaced "show_owned_relics"; the
                 // legacy value carries over so players who had it on keep relics
                 // visible (now in every context).
-                Current.ShowRelics = config.GetValue(
-                    Section,
-                    "show_relics",
-                    config.GetValue(Section, "show_owned_relics", false).AsBool()).AsBool();
-                Current.ShowAllMapRoutes = config.GetValue(Section, "show_map_routes", false).AsBool();
-                Current.IntentMode = IntentVisibilityRules.Parse(
-                    config.GetValue(Section, "intent_visibility", "hidden").AsString());
-                Current.EnemyModelsVisible = config.GetValue(Section, "enemy_models_visible", false).AsBool();
-                BlurSalt.PerLaunch = Current.SaltMode == BlurSaltMode.PerLaunch;
+                if (!config.HasSectionKey(Section, "show_relics"))
+                {
+                    config.SetValue(
+                        Section,
+                        "show_relics",
+                        config.GetValue(Section, "show_owned_relics", Defaults.ShowRelics).AsBool());
+                }
+                ReadInto(Current, config, Section, Defaults);
             }
+            BlurSalt.PerLaunch = Current.SaltMode == BlurSaltMode.PerLaunch;
 
             CounterCollapsed = config.GetValue(UiSection, "counter_collapsed", false).AsBool();
             PanelCollapsed = config.GetValue(UiSection, "collapsed", false).AsBool();
@@ -111,25 +109,60 @@ internal static class DifficultyRuntime
         }
     }
 
+    /// <summary>Reads one settings section; missing keys fall back to
+    /// <paramref name="fallback"/> (the player's defaults or factory).</summary>
+    private static void ReadInto(DifficultySettings target, ConfigFile config, string section, DifficultySettings fallback)
+    {
+        target.SelectionReveal = DifficultySettings.ParseSelectionReveal(
+            config.GetValue(section, "selection_reveal", DifficultySettings.ToStorage(fallback.SelectionReveal)).AsString());
+        target.RevealShopAndEventCards = config.GetValue(section, "reveal_shop_event", fallback.RevealShopAndEventCards).AsBool();
+        target.TextBlurPercent = DifficultySettings.ClampBlurPercent(
+            config.GetValue(section, "text_blur_percent", fallback.TextBlurPercent).AsInt32());
+        target.SaltMode = BlurSaltModeRules.Parse(
+            config.GetValue(section, "blur_salt_mode", BlurSaltModeRules.ToStorage(fallback.SaltMode)).AsString());
+        target.MemoryMode = CardMemoryModeRules.Parse(
+            config.GetValue(section, "memory_mode", CardMemoryModeRules.ToStorage(fallback.MemoryMode)).AsString());
+        target.BadMemoryThreshold = DifficultySettings.ClampBadMemoryThreshold(
+            config.GetValue(section, "bad_memory_n", fallback.BadMemoryThreshold).AsInt32());
+        target.MemoryFade = config.GetValue(section, "memory_fade", fallback.MemoryFade).AsBool();
+        target.PlayCounter = config.GetValue(section, "play_counter", fallback.PlayCounter).AsBool();
+        target.SnapshotStatus = config.GetValue(section, "snapshot_status", fallback.SnapshotStatus).AsBool();
+        target.ReadableStatusNumbers = config.GetValue(section, "readable_status_numbers", fallback.ReadableStatusNumbers).AsBool();
+        target.ShowRelics = config.GetValue(section, "show_relics", fallback.ShowRelics).AsBool();
+        target.ShowAllMapRoutes = config.GetValue(section, "show_map_routes", fallback.ShowAllMapRoutes).AsBool();
+        target.IntentMode = IntentVisibilityRules.Parse(
+            config.GetValue(section, "intent_visibility", IntentVisibilityRules.ToStorage(fallback.IntentMode)).AsString());
+        target.EnemyModelsVisible = config.GetValue(section, "enemy_models_visible", fallback.EnemyModelsVisible).AsBool();
+    }
+
+    private static void WriteInto(ConfigFile config, string section, DifficultySettings settings)
+    {
+        config.SetValue(section, "selection_reveal", DifficultySettings.ToStorage(settings.SelectionReveal));
+        config.SetValue(section, "reveal_shop_event", settings.RevealShopAndEventCards);
+        config.SetValue(section, "text_blur_percent", settings.TextBlurPercent);
+        config.SetValue(section, "blur_salt_mode", BlurSaltModeRules.ToStorage(settings.SaltMode));
+        config.SetValue(section, "memory_mode", CardMemoryModeRules.ToStorage(settings.MemoryMode));
+        config.SetValue(section, "bad_memory_n", settings.BadMemoryThreshold);
+        config.SetValue(section, "memory_fade", settings.MemoryFade);
+        config.SetValue(section, "play_counter", settings.PlayCounter);
+        config.SetValue(section, "snapshot_status", settings.SnapshotStatus);
+        config.SetValue(section, "readable_status_numbers", settings.ReadableStatusNumbers);
+        config.SetValue(section, "show_relics", settings.ShowRelics);
+        config.SetValue(section, "show_map_routes", settings.ShowAllMapRoutes);
+        config.SetValue(section, "intent_visibility", IntentVisibilityRules.ToStorage(settings.IntentMode));
+        config.SetValue(section, "enemy_models_visible", settings.EnemyModelsVisible);
+    }
+
     public static void Save() =>
         PatchGuard.Run("Difficulty.Save", () =>
         {
             Godot.DirAccess.MakeDirRecursiveAbsolute(SettingsDir);
             var config = new ConfigFile();
-            config.SetValue(Section, "selection_reveal", DifficultySettings.ToStorage(Current.SelectionReveal));
-            config.SetValue(Section, "reveal_shop_event", Current.RevealShopAndEventCards);
-            config.SetValue(Section, "text_blur_percent", Current.TextBlurPercent);
-            config.SetValue(Section, "blur_salt_mode", BlurSaltModeRules.ToStorage(Current.SaltMode));
-            config.SetValue(Section, "memory_mode", CardMemoryModeRules.ToStorage(Current.MemoryMode));
-            config.SetValue(Section, "bad_memory_n", Current.BadMemoryThreshold);
-            config.SetValue(Section, "memory_fade", Current.MemoryFade);
-            config.SetValue(Section, "play_counter", Current.PlayCounter);
-            config.SetValue(Section, "snapshot_status", Current.SnapshotStatus);
-            config.SetValue(Section, "readable_status_numbers", Current.ReadableStatusNumbers);
-            config.SetValue(Section, "show_relics", Current.ShowRelics);
-            config.SetValue(Section, "show_map_routes", Current.ShowAllMapRoutes);
-            config.SetValue(Section, "intent_visibility", IntentVisibilityRules.ToStorage(Current.IntentMode));
-            config.SetValue(Section, "enemy_models_visible", Current.EnemyModelsVisible);
+            WriteInto(config, Section, Current);
+            if (CustomDefaults)
+            {
+                WriteInto(config, DefaultsSection, Defaults);
+            }
             config.SetValue(UiSection, "counter_collapsed", CounterCollapsed);
             config.SetValue(UiSection, "collapsed", PanelCollapsed);
             config.SetValue(UiSection, "docked", PanelDocked);
@@ -142,6 +175,28 @@ internal static class DifficultyRuntime
             }
             config.Save(SettingsPath);
         });
+
+    /// <summary>Applies the reset target: the player's saved defaults when they
+    /// pressed "set current as default", else the factory defaults.</summary>
+    public static void ResetToDefaults()
+    {
+        Current.CopyFrom(Defaults);
+        BlurSalt.PerLaunch = Current.SaltMode == BlurSaltMode.PerLaunch;
+        NotifyChanged();
+    }
+
+    /// <summary>"Set current as default" (user change 2026-09-21): stores the
+    /// current modifier settings as the defaults that reset restores; persisted
+    /// in the mod's config and kept across launches.</summary>
+    public static void SaveCurrentAsDefaults()
+    {
+        Defaults.CopyFrom(Current);
+        CustomDefaults = true;
+        Save();
+    }
+
+    /// <summary>True when the player has saved custom defaults.</summary>
+    public static bool CustomDefaults { get; private set; }
 
     public static void SetPanelCollapsed(bool collapsed)
     {
