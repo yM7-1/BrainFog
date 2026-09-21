@@ -14,7 +14,6 @@ public class DifficultySettingsTests
         Assert.Equal(CardMemoryMode.BadMemory, settings.MemoryMode);
         Assert.Equal(2, settings.BadMemoryThreshold);
         Assert.True(settings.MemoryFade);
-        Assert.False(settings.PlayCounter);
         Assert.False(settings.SnapshotStatus);
         Assert.True(settings.ReadableStatusNumbers);
         Assert.Equal(50, settings.TextBlurPercent);
@@ -35,7 +34,6 @@ public class DifficultySettingsTests
             MemoryMode = CardMemoryMode.Omniscient,
             BadMemoryThreshold = 7,
             MemoryFade = false,
-            PlayCounter = true,
             SnapshotStatus = true,
             ReadableStatusNumbers = false,
             TextBlurPercent = 99,
@@ -53,7 +51,6 @@ public class DifficultySettingsTests
         Assert.Equal(CardMemoryMode.BadMemory, settings.MemoryMode);
         Assert.Equal(2, settings.BadMemoryThreshold);
         Assert.True(settings.MemoryFade);
-        Assert.False(settings.PlayCounter);
         Assert.False(settings.SnapshotStatus);
         Assert.True(settings.ReadableStatusNumbers);
         Assert.Equal(50, settings.TextBlurPercent);
@@ -160,7 +157,6 @@ public class DifficultySettingsTests
             MemoryMode = CardMemoryMode.Nonsense,
             BadMemoryThreshold = 5,
             MemoryFade = false,
-            PlayCounter = true,
             SnapshotStatus = true,
             ReadableStatusNumbers = false,
             TextBlurPercent = 73,
@@ -179,7 +175,6 @@ public class DifficultySettingsTests
         Assert.Equal(CardMemoryMode.Nonsense, target.MemoryMode);
         Assert.Equal(5, target.BadMemoryThreshold);
         Assert.False(target.MemoryFade);
-        Assert.True(target.PlayCounter);
         Assert.True(target.SnapshotStatus);
         Assert.False(target.ReadableStatusNumbers);
         Assert.Equal(73, target.TextBlurPercent);

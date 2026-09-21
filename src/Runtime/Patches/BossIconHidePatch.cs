@@ -8,9 +8,9 @@ namespace BrainFog.Patches;
 /// <summary>
 /// The top-bar act-boss icon ("boss, the mightiest enemy of the region") is
 /// hidden by default (user change 2026-09-19). Since 0.3.4 the difficulty
-/// option "show all map routes" restores it completely: the icon, its focus and
-/// its original hover description. The map's own boss point is owned by
-/// <see cref="BossMapPointMaskPatch"/>.
+/// option "show all map routes" restores it: the icon and its focus; its hover
+/// description follows the unified blur ratio (2026-09-21 supplement). The
+/// map's own boss point is owned by <see cref="BossMapPointMaskPatch"/>.
 /// </summary>
 [HarmonyPatch(typeof(NTopBarBossIcon))]
 internal static class BossIconHidePatch

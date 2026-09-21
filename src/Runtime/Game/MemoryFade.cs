@@ -89,7 +89,6 @@ internal static class MemoryFade
     private static void Finish(Player player, int count, List<string> ids)
     {
         RevealPersistence.OnCardsRemoved(player, ids);
-        PlayCounterTracker.OnCardsRemoved(ids);
         foreach (var id in ids)
         {
             ModRuntime.Tracker.HideInstance(id);

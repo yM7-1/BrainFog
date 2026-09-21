@@ -36,9 +36,9 @@ internal static class CardPileHandRemovePatch
 }
 
 /// <summary>
-/// Deck additions (rewards, shops, events, transforms): numbers the new copy
-/// for the play counter and, in bad-memory mode, starts it revealed
-/// (user change 2026-09-21). Covers silent additions too.
+/// Deck additions (rewards, shops, events, transforms): in bad-memory mode the
+/// new copy starts revealed (user change 2026-09-21). Covers silent additions
+/// too.
 /// </summary>
 [HarmonyPatch(typeof(CardPile), "AddInternal")]
 internal static class CardPileDeckAddPatch
@@ -48,7 +48,7 @@ internal static class CardPileDeckAddPatch
     {
         if (__instance.Type == PileType.Deck)
         {
-            Game.PlayCounterTracker.OnCardAddedToDeck(card);
+            Game.BadMemoryTracker.OnCardAddedToDeck(card);
         }
     }
 }

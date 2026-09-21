@@ -48,14 +48,22 @@ internal sealed partial class BreathingBox : ColorRect
         if (_probeTimer >= ProbeIntervalSeconds)
         {
             _probeTimer = 0;
-            using var track = Creature.SpineAnimation.GetCurrentTrack(0);
-            if (track != null)
+            var track = Creature.SpineAnimation.GetCurrentTrack(0);
+            try
             {
-                var duration = track.GetAnimationDuration();
-                if (duration > 0.001f)
+                if (track != null)
                 {
-                    _duration = duration;
+                    var duration = track.GetAnimationDuration();
+                    if (duration > 0.001f)
+                    {
+                        _duration = duration;
+                    }
                 }
+            }
+            finally
+            {
+                // MegaSpineBinding only implements IDisposable from 0.108+; keep both branches happy.
+                (track as IDisposable)?.Dispose();
             }
         }
 

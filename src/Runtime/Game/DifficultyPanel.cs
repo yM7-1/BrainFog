@@ -55,7 +55,6 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     private Label _badNLabel = null!;
     private SpinBox _badN = null!;
     private CheckButton _memoryFade = null!;
-    private CheckButton _playCounter = null!;
     private CheckButton _enemyModels = null!;
     private Label _intentLabel = null!;
     private OptionButton _intentMode = null!;
@@ -284,11 +283,6 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _body.AddChild(_memoryFade);
         BindHint(_memoryFade, "panel_hint_memory_fade");
 
-        _playCounter = new CheckButton();
-        _playCounter.Toggled += OnPlayCounterToggled;
-        _body.AddChild(_playCounter);
-        BindHint(_playCounter, "panel_hint_play_counter");
-
         _sectionPerception = Section();
         _body.AddChild(_sectionPerception);
 
@@ -426,7 +420,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
                      _selectionLabel, _selection, _shopEvent,
                      _snapshotStatus, _statusNumbers, _relics, _mapRoutes, _enemyModels, _tip,
                      _sectionText, _blurLabel, _saltLabel, _saltMode,
-                     _memoryLabel, _memoryMode, _badNLabel, _badN, _memoryFade, _playCounter,
+                     _memoryLabel, _memoryMode, _badNLabel, _badN, _memoryFade,
                      _intentLabel, _intentMode, _saveDefault, _reset,
                  })
         {
@@ -480,7 +474,6 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _badNLabel.Text = T("panel_memory_n", zh ? "n =（卡牌上手n次未打出则失忆）" : "n = (forget after n unplayed draws)");
 
         _memoryFade.Text = T("panel_memory_fade", zh ? "记忆消逝" : "Memory fade");
-        _playCounter.Text = T("panel_play_counter", zh ? "卡牌计数器" : "Play counter");
 
         _snapshotStatus.Text = T("panel_amnesia_status", zh ? "血量/金币失忆模式" : "HP/gold amnesia mode");
         _statusNumbers.Text = T("panel_status_numbers", zh ? "血量数/金币数恢复正常显示" : "Readable HP/gold numbers");
@@ -512,7 +505,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
                      _title, _sectionText, _sectionCognition, _sectionPerception, _selectionLabel,
                      _selection, _shopEvent, _snapshotStatus, _statusNumbers, _relics, _mapRoutes, _enemyModels,
                      _tip, _dock, _tab, _blurLabel, _saltLabel, _saltMode,
-                     _memoryLabel, _memoryMode, _badNLabel, _badN, _memoryFade, _playCounter,
+                     _memoryLabel, _memoryMode, _badNLabel, _badN, _memoryFade,
                      _intentLabel, _intentMode, _saveDefault, _reset,
                  })
         {
@@ -656,7 +649,6 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             "panel_hint_memory_omniscient" => zh ? "通晓万物：全部卡牌全局揭示" : "Omniscience: every card is revealed everywhere",
             "panel_hint_memory_nonsense" => zh ? "歪比巴卜：卡牌永不揭示" : "Nonsense: cards are never revealed",
             "panel_hint_memory_fade" => zh ? "战斗结束时仍处于未揭示状态的卡牌会从卡组中移除（歪比巴卜模式不受影响）" : "Cards still unrevealed at the end of a combat are removed from the deck (nonsense mode exempt)",
-            "panel_hint_play_counter" => zh ? "记录每张牌（同名按加入顺序编号）本局打出的次数，并在右上角显示排行榜" : "Count plays per copy (same-name copies numbered by joining order) and show a top-right leaderboard",
             "panel_hint_enemy_models" => zh ? "开启后敌人显示真实模型（默认关闭：只有呼吸方框）" : "Show real enemy models (default off: breathing boxes only)",
             "panel_hint_salt" => zh ? "固定混乱：乱码不随重进变化；混乱混乱：每次重进游戏重新随机" : "Fixed: garbling never changes; Chaos: re-rolled on every launch",
             "panel_hint_amnesia_status" => zh ? "开启后血量与金币停留在上次休息时（灰显标注）" : "HP and gold stay at the values from your last rest (shown gray)",
@@ -807,7 +799,6 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             _memoryMode.Selected = CardMemoryModeRules.ToIndex(settings.MemoryMode);
             _badN.Value = settings.BadMemoryThreshold;
             _memoryFade.ButtonPressed = settings.MemoryFade;
-            _playCounter.ButtonPressed = settings.PlayCounter;
             UpdateBadNVisibility();
             _relics.ButtonPressed = settings.ShowRelics;
             _mapRoutes.ButtonPressed = settings.ShowAllMapRoutes;
@@ -897,17 +888,6 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         DifficultyRuntime.NotifyChanged();
     }
 
-    private void OnPlayCounterToggled(bool pressed)
-    {
-        if (_applying)
-        {
-            return;
-        }
-        DifficultyRuntime.Current.PlayCounter = pressed;
-        PlayCounterTracker.OnSettingChanged();
-        DifficultyRuntime.NotifyChanged();
-    }
-
     private void OnEnemyModelsToggled(bool pressed)
     {
         if (_applying)
@@ -953,7 +933,6 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         DifficultyRuntime.ResetToDefaults();
         ApplyFromSettings();
         _blurPending = true;
-        PlayCounterTracker.OnSettingChanged();
     }
 
     private void UpdateBadNVisibility()

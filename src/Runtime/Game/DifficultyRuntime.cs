@@ -38,9 +38,6 @@ internal static class DifficultyRuntime
     /// <summary>Docked tab position, normalized to the viewport (0..1).</summary>
     public static float PanelDockY { get; private set; } = 0.5f;
 
-    /// <summary>Play-counter leaderboard collapsed to its title bar.</summary>
-    public static bool CounterCollapsed { get; private set; }
-
     /// <summary>Dragged panel position, normalized to the viewport (0..1).</summary>
     public static bool HasPanelPosition { get; private set; }
     public static float PanelPositionX { get; private set; }
@@ -89,7 +86,6 @@ internal static class DifficultyRuntime
             }
             BlurSalt.PerLaunch = Current.SaltMode == BlurSaltMode.PerLaunch;
 
-            CounterCollapsed = config.GetValue(UiSection, "counter_collapsed", false).AsBool();
             PanelCollapsed = config.GetValue(UiSection, "collapsed", false).AsBool();
             PanelDocked = config.GetValue(UiSection, "docked", false).AsBool();
             PanelDockSide = config.GetValue(UiSection, "dock_side", 0).AsInt32() == 1 ? 1 : 0;
@@ -125,7 +121,6 @@ internal static class DifficultyRuntime
         target.BadMemoryThreshold = DifficultySettings.ClampBadMemoryThreshold(
             config.GetValue(section, "bad_memory_n", fallback.BadMemoryThreshold).AsInt32());
         target.MemoryFade = config.GetValue(section, "memory_fade", fallback.MemoryFade).AsBool();
-        target.PlayCounter = config.GetValue(section, "play_counter", fallback.PlayCounter).AsBool();
         target.SnapshotStatus = config.GetValue(section, "snapshot_status", fallback.SnapshotStatus).AsBool();
         target.ReadableStatusNumbers = config.GetValue(section, "readable_status_numbers", fallback.ReadableStatusNumbers).AsBool();
         target.ShowRelics = config.GetValue(section, "show_relics", fallback.ShowRelics).AsBool();
@@ -144,7 +139,6 @@ internal static class DifficultyRuntime
         config.SetValue(section, "memory_mode", CardMemoryModeRules.ToStorage(settings.MemoryMode));
         config.SetValue(section, "bad_memory_n", settings.BadMemoryThreshold);
         config.SetValue(section, "memory_fade", settings.MemoryFade);
-        config.SetValue(section, "play_counter", settings.PlayCounter);
         config.SetValue(section, "snapshot_status", settings.SnapshotStatus);
         config.SetValue(section, "readable_status_numbers", settings.ReadableStatusNumbers);
         config.SetValue(section, "show_relics", settings.ShowRelics);
@@ -163,7 +157,6 @@ internal static class DifficultyRuntime
             {
                 WriteInto(config, DefaultsSection, Defaults);
             }
-            config.SetValue(UiSection, "counter_collapsed", CounterCollapsed);
             config.SetValue(UiSection, "collapsed", PanelCollapsed);
             config.SetValue(UiSection, "docked", PanelDocked);
             config.SetValue(UiSection, "dock_side", PanelDockSide);
@@ -201,13 +194,6 @@ internal static class DifficultyRuntime
     public static void SetPanelCollapsed(bool collapsed)
     {
         PanelCollapsed = collapsed;
-        Save();
-    }
-
-    /// <summary>Collapses/expands the play-counter leaderboard (persisted).</summary>
-    public static void SetCounterCollapsed(bool collapsed)
-    {
-        CounterCollapsed = collapsed;
         Save();
     }
 

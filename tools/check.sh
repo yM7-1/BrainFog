@@ -11,12 +11,39 @@ export STS2_DATA_DIR
 
 cd "$(dirname "$0")/.."
 
-echo "==> build"
+REFS_DIR="${STS2_REFS_DIR:-$PWD/.refs/sts2-refs}"
+REF_MIN="$REFS_DIR/0.107.1"
+REF_BETA="$REFS_DIR/0.111.0"
+
+if [ ! -f "$REF_MIN/sts2.dll" ]; then
+  echo "!! min-version reference assemblies missing at $REF_MIN" >&2
+  echo "   run: bash tools/fetch-refs.sh" >&2
+  exit 1
+fi
+
+echo "==> build (installed game: $STS2_DATA_DIR)"
 dotnet build BrainFog.csproj -c Release -p:CopyModOnBuild=false \
+  -p:Sts2UseLocalGame=true \
   -p:SteamRoot="$STEAM_ROOT" \
   -p:Sts2DataDir="$STS2_DATA_DIR" \
   -v minimal -nologo
 
-echo "==> test"
+echo "==> test (core + audit: installed game)"
 dotnet test tests/BrainFog.Tests/BrainFog.Tests.csproj -c Release \
+  -v minimal -nologo
+
+echo "==> build (min game version 0.107.1)"
+dotnet build BrainFog.csproj -c Release -p:CopyModOnBuild=false \
+  -p:SteamRoot="$STEAM_ROOT" \
+  -p:Sts2DataDir="$REF_MIN" \
+  -p:RitsuLibReferenceTarget=0.107.1 \
+  -v minimal -nologo
+
+AUDIT_DIRS="$REF_MIN"
+if [ -f "$REF_BETA/sts2.dll" ]; then
+  AUDIT_DIRS="$AUDIT_DIRS:$REF_BETA"
+fi
+
+echo "==> test (audit: $AUDIT_DIRS)"
+STS2_AUDIT_DIRS="$AUDIT_DIRS" dotnet test tests/BrainFog.Tests/BrainFog.Tests.csproj -c Release \
   -v minimal -nologo

@@ -27,7 +27,6 @@ internal static class CardModelPlayRevealPatch
         if (!ModRuntime.Disabled)
         {
             Game.BadMemoryTracker.OnPlayed(__instance);
-            Game.PlayCounterTracker.OnPlayed(__instance);
         }
     }
 

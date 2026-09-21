@@ -6,13 +6,24 @@ namespace BrainFog.Tests;
 /// <summary>
 /// Audits that the game assembly still contains every symbol BrainFog patches.
 /// Add new patch targets to <see cref="PatchTargets"/>; the test verifies them all.
-/// Target game: STS2 v0.111.0.
+/// Target game versions: 0.107.1 (stable) and 0.111.0 (beta).
+/// Point <c>STS2_DATA_DIR</c> at one game data directory, or list several with
+/// <c>STS2_AUDIT_DIRS</c> (colon-separated) to audit them all in one run.
 /// </summary>
 public class PatchTargetAuditTests
 {
-    private static readonly string Sts2DataDir =
+    private static readonly string DefaultSts2DataDir =
         Environment.GetEnvironmentVariable("STS2_DATA_DIR")
         ?? "/mnt/d/Steam/steamapps/common/Slay the Spire 2/data_sts2_windows_x86_64";
+
+    public static IEnumerable<object[]> AuditTargets()
+    {
+        var configured = Environment.GetEnvironmentVariable("STS2_AUDIT_DIRS");
+        var dirs = string.IsNullOrWhiteSpace(configured)
+            ? new[] { DefaultSts2DataDir }
+            : configured.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return dirs.Select(dir => new object[] { dir });
+    }
 
     private enum Kind
     {
@@ -378,13 +389,13 @@ public class PatchTargetAuditTests
         return true;
     }
 
-    private static MetadataLoadContext CreateContext()
+    private static MetadataLoadContext CreateContext(string sts2DataDir)
     {
         var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var assemblies = new List<string>();
         var candidates = Directory.GetFiles(runtimeDir, "*.dll")
-            .Concat(Directory.GetFiles(Sts2DataDir, "*.dll"));
+            .Concat(Directory.GetFiles(sts2DataDir, "*.dll"));
         foreach (var path in candidates)
         {
             var name = Path.GetFileName(path);
@@ -400,17 +411,19 @@ public class PatchTargetAuditTests
         return new MetadataLoadContext(new PathAssemblyResolver(assemblies));
     }
 
-    [Fact]
-    public void GameAssembly_IsPresent()
+    [Theory]
+    [MemberData(nameof(AuditTargets))]
+    public void GameAssembly_IsPresent(string sts2DataDir)
     {
-        Assert.True(File.Exists(Path.Combine(Sts2DataDir, "sts2.dll")),
-            $"sts2.dll not found under {Sts2DataDir}");
+        Assert.True(File.Exists(Path.Combine(sts2DataDir, "sts2.dll")),
+            $"sts2.dll not found under {sts2DataDir}");
     }
 
-    [Fact]
-    public void AllPatchTargets_Exist()
+    [Theory]
+    [MemberData(nameof(AuditTargets))]
+    public void AllPatchTargets_Exist(string sts2DataDir)
     {
-        using var ctx = CreateContext();
+        using var ctx = CreateContext(sts2DataDir);
         var sts2 = ctx.LoadFromAssemblyName(new AssemblyName("sts2"));
         var failures = new List<string>();
 

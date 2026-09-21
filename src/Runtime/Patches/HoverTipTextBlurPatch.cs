@@ -7,9 +7,11 @@ namespace BrainFog.Patches;
 /// <summary>
 /// Hover tips follow the unified blur ratio (user change 2026-09-21): titles
 /// and descriptions are garbled like all other text.
-/// Exempt: enemy intent tooltips (attack numbers/actions stay readable), the
-/// settings screens, the card compendium, and (since 0.3.4) the map boss icon
-/// and map legend tips while "show all map routes" is on.
+/// Exempt: enemy intent tooltips (attack numbers/actions stay readable) and the
+/// settings screens / card compendium.
+/// Since 2026-09-21 (supplement) the act-boss icon and map legend tips are no
+/// longer exempt while "show all map routes" is on: their restored descriptions
+/// follow the text module's blur percentage too.
 /// </summary>
 [HarmonyPatch(typeof(NHoverTipSet), "Init")]
 internal static class HoverTipTextBlurPatch
@@ -21,26 +23,6 @@ internal static class HoverTipTextBlurPatch
         "Cowardly", "Heal", "Sleeping", "Stunned", "Summon",
         "攻势", "强化", "恶意", "濒死一击", "策略", "守势", "懦弱", "回复", "沉睡", "击晕", "召唤",
     };
-
-    /// <summary>True for the top-bar act-boss icon and map legend tips while
-    /// the "show all map routes" option is on (0.3.4): the original act-boss
-    /// description and legend text stay readable.</summary>
-    private static bool IsMapInfoTip(NHoverTipSet set)
-    {
-        if (!Game.DifficultyRuntime.Current.ShowAllMapRoutes)
-        {
-            return false;
-        }
-        for (Node? node = set._owner; node != null; node = node.GetParent())
-        {
-            var typeName = node.GetType().Name;
-            if (typeName is "NTopBarBossIcon" or "NMapLegendItem")
-            {
-                return true;
-            }
-        }
-        return false;
-    }
 
     /// <summary>True for hover tips built from the intent tables (enemy intent numbers).</summary>
     private static bool IsIntentHoverTip(NHoverTipSet set)
@@ -95,11 +77,6 @@ internal static class HoverTipTextBlurPatch
             }
 
             if (IsExempt(__instance))
-            {
-                return;
-            }
-
-            if (IsMapInfoTip(__instance))
             {
                 return;
             }

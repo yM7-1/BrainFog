@@ -8,8 +8,7 @@ namespace BrainFog.Game;
 /// Fresh run (user change 2026-09-21): the starting deck counts as known.
 /// Good memory reveals the definitions for the run, bad memory reveals the
 /// copies (they can still be forgotten later); omniscience needs nothing and
-/// nonsense stays never-revealed. Also assigns the play-counter numbers for
-/// every starting-deck copy (stable numbering).
+/// nonsense stays never-revealed.
 /// </summary>
 internal static class InitialReveal
 {
@@ -46,7 +45,6 @@ internal static class InitialReveal
             RevealPersistence.OnInitialReveal(player, keys, ids);
         }
 
-        PlayCounterTracker.EnsureDeckNumbers(state);
         CardFogRenderer.RefreshAllLiveCards();
     }
 }

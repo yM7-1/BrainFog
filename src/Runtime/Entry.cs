@@ -36,15 +36,6 @@ public static class Entry
         tree.Root.CallDeferred(Godot.Node.MethodName.AddChild, new Game.DifficultyPanel { Name = "BrainFogDifficultyPanelLayer" });
     }
 
-    private static void TryAttachPlayCounterPanel()
-    {
-        if (Godot.Engine.GetMainLoop() is not Godot.SceneTree tree || tree.Root == null)
-        {
-            return;
-        }
-        tree.Root.CallDeferred(Godot.Node.MethodName.AddChild, new Game.PlayCounterPanel { Name = "BrainFogPlayCounterLayer" });
-    }
-
     public static void Initialize()
     {
         try

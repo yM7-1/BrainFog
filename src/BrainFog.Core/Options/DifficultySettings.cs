@@ -46,10 +46,6 @@ public sealed class DifficultySettings
     /// memory; nonsense mode is exempt. On by default.</summary>
     public bool MemoryFade { get; set; } = true;
 
-    /// <summary>"Play counter" (user change 2026-09-21): count every play per
-    /// card copy for the run and show the top-right leaderboard. Off by default.</summary>
-    public bool PlayCounter { get; set; }
-
     /// <summary>HP/gold show the stale "state at last rest" snapshot instead of
     /// live values (default: live values, garbled like all text).</summary>
     public bool SnapshotStatus { get; set; }
@@ -94,7 +90,6 @@ public sealed class DifficultySettings
         MemoryMode = other.MemoryMode;
         BadMemoryThreshold = other.BadMemoryThreshold;
         MemoryFade = other.MemoryFade;
-        PlayCounter = other.PlayCounter;
         SnapshotStatus = other.SnapshotStatus;
         ReadableStatusNumbers = other.ReadableStatusNumbers;
         ShowRelics = other.ShowRelics;

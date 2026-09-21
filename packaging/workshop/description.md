@@ -6,8 +6,8 @@
 主标题界面与对局内均可操作（可拖动/收起/缩进屏幕边缘；「当前设置为默认」保存自己的默认，「重置为默认」一键恢复）：
 
 - **文字**：乱码百分比 0%–100% 自由调节；乱码模式：固定混乱（重进不变）/ 混乱混乱（每次重进重新随机）
-- **认知**：卡牌奖励揭示（不揭示 / 随机揭示1-3张 / 奖励全部揭示）；商店与事件卡面揭示开关；卡牌记忆四模式；记忆消逝开关；卡牌计数器
-- **感知**：血量/金币失忆模式；血量数/金币数恢复正常显示；显示遗物（全场景恢复：已拥有/奖励/商店/宝箱/检视/跑图历史）；显示地图所有路线（含阶段 Boss 图标/描述与图例恢复）；敌人模型可见；敌人意图（不可见 / 仅第一回合 / 全部可见）
+- **认知**：卡牌奖励揭示（不揭示 / 随机揭示1-3张 / 奖励全部揭示）；商店与事件卡面揭示开关；卡牌记忆四模式；记忆消逝开关
+- **感知**：血量/金币失忆模式；血量数/金币数恢复正常显示；显示遗物（全场景恢复：已拥有/奖励/商店/宝箱/检视/跑图历史）；显示地图所有路线（含阶段 Boss 图标与图例恢复；其悬停描述仍随乱码百分比）；敌人模型可见；敌人意图（不可见 / 仅第一回合 / 全部可见）
 
 默认配置偏辅助：卡牌奖励全部揭示、商店/事件卡面揭示、血量/金币数值可读、遗物可见、地图全路线、敌人模型与敌人意图可见；可逐项恢复难度，并用「当前设置为默认」保存自己的默认。
 
@@ -18,7 +18,7 @@
 - **坏记性**（默认）：每张卡上手 n 次未打出就会忘记（n 默认 2、可调）；打出重置计数；新获得的牌先认得，即将失忆的手牌会变暗提醒
 - **歪比巴卜**：卡牌永不揭示
 
-开局牌组视为记得（好记性/坏记性）。**记忆消逝**（开关，默认开）：战斗结束时仍未揭示的牌会从卡组中移除，并播放原版删卡动画（歪比巴卜模式不受影响，无保底）。**卡牌计数器**（开关，默认关）：记录每张牌（同名按加入顺序编号，如「打击1」）本局打出的次数，右上角显示可收起的排行榜。
+开局牌组视为记得（好记性/坏记性）。**记忆消逝**（开关，默认开）：战斗结束时仍未揭示的牌会从卡组中移除，并播放原版删卡动画（歪比巴卜模式不受影响，无保底）。
 
 ## 核心效果
 
@@ -27,7 +27,7 @@
 - **记忆失真**：血量与金币默认实时且数值可读；可切换失忆模式停留在「上次休息时」，或关闭「血量数/金币数恢复正常显示」让数值重新乱码
 - **世界模糊**：敌人默认显示真实模型（可关闭恢复呼吸方框）、名字隐藏；遗物默认可见（可关闭「显示遗物」恢复遮蔽）、药水只剩轮廓、地图迷雾、Boss 信息隐藏；受击/治疗数字乱码
 
-依赖 STS2 v0.111.0 与 RitsuLib 0.6.2；仅单人；卸载即恢复原版。
+支持 STS2 v0.107.1–v0.111.0（正式服/测试服）与 RitsuLib 0.6.2；仅单人；卸载即恢复原版。
 
 Github链接：https://github.com/yM7-1/BrainFog
 
@@ -42,8 +42,8 @@ Most text in the Spire is replaced with garbled static — use the built-in modi
 Available on the main menu and in-run (draggable, collapsible, dockable; Set current as default saves your defaults, Reset to defaults restores them):
 
 - **Text**: unified blur percentage 0%–100%; blur mode: fixed chaos / re-rolled on every launch
-- **Cognition**: card reward reveal (none / random 1-3 / all); shop & event card faces on/off; four card-memory modes; memory fade; play counter
-- **Perception**: HP/gold amnesia mode; readable HP/gold numbers; show relics (all contexts: owned/rewards/shops/chests/inspect/history); show all map routes (restores the act-boss icon/description and the legend); visible enemy models; enemy intents (hidden / first round only / always)
+- **Cognition**: card reward reveal (none / random 1-3 / all); shop & event card faces on/off; four card-memory modes; memory fade
+- **Perception**: HP/gold amnesia mode; readable HP/gold numbers; show relics (all contexts: owned/rewards/shops/chests/inspect/history); show all map routes (restores the act-boss icon and the legend; their hover descriptions still follow the text blur); visible enemy models; enemy intents (hidden / first round only / always)
 
 The default preset is lenient: all reward cards revealed, shop/event card faces revealed, readable HP/gold numbers, relics visible, all map routes, enemy models and intents visible. Tone the difficulty back up per option, or save your own defaults with Set current as default.
 
@@ -54,7 +54,7 @@ The default preset is lenient: all reward cards revealed, shop/event card faces 
 - **Bad memory** (default): a card is forgotten after n unplayed draws (n defaults to 2, adjustable); playing resets the counter; newly acquired cards start known, and a hand card about to be forgotten dims
 - **Nonsense**: cards are never revealed
 
-The starting deck counts as known (good/bad memory). **Memory fade** (on by default): cards still unrevealed at the end of a combat are removed from the deck with the original removal animation (nonsense mode exempt; no floor). **Play counter** (off by default): counts plays per copy (same-name copies numbered by joining order, e.g. "Strike1") and shows a collapsible top-right leaderboard.
+The starting deck counts as known (good/bad memory). **Memory fade** (on by default): cards still unrevealed at the end of a combat are removed from the deck with the original removal animation (nonsense mode exempt; no floor). 
 
 ## Core effects
 
@@ -63,7 +63,7 @@ The starting deck counts as known (good/bad memory). **Memory fade** (on by defa
 - **Faulty memory**: HP and gold are live and readable by default; switch on amnesia mode to freeze them at your last rest, or turn readable HP/gold numbers off to garble them again
 - **Blurred world**: enemies show their real models by default (turn visible enemy models off to restore the breathing boxes), names stay hidden; relics visible by default (turn Show relics off to mask them again), potions outlined, map fogged, boss info hidden; damage/heal numbers garbled
 
-Requires STS2 v0.111.0 + RitsuLib 0.6.2. Single-player only; uninstall restores everything.
+Supports STS2 v0.107.1–v0.111.0 (stable/beta) + RitsuLib 0.6.2. Single-player only; uninstall restores everything.
 
 GitHub: https://github.com/yM7-1/BrainFog
 
@@ -75,12 +75,12 @@ GitHub: https://github.com/yM7-1/BrainFog
 ▒░＊◇面与对▓内均可操▒（可@＊/§◆/缩§屏§边%；「◆前&置@%&」※&自§▓默认，「重置◇▓◇」一键▓复）：
 #&：◆码百#§ 0%–100% #由#节；乱码░%：※定混乱（#进不◆）/ 混%%乱（▓§◇进重新＊@）
 ░知：卡牌◇#揭示（＊#示 / 随◆揭＊1-3# / ＊◆全@揭示）；商店与%件卡#揭示#关；卡牌记忆§模式；记▓▓逝开&；卡牌▒数#
-感知：&量/※▓◇◇模式；血量◆/◆币数&复◆常显░；显示遗@（全※◇▒▒：#░有/奖励/@#/※箱/检视/◆@◇▒）；＊#@图#◆▒%（含%＊ Boss ◇标/§@与图◇░░）；敌＊&◇%▒；敌＊意%（◇§见 / ＊§一#合 / ▒部可见）
+感知：&量/※▓◇◇模式；血量◆/◆币数&复◆常显░；显示遗@（全※◇▒▒：#░有/奖励/@#/※箱/检视/◆@◇▒）；＊#@图#◆▒%（含%＊ Boss ◇标与图◇░░；§@随◆码%）；敌＊&◇%▒；敌＊意%（◇§见 / ＊§一#合 / ▒部可见）
 ▒认◆#偏辅▓：卡牌%励▒＊◆#、%&/▒件※面揭%、血量/◇币数值可§、▓◇@§、地#◆░◆、※◆模型与※人意※可见；%◇&恢复难#，并用「@＊§%为▓※」%@自▓的#认。
 卡&▒忆#◆式
 ░%◆※：&#卡牌§接可▓
 ※#＊：░出/░◇＊%即永久记▒，同名卡◇所※＊励/商&/░件&░显示◇牌§
 %记░（%认）：每张◆§手 n §＊打#%会＊▒（n 默@ 2、%%）；▒▓重置计░；#获%&※先&得，※&＊▓※※▒会变◆提醒
 歪＊＊▓：#▒永@%░
-依赖 STS2 v0.111.0 # RitsuLib 0.6.2；仅&人；卸载即恢◆原版。
+支持 STS2 v0.107.1–v0.111.0 # RitsuLib 0.6.2；仅&人；卸载即恢◆原版。
 Github◇接：https://github.com/yM7-1/BrainFog

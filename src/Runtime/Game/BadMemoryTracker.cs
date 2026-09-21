@@ -44,6 +44,24 @@ internal static class BadMemoryTracker
             QueueVisualRefresh();
         });
 
+    /// <summary>Deck addition (rewards, shops, events, transforms): in bad-memory
+    /// mode the new copy starts revealed (user change 2026-09-21).</summary>
+    public static void OnCardAddedToDeck(CardModel card) =>
+        PatchGuard.Run("BadMemory.DeckAdded", () =>
+        {
+            if (!Active)
+            {
+                return;
+            }
+            var id = CardInstanceRegistry.GetOrCreateId(card);
+            if (string.IsNullOrEmpty(id) || !ModRuntime.Tracker.RevealInstanceByPlay(id))
+            {
+                return;
+            }
+            RevealPersistence.OnInstanceRevealed(card, id);
+            Callable.From(() => CardFogRenderer.RefreshLiveCards(card)).CallDeferred();
+        });
+
     public static void OnPlayed(CardModel card) =>
         PatchGuard.Run("BadMemory.Played", () =>
         {

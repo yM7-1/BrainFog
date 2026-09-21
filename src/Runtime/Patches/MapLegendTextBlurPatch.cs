@@ -8,9 +8,10 @@ namespace BrainFog.Patches;
 /// <summary>
 /// Map legend labels (header and enemy/merchant/treasure/rest/elite/boss/...)
 /// follow the unified blur ratio by default. Since 0.3.4 the "show all map
-/// routes" option restores the original legend text instead; the boss legend
-/// entry then also shows its original "mightiest enemy of the region" hover
-/// description (see <see cref="HoverTipTextBlurPatch"/>).
+/// routes" option restores the original legend text instead. The hover
+/// descriptions (including the boss's "mightiest enemy of the region") follow
+/// the unified ratio again since 2026-09-21 (see
+/// <see cref="HoverTipTextBlurPatch"/>).
 /// </summary>
 [HarmonyPatch(typeof(NMapLegendItem), "SetLocalizedFields")]
 internal static class MapLegendTextBlurPatch
