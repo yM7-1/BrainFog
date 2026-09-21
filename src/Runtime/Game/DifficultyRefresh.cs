@@ -39,6 +39,9 @@ internal static class DifficultyRefresh
         }
         switch (node)
         {
+            case NCreature creature:
+                EnemyVisualMask.Apply(creature);
+                break;
             case NRelic relic:
                 Patches.RelicMasking.Apply(relic);
                 break;

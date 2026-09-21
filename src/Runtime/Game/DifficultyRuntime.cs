@@ -34,6 +34,9 @@ internal static class DifficultyRuntime
     /// <summary>Docked tab position, normalized to the viewport (0..1).</summary>
     public static float PanelDockY { get; private set; } = 0.5f;
 
+    /// <summary>Play-counter leaderboard collapsed to its title bar.</summary>
+    public static bool CounterCollapsed { get; private set; }
+
     /// <summary>Dragged panel position, normalized to the viewport (0..1).</summary>
     public static bool HasPanelPosition { get; private set; }
     public static float PanelPositionX { get; private set; }
@@ -69,16 +72,20 @@ internal static class DifficultyRuntime
                 Current.MemoryMode = CardMemoryModeRules.Parse(
                     config.GetValue(Section, "memory_mode", "bad").AsString());
                 Current.BadMemoryThreshold = DifficultySettings.ClampBadMemoryThreshold(
-                    config.GetValue(Section, "bad_memory_n", 1).AsInt32());
+                    config.GetValue(Section, "bad_memory_n", 2).AsInt32());
+                Current.MemoryFade = config.GetValue(Section, "memory_fade", true).AsBool();
+                Current.PlayCounter = config.GetValue(Section, "play_counter", false).AsBool();
                 Current.SnapshotStatus = config.GetValue(Section, "snapshot_status", false).AsBool();
                 Current.ReadableStatusNumbers = config.GetValue(Section, "readable_status_numbers", false).AsBool();
                 Current.ShowOwnedRelics = config.GetValue(Section, "show_owned_relics", false).AsBool();
                 Current.ShowAllMapRoutes = config.GetValue(Section, "show_map_routes", false).AsBool();
                 Current.IntentMode = IntentVisibilityRules.Parse(
                     config.GetValue(Section, "intent_visibility", "hidden").AsString());
+                Current.EnemyModelsVisible = config.GetValue(Section, "enemy_models_visible", false).AsBool();
                 BlurSalt.PerLaunch = Current.SaltMode == BlurSaltMode.PerLaunch;
             }
 
+            CounterCollapsed = config.GetValue(UiSection, "counter_collapsed", false).AsBool();
             PanelCollapsed = config.GetValue(UiSection, "collapsed", false).AsBool();
             PanelDocked = config.GetValue(UiSection, "docked", false).AsBool();
             PanelDockSide = config.GetValue(UiSection, "dock_side", 0).AsInt32() == 1 ? 1 : 0;
@@ -109,11 +116,15 @@ internal static class DifficultyRuntime
             config.SetValue(Section, "blur_salt_mode", BlurSaltModeRules.ToStorage(Current.SaltMode));
             config.SetValue(Section, "memory_mode", CardMemoryModeRules.ToStorage(Current.MemoryMode));
             config.SetValue(Section, "bad_memory_n", Current.BadMemoryThreshold);
+            config.SetValue(Section, "memory_fade", Current.MemoryFade);
+            config.SetValue(Section, "play_counter", Current.PlayCounter);
             config.SetValue(Section, "snapshot_status", Current.SnapshotStatus);
             config.SetValue(Section, "readable_status_numbers", Current.ReadableStatusNumbers);
             config.SetValue(Section, "show_owned_relics", Current.ShowOwnedRelics);
             config.SetValue(Section, "show_map_routes", Current.ShowAllMapRoutes);
             config.SetValue(Section, "intent_visibility", IntentVisibilityRules.ToStorage(Current.IntentMode));
+            config.SetValue(Section, "enemy_models_visible", Current.EnemyModelsVisible);
+            config.SetValue(UiSection, "counter_collapsed", CounterCollapsed);
             config.SetValue(UiSection, "collapsed", PanelCollapsed);
             config.SetValue(UiSection, "docked", PanelDocked);
             config.SetValue(UiSection, "dock_side", PanelDockSide);
@@ -129,6 +140,13 @@ internal static class DifficultyRuntime
     public static void SetPanelCollapsed(bool collapsed)
     {
         PanelCollapsed = collapsed;
+        Save();
+    }
+
+    /// <summary>Collapses/expands the play-counter leaderboard (persisted).</summary>
+    public static void SetCounterCollapsed(bool collapsed)
+    {
+        CounterCollapsed = collapsed;
         Save();
     }
 

@@ -43,6 +43,12 @@ public sealed class BadMemoryCounter
         return true;
     }
 
+    /// <summary>True when leaving the hand right now would reach the threshold,
+    /// i.e. the copy is about to be forgotten if it is not played. Drives the
+    /// "about to be forgotten" dim hint on the card face (2026-09-21).</summary>
+    public bool WouldForgetOnLeave(int threshold) =>
+        !PlayedSinceEntry && UnplayedDraws + 1 >= Math.Max(1, threshold);
+
     /// <summary>Restores a persisted counter value.</summary>
     public void Restore(int unplayedDraws) => UnplayedDraws = Math.Max(0, unplayedDraws);
 }

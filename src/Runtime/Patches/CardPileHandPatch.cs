@@ -34,3 +34,21 @@ internal static class CardPileHandRemovePatch
         }
     }
 }
+
+/// <summary>
+/// Deck additions (rewards, shops, events, transforms): numbers the new copy
+/// for the play counter and, in bad-memory mode, starts it revealed
+/// (user change 2026-09-21). Covers silent additions too.
+/// </summary>
+[HarmonyPatch(typeof(CardPile), "AddInternal")]
+internal static class CardPileDeckAddPatch
+{
+    [HarmonyPostfix]
+    private static void Postfix(CardPile __instance, CardModel card)
+    {
+        if (__instance.Type == PileType.Deck)
+        {
+            Game.PlayCounterTracker.OnCardAddedToDeck(card);
+        }
+    }
+}

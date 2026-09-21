@@ -13,6 +13,9 @@ internal static class BrainFogTuning
     // Card fog.
     public static readonly Godot.Color CardFogColor = Godot.Colors.Black;
 
+    // "About to be forgotten" dim overlay (bad memory hint).
+    public static readonly Godot.Color CardDimColor = new(0f, 0f, 0f, 0.5f);
+
     // Low-HP warning color.
     public static readonly Godot.Color LowHpColor = Godot.Colors.Red;
 }

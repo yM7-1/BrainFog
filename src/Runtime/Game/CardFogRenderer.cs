@@ -21,6 +21,7 @@ namespace BrainFog.Game;
 internal static class CardFogRenderer
 {
     private const string FogNodeName = "BrainFogFog";
+    private const string DimNodeName = "BrainFogDim";
     private const string HiddenPartMeta = "BrainFogHiddenPart";
     private const string PlusNodeName = "BrainFogPlusMarker";
     private const string RuleMeta = "BrainFogRule";
@@ -174,11 +175,16 @@ internal static class CardFogRenderer
             // Pooled card without a model: clear any leftover state.
             RestoreFaceParts(card);
             fog.Visible = false;
+            if (card.GetNodeOrNull<ColorRect>(DimNodeName) is { Visible: true } leftoverDim)
+            {
+                leftoverDim.Visible = false;
+            }
             card.RemoveMeta(RuleMeta);
             return;
         }
 
         var rule = ResolveRule(card);
+        UpdateDimOverlay(card, rule, card.Model);
         var previous = card.HasMeta(RuleMeta) ? (CardVisualRule)card.GetMeta(RuleMeta).AsInt32() : (CardVisualRule?)null;
         if (previous == rule)
         {
@@ -307,6 +313,49 @@ internal static class CardFogRenderer
             plus.OffsetBottom = 32f;
         }
         plus.Visible = true;
+    }
+
+    /// <summary>
+    /// "About to be forgotten" hint (user change 2026-09-21): in bad-memory
+    /// mode, a revealed hand copy that would revert to unknown if it is not
+    /// played gets a dark overlay on its face. The node is only created when
+    /// the hint is needed.
+    /// </summary>
+    private static void UpdateDimOverlay(NCard card, CardVisualRule rule, CardModel model)
+    {
+        var show = rule == CardVisualRule.FullFace
+            && !ModRuntime.Disabled
+            && Game.BadMemoryTracker.ShouldDim(model);
+        var dim = card.GetNodeOrNull<ColorRect>(DimNodeName);
+        if (!show)
+        {
+            if (dim != null && dim.Visible)
+            {
+                dim.Visible = false;
+            }
+            return;
+        }
+
+        dim ??= CreateDim(card);
+        dim.Visible = true;
+        var last = card.GetChildCount() - 1;
+        if (last >= 0 && dim.GetIndex() != last)
+        {
+            card.MoveChild(dim, last); // keep the hint above every face part
+        }
+    }
+
+    private static ColorRect CreateDim(NCard card)
+    {
+        var dim = new ColorRect
+        {
+            Name = DimNodeName,
+            Color = BrainFogTuning.CardDimColor,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
+        card.AddChild(dim);
+        dim.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        return dim;
     }
 
     private static ColorRect GetOrCreateFog(NCard card)

@@ -57,4 +57,33 @@ public class BadMemoryCounterTests
         Assert.Equal(3, counter.UnplayedDraws);
         Assert.True(counter.OnLeaveHand(4)); // 3 + 1 = 4
     }
+
+    [Fact]
+    public void WouldForgetOnLeave_WarnsOnTheLastChance()
+    {
+        var counter = new BadMemoryCounter();
+        counter.OnEnterHand();
+        Assert.False(counter.WouldForgetOnLeave(2)); // first entry: still safe
+
+        counter.OnLeaveHand(2);
+        counter.OnEnterHand();
+        Assert.True(counter.WouldForgetOnLeave(2)); // second entry: warning
+    }
+
+    [Fact]
+    public void WouldForgetOnLeave_ThresholdOneWarnsImmediately()
+    {
+        var counter = new BadMemoryCounter();
+        counter.OnEnterHand();
+        Assert.True(counter.WouldForgetOnLeave(1));
+    }
+
+    [Fact]
+    public void WouldForgetOnLeave_PlayingClearsTheWarning()
+    {
+        var counter = new BadMemoryCounter();
+        counter.OnEnterHand();
+        counter.OnPlayed();
+        Assert.False(counter.WouldForgetOnLeave(1));
+    }
 }

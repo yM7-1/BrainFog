@@ -36,11 +36,15 @@ internal static class RevealPersistence
             PendingDeckOrder.AddRange(data.DeckOrderIds);
             BindDeckFromSave(state, data);
             BadMemoryTracker.OnRunLoaded(data.BadMemoryCounts);
+            PlayCounterTracker.OnRunLoaded(data.PlayCounts, data.CardNumbers, data.CardNames, data.NextCardNumbers);
+            PlayCounterTracker.EnsureDeckNumbers(state);
         }
         else
         {
             ModRuntime.Tracker.Reset();
             BadMemoryTracker.OnRunLoaded(null);
+            PlayCounterTracker.OnRunLoaded(null, null, null, null);
+            InitialReveal.Apply(state);
         }
         MegaCrit.Sts2.Core.Logging.Log.Info(
             $"[BrainFog][Persistence] run started: revealed={ModRuntime.Tracker.RevealedCount} savedDeck={PendingDeckOrder.Count}");
@@ -219,6 +223,135 @@ internal static class RevealPersistence
             if (!data.RevealedInstances.Contains(instanceId))
             {
                 data.RevealedInstances.Add(instanceId);
+            }
+        });
+    }
+
+    /// <summary>Batch-persists the starting-deck reveal of a fresh run
+    /// (2026-09-21: the starting deck counts as known per memory mode).</summary>
+    public static void OnInitialReveal(
+        Player owner,
+        IReadOnlyCollection<string> definitionKeys,
+        IReadOnlyCollection<string> instanceIds) =>
+        PatchGuard.Run("Persistence.InitialReveal", () => OnInitialRevealCore(owner, definitionKeys, instanceIds));
+
+    private static void OnInitialRevealCore(
+        Player owner,
+        IReadOnlyCollection<string> definitionKeys,
+        IReadOnlyCollection<string> instanceIds)
+    {
+        if (definitionKeys.Count == 0 && instanceIds.Count == 0)
+        {
+            return;
+        }
+        if (_slot == null || _runStateRef == null || !_runStateRef.TryGetTarget(out var state))
+        {
+            return;
+        }
+
+        RefreshDeckOrderCore(owner);
+        _slot.Modify(state, data =>
+        {
+            foreach (var key in definitionKeys)
+            {
+                if (!data.RevealedCards.Contains(key))
+                {
+                    data.RevealedCards.Add(key);
+                }
+            }
+            foreach (var id in instanceIds)
+            {
+                if (!data.RevealedInstances.Contains(id))
+                {
+                    data.RevealedInstances.Add(id);
+                }
+            }
+        });
+    }
+
+    /// <summary>"Play counter": persists one copy's play count.</summary>
+    public static void SetPlayCount(string instanceId, int count) =>
+        PatchGuard.Run("Persistence.PlayCount", () => SetPlayCountCore(instanceId, count));
+
+    private static void SetPlayCountCore(string instanceId, int count)
+    {
+        if (string.IsNullOrEmpty(instanceId) || count <= 0
+            || _slot == null || _runStateRef == null || !_runStateRef.TryGetTarget(out var state)
+            || !IsCurrentRun(state))
+        {
+            return;
+        }
+
+        _slot.Modify(state, data => data.PlayCounts[instanceId] = count);
+    }
+
+    /// <summary>"Play counter": persists a copy's stable number and name.</summary>
+    public static void SetCardNumber(string instanceId, int number, string name) =>
+        PatchGuard.Run("Persistence.CardNumber", () => SetCardNumberCore(instanceId, number, name));
+
+    private static void SetCardNumberCore(string instanceId, int number, string name)
+    {
+        if (string.IsNullOrEmpty(instanceId) || number <= 0
+            || _slot == null || _runStateRef == null || !_runStateRef.TryGetTarget(out var state)
+            || !IsCurrentRun(state))
+        {
+            return;
+        }
+
+        _slot.Modify(state, data =>
+        {
+            data.CardNumbers[instanceId] = number;
+            if (!string.IsNullOrEmpty(name))
+            {
+                data.CardNames[instanceId] = name;
+            }
+        });
+    }
+
+    /// <summary>"Play counter": persists the next number per definition so
+    /// numbering stays stable when copies leave the deck.</summary>
+    public static void SetNextCardNumber(string definitionKey, int next) =>
+        PatchGuard.Run("Persistence.NextCardNumber", () => SetNextCardNumberCore(definitionKey, next));
+
+    private static void SetNextCardNumberCore(string definitionKey, int next)
+    {
+        if (string.IsNullOrEmpty(definitionKey) || next <= 0
+            || _slot == null || _runStateRef == null || !_runStateRef.TryGetTarget(out var state)
+            || !IsCurrentRun(state))
+        {
+            return;
+        }
+
+        _slot.Modify(state, data => data.NextCardNumbers[definitionKey] = next);
+    }
+
+    /// <summary>Cards left the deck (memory fade): drop their saved reveal,
+    /// counter and play-counter entries; the deck order is refreshed too.</summary>
+    public static void OnCardsRemoved(Player owner, IReadOnlyCollection<string> instanceIds) =>
+        PatchGuard.Run("Persistence.CardsRemoved", () => OnCardsRemovedCore(owner, instanceIds));
+
+    private static void OnCardsRemovedCore(Player owner, IReadOnlyCollection<string> instanceIds)
+    {
+        if (_slot == null || _runStateRef == null || !_runStateRef.TryGetTarget(out var state))
+        {
+            return;
+        }
+
+        RefreshDeckOrderCore(owner);
+        if (instanceIds.Count == 0)
+        {
+            return;
+        }
+
+        _slot.Modify(state, data =>
+        {
+            foreach (var id in instanceIds)
+            {
+                data.RevealedInstances.Remove(id);
+                data.BadMemoryCounts?.Remove(id);
+                data.PlayCounts.Remove(id);
+                data.CardNumbers.Remove(id);
+                data.CardNames.Remove(id);
             }
         });
     }

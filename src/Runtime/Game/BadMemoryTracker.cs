@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using BrainFog.Core.Options;
 using BrainFog.Core.Reveal;
 using Godot;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 
 namespace BrainFog.Game;
@@ -22,6 +23,7 @@ internal static class BadMemoryTracker
 
     private static readonly ConditionalWeakTable<CardModel, Entry> Map = new();
     private static Dictionary<string, int> _savedCounters = new(StringComparer.Ordinal);
+    private static bool _refreshQueued;
 
     /// <summary>Run load: restores persisted counters (called after deck binding).</summary>
     public static void OnRunLoaded(IReadOnlyDictionary<string, int>? counters)
@@ -39,6 +41,7 @@ internal static class BadMemoryTracker
                 return;
             }
             GetEntry(card).Counter.OnEnterHand();
+            QueueVisualRefresh();
         });
 
     public static void OnPlayed(CardModel card) =>
@@ -51,6 +54,7 @@ internal static class BadMemoryTracker
             var entry = GetEntry(card);
             entry.Counter.OnPlayed();
             Persist(card, entry, 0);
+            QueueVisualRefresh();
         });
 
     public static void OnLeaveHand(CardModel card) =>
@@ -70,7 +74,32 @@ internal static class BadMemoryTracker
                 return;
             }
             Persist(card, entry, entry.Counter.UnplayedDraws);
+            QueueVisualRefresh();
         });
+
+    /// <summary>True when the revealed hand copy is on its last chance: not
+    /// playing it before it leaves the hand would forget it. Drives the dim
+    /// hint on the card face (user change 2026-09-21).</summary>
+    public static bool ShouldDim(CardModel? card) =>
+        PatchGuard.RunOr("BadMemory.ShouldDim", () => ShouldDimCore(card), false);
+
+    private static bool ShouldDimCore(CardModel? card)
+    {
+        if (!Active || card == null || card.Pile?.Type != PileType.Hand)
+        {
+            return false;
+        }
+
+        var id = CardInstanceRegistry.TryGetId(card);
+        if (string.IsNullOrEmpty(id) || !ModRuntime.Tracker.IsInstanceRevealed(id))
+        {
+            return false;
+        }
+
+        var threshold = DifficultySettings.ClampBadMemoryThreshold(
+            DifficultyRuntime.Current.BadMemoryThreshold);
+        return GetEntry(card).Counter.WouldForgetOnLeave(threshold);
+    }
 
     private static bool Active =>
         !ModRuntime.Disabled && DifficultyRuntime.Current.MemoryMode == CardMemoryMode.BadMemory;
@@ -111,7 +140,23 @@ internal static class BadMemoryTracker
         if (ModRuntime.Tracker.HideInstance(id))
         {
             RevealPersistence.OnInstanceHidden(id);
-            Callable.From(() => CardFogRenderer.RefreshLiveCards(card)).CallDeferred();
+            QueueVisualRefresh();
         }
+    }
+
+    /// <summary>Coalesces the deferred visual refresh to one per frame (draw or
+    /// play several cards in a turn: still one refresh).</summary>
+    private static void QueueVisualRefresh()
+    {
+        if (_refreshQueued)
+        {
+            return;
+        }
+        _refreshQueued = true;
+        Callable.From(() =>
+        {
+            _refreshQueued = false;
+            CardFogRenderer.RefreshAllLiveCards();
+        }).CallDeferred();
     }
 }

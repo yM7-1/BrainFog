@@ -36,8 +36,17 @@ public sealed class DifficultySettings
     public CardMemoryMode MemoryMode { get; set; } = CardMemoryMode.BadMemory;
 
     /// <summary>"Bad memory" threshold n (≥1): unplayed hand entries before a
-    /// revealed copy reverts to unknown.</summary>
-    public int BadMemoryThreshold { get; set; } = 1;
+    /// revealed copy reverts to unknown (default 2, user change 2026-09-21).</summary>
+    public int BadMemoryThreshold { get; set; } = 2;
+
+    /// <summary>"Memory fade" (user change 2026-09-21): cards still unrevealed
+    /// at the end of a combat are removed from the deck. Applies to good/bad
+    /// memory; nonsense mode is exempt. On by default.</summary>
+    public bool MemoryFade { get; set; } = true;
+
+    /// <summary>"Play counter" (user change 2026-09-21): count every play per
+    /// card copy for the run and show the top-right leaderboard. Off by default.</summary>
+    public bool PlayCounter { get; set; }
 
     /// <summary>HP/gold show the stale "state at last rest" snapshot instead of
     /// live values (default: live values, garbled like all text).</summary>
@@ -56,6 +65,10 @@ public sealed class DifficultySettings
     /// <summary>Enemy intent visibility: all rounds / first round only / hidden.</summary>
     public IntentVisibility IntentMode { get; set; } = IntentVisibility.Hidden;
 
+    /// <summary>Show real enemy models instead of the breathing-box mask
+    /// (user change 2026-09-21; default off = masked).</summary>
+    public bool EnemyModelsVisible { get; set; }
+
     public static int ClampBlurPercent(int value) => Math.Clamp(value, 0, 100);
 
     public static int ClampBadMemoryThreshold(int value) => Math.Clamp(value, 1, 99);
@@ -68,12 +81,15 @@ public sealed class DifficultySettings
         SelectionReveal = SelectionRevealOption.None;
         RevealShopAndEventCards = false;
         MemoryMode = CardMemoryMode.BadMemory;
-        BadMemoryThreshold = 1;
+        BadMemoryThreshold = 2;
+        MemoryFade = true;
+        PlayCounter = false;
         SnapshotStatus = false;
         ReadableStatusNumbers = false;
         ShowOwnedRelics = false;
         ShowAllMapRoutes = false;
         IntentMode = IntentVisibility.Hidden;
+        EnemyModelsVisible = false;
     }
 
     public static string ToStorage(SelectionRevealOption option) => option switch

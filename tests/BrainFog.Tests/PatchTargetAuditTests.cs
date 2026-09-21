@@ -353,6 +353,10 @@ public class PatchTargetAuditTests
         {
             new MemberTarget("InitializeRunLobby", Kind.Method),
         },
+        ["MegaCrit.Sts2.Core.Entities.Players.Player"] = new[]
+        {
+            new MemberTarget("AfterCombatEnd", Kind.Method),
+        },
     };
 
     /// <summary>Overload disambiguation: compare parameter types by their

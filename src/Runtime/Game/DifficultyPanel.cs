@@ -54,6 +54,9 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     private OptionButton _memoryMode = null!;
     private Label _badNLabel = null!;
     private SpinBox _badN = null!;
+    private CheckButton _memoryFade = null!;
+    private CheckButton _playCounter = null!;
+    private CheckButton _enemyModels = null!;
     private Label _intentLabel = null!;
     private OptionButton _intentMode = null!;
     private Button _reset = null!;
@@ -275,6 +278,16 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _body.AddChild(_badN);
         BindHint(_badN, "panel_hint_memory_bad");
 
+        _memoryFade = new CheckButton();
+        _memoryFade.Toggled += OnMemoryFadeToggled;
+        _body.AddChild(_memoryFade);
+        BindHint(_memoryFade, "panel_hint_memory_fade");
+
+        _playCounter = new CheckButton();
+        _playCounter.Toggled += OnPlayCounterToggled;
+        _body.AddChild(_playCounter);
+        BindHint(_playCounter, "panel_hint_play_counter");
+
         _sectionPerception = Section();
         _body.AddChild(_sectionPerception);
 
@@ -297,6 +310,11 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _mapRoutes.Toggled += OnMapRoutesToggled;
         _body.AddChild(_mapRoutes);
         BindHint(_mapRoutes, "panel_hint_map_routes");
+
+        _enemyModels = new CheckButton();
+        _enemyModels.Toggled += OnEnemyModelsToggled;
+        _body.AddChild(_enemyModels);
+        BindHint(_enemyModels, "panel_hint_enemy_models");
 
         _intentLabel = new Label();
         _body.AddChild(_intentLabel);
@@ -394,9 +412,9 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         foreach (var control in new Control[]
                  {
                      _selectionLabel, _selection, _shopEvent,
-                     _snapshotStatus, _statusNumbers, _ownedRelics, _mapRoutes, _tip,
+                     _snapshotStatus, _statusNumbers, _ownedRelics, _mapRoutes, _enemyModels, _tip,
                      _sectionText, _blurLabel, _saltLabel, _saltMode,
-                     _memoryLabel, _memoryMode, _badNLabel, _badN,
+                     _memoryLabel, _memoryMode, _badNLabel, _badN, _memoryFade, _playCounter,
                      _intentLabel, _intentMode, _reset,
                  })
         {
@@ -449,10 +467,14 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         }
         _badNLabel.Text = T("panel_memory_n", zh ? "n =（卡牌上手n次未打出则失忆）" : "n = (forget after n unplayed draws)");
 
+        _memoryFade.Text = T("panel_memory_fade", zh ? "记忆消逝" : "Memory fade");
+        _playCounter.Text = T("panel_play_counter", zh ? "卡牌计数器" : "Play counter");
+
         _snapshotStatus.Text = T("panel_amnesia_status", zh ? "血量/金币失忆模式" : "HP/gold amnesia mode");
         _statusNumbers.Text = T("panel_status_numbers", zh ? "血量数/金币数恢复正常显示" : "Readable HP/gold numbers");
         _ownedRelics.Text = T("panel_owned_relics", zh ? "显示已拥有遗物" : "Show owned relics");
         _mapRoutes.Text = T("panel_map_routes", zh ? "显示地图所有路线" : "Show all map routes");
+        _enemyModels.Text = T("panel_enemy_models", zh ? "敌人模型可见" : "Enemy models visible");
 
         _intentLabel.Text = T("panel_intent_label", zh ? "可见敌人意图" : "Enemy intents");
         var intentOptions = zh
@@ -475,9 +497,10 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         foreach (var control in new Control[]
                  {
                      _title, _sectionText, _sectionCognition, _sectionPerception, _selectionLabel,
-                     _selection, _shopEvent, _snapshotStatus, _statusNumbers, _ownedRelics, _mapRoutes,
+                     _selection, _shopEvent, _snapshotStatus, _statusNumbers, _ownedRelics, _mapRoutes, _enemyModels,
                      _tip, _dock, _tab, _blurLabel, _saltLabel, _saltMode,
-                     _memoryLabel, _memoryMode, _badNLabel, _badN, _intentLabel, _intentMode, _reset,
+                     _memoryLabel, _memoryMode, _badNLabel, _badN, _memoryFade, _playCounter,
+                     _intentLabel, _intentMode, _reset,
                  })
         {
             control.ApplyLocaleFontSubstitution(FontType.Regular, "font");
@@ -619,6 +642,9 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             "panel_hint_memory_bad" => zh ? "坏记性：某张卡每 n 次上手却未被打出，就变回未揭示状态" : "Bad memory: a copy drawn n times without being played reverts to unknown",
             "panel_hint_memory_omniscient" => zh ? "通晓万物：全部卡牌全局揭示" : "Omniscience: every card is revealed everywhere",
             "panel_hint_memory_nonsense" => zh ? "歪比巴卜：卡牌永不揭示" : "Nonsense: cards are never revealed",
+            "panel_hint_memory_fade" => zh ? "战斗结束时仍处于未揭示状态的卡牌会从卡组中移除（歪比巴卜模式不受影响）" : "Cards still unrevealed at the end of a combat are removed from the deck (nonsense mode exempt)",
+            "panel_hint_play_counter" => zh ? "记录每张牌（同名按加入顺序编号）本局打出的次数，并在右上角显示排行榜" : "Count plays per copy (same-name copies numbered by joining order) and show a top-right leaderboard",
+            "panel_hint_enemy_models" => zh ? "开启后敌人显示真实模型（默认关闭：只有呼吸方框）" : "Show real enemy models (default off: breathing boxes only)",
             "panel_hint_salt" => zh ? "固定混乱：乱码不随重进变化；混乱混乱：每次重进游戏重新随机" : "Fixed: garbling never changes; Chaos: re-rolled on every launch",
             "panel_hint_amnesia_status" => zh ? "开启后血量与金币停留在上次休息时（灰显标注）" : "HP and gold stay at the values from your last rest (shown gray)",
             "panel_hint_status_numbers" => zh ? "开启后血量数与金币数不再乱码（实时/失忆模式不受影响）" : "HP and gold numbers are no longer garbled (live/amnesia mode unchanged)",
@@ -766,9 +792,12 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             _saltMode.Selected = BlurSaltModeRules.ToIndex(settings.SaltMode);
             _memoryMode.Selected = CardMemoryModeRules.ToIndex(settings.MemoryMode);
             _badN.Value = settings.BadMemoryThreshold;
+            _memoryFade.ButtonPressed = settings.MemoryFade;
+            _playCounter.ButtonPressed = settings.PlayCounter;
             UpdateBadNVisibility();
             _ownedRelics.ButtonPressed = settings.ShowOwnedRelics;
             _mapRoutes.ButtonPressed = settings.ShowAllMapRoutes;
+            _enemyModels.ButtonPressed = settings.EnemyModelsVisible;
             _intentMode.Selected = IntentVisibilityRules.ToIndex(settings.IntentMode);
             UpdateBlurLabel();
             _body.Visible = !DifficultyRuntime.PanelCollapsed;
@@ -844,12 +873,44 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         DifficultyRuntime.NotifyChanged();
     }
 
+    private void OnMemoryFadeToggled(bool pressed)
+    {
+        if (_applying)
+        {
+            return;
+        }
+        DifficultyRuntime.Current.MemoryFade = pressed;
+        DifficultyRuntime.NotifyChanged();
+    }
+
+    private void OnPlayCounterToggled(bool pressed)
+    {
+        if (_applying)
+        {
+            return;
+        }
+        DifficultyRuntime.Current.PlayCounter = pressed;
+        PlayCounterTracker.OnSettingChanged();
+        DifficultyRuntime.NotifyChanged();
+    }
+
+    private void OnEnemyModelsToggled(bool pressed)
+    {
+        if (_applying)
+        {
+            return;
+        }
+        DifficultyRuntime.Current.EnemyModelsVisible = pressed;
+        DifficultyRuntime.NotifyChanged();
+    }
+
     private void OnReset()
     {
         DifficultyRuntime.Current.ApplyDefaults();
         BlurSalt.PerLaunch = true;
         ApplyFromSettings();
         _blurPending = true;
+        PlayCounterTracker.OnSettingChanged();
         DifficultyRuntime.NotifyChanged();
     }
 

@@ -12,7 +12,9 @@ public class DifficultySettingsTests
         Assert.Equal(SelectionRevealOption.None, settings.SelectionReveal);
         Assert.False(settings.RevealShopAndEventCards);
         Assert.Equal(CardMemoryMode.BadMemory, settings.MemoryMode);
-        Assert.Equal(1, settings.BadMemoryThreshold);
+        Assert.Equal(2, settings.BadMemoryThreshold);
+        Assert.True(settings.MemoryFade);
+        Assert.False(settings.PlayCounter);
         Assert.False(settings.SnapshotStatus);
         Assert.False(settings.ReadableStatusNumbers);
         Assert.Equal(50, settings.TextBlurPercent);
@@ -20,6 +22,7 @@ public class DifficultySettingsTests
         Assert.False(settings.ShowOwnedRelics);
         Assert.False(settings.ShowAllMapRoutes);
         Assert.Equal(IntentVisibility.Hidden, settings.IntentMode);
+        Assert.False(settings.EnemyModelsVisible);
     }
 
     [Fact]
@@ -31,6 +34,8 @@ public class DifficultySettingsTests
             RevealShopAndEventCards = true,
             MemoryMode = CardMemoryMode.Omniscient,
             BadMemoryThreshold = 7,
+            MemoryFade = false,
+            PlayCounter = true,
             SnapshotStatus = true,
             ReadableStatusNumbers = true,
             TextBlurPercent = 99,
@@ -38,6 +43,7 @@ public class DifficultySettingsTests
             ShowOwnedRelics = true,
             ShowAllMapRoutes = true,
             IntentMode = IntentVisibility.All,
+            EnemyModelsVisible = true,
         };
 
         settings.ApplyDefaults();
@@ -45,7 +51,9 @@ public class DifficultySettingsTests
         Assert.Equal(SelectionRevealOption.None, settings.SelectionReveal);
         Assert.False(settings.RevealShopAndEventCards);
         Assert.Equal(CardMemoryMode.BadMemory, settings.MemoryMode);
-        Assert.Equal(1, settings.BadMemoryThreshold);
+        Assert.Equal(2, settings.BadMemoryThreshold);
+        Assert.True(settings.MemoryFade);
+        Assert.False(settings.PlayCounter);
         Assert.False(settings.SnapshotStatus);
         Assert.False(settings.ReadableStatusNumbers);
         Assert.Equal(50, settings.TextBlurPercent);
@@ -53,6 +61,7 @@ public class DifficultySettingsTests
         Assert.False(settings.ShowOwnedRelics);
         Assert.False(settings.ShowAllMapRoutes);
         Assert.Equal(IntentVisibility.Hidden, settings.IntentMode);
+        Assert.False(settings.EnemyModelsVisible);
     }
 
     [Theory]

@@ -23,6 +23,14 @@ internal static class EnemyVisualMask
             return;
         }
 
+        // "Enemy models visible" option (user change 2026-09-21): default off,
+        // i.e. the breathing box stays the default presentation.
+        if (DifficultyRuntime.Current.EnemyModelsVisible)
+        {
+            Restore(node);
+            return;
+        }
+
         var isOwnPet = entity.PetOwner != null && LocalContext.IsMe(entity.PetOwner);
         if (!Core.Reveal.MaskEligibility.ShouldMask(ModRuntime.Disabled, entity.IsPlayer, isOwnPet))
         {
