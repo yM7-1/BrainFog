@@ -297,13 +297,8 @@ public class PatchTargetAuditTests
         {
             new MemberTarget("Open", Kind.Method),
             new MemberTarget("RecalculateTravelability", Kind.Method),
-            new MemberTarget("ProcessMouseDrawingEvent", Kind.Method),
-            new MemberTarget("OnDrawingToolsHotkeyPressed", Kind.Method),
-            new MemberTarget("OnMapDrawingButtonPressed", Kind.Method),
-            new MemberTarget("OnMapErasingButtonPressed", Kind.Method),
             new MemberTarget("_mapPointDictionary", Kind.Field),
             new MemberTarget("_paths", Kind.Field),
-            new MemberTarget("_drawingTools", Kind.Field),
             new MemberTarget("_bossPointNode", Kind.Field),
             new MemberTarget("_secondBossPointNode", Kind.Field),
             new MemberTarget("_startingPointNode", Kind.Field),

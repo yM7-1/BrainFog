@@ -7,7 +7,8 @@ namespace BrainFog.Game;
 
 /// <summary>
 /// Map fog (spec 0.01 3.3 / 0.02 #9): only visited points/paths and the next
-/// travelable row stay visible; the drawing tools are disabled.
+/// travelable row stay visible. The original drawing tools are never touched
+/// (user change 2026-09-21, 0.3.3).
 /// </summary>
 internal static class MapFogController
 {
@@ -70,14 +71,9 @@ internal static class MapFogController
         HideSpecial(screen._bossPointNode);
         HideSpecial(screen._secondBossPointNode);
         HideSpecial(screen._startingPointNode);
-
-        if (screen._drawingTools != null && GodotObject.IsInstanceValid(screen._drawingTools))
-        {
-            screen._drawingTools.Visible = false;
-        }
     }
 
-    /// <summary>Difficulty option: show every node and route (drawing stays disabled).</summary>
+    /// <summary>Difficulty option: show every node and route.</summary>
     private static void RevealEverything(NMapScreen screen, System.Collections.Generic.Dictionary<MapCoord, NMapPoint> points)
     {
         foreach (var pair in points)
@@ -105,11 +101,6 @@ internal static class MapFogController
         ShowSpecial(screen._bossPointNode);
         ShowSpecial(screen._secondBossPointNode);
         ShowSpecial(screen._startingPointNode);
-
-        if (screen._drawingTools != null && GodotObject.IsInstanceValid(screen._drawingTools))
-        {
-            screen._drawingTools.Visible = false;
-        }
     }
 
     private static void ShowSpecial(NMapPoint? node)

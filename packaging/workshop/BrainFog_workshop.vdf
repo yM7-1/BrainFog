@@ -97,6 +97,6 @@ GitHub: https://github.com/yM7-1/BrainFog
 依赖 STS2 v0.111.0 与 RitsuLib 0.6.2；＊＊▓；#▒即@%░版。
 Github链#：https://github.com/yM7-1/BrainFog
 "
-	"changenote"		"v0.3.2：默认值调整——卡牌奖励全部揭示、商店/事件卡面揭示、血量/金币数值可读、遗物可见、地图全路线、敌人模型与敌人意图全部可见（旧配置保留原值）；新增「当前设置为默认」按钮可保存自己的默认"
+	"changenote"		"v0.3.3：恢复原版地图画图功能——画线/擦除按钮、右键绘制与画线快捷键不再被隐藏或拦截（始终原版行为，不占修改器选项）"
 	"visibility"		"0"
 }
