@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Nodes.Relics;
 using MegaCrit.Sts2.Core.Nodes.Rewards;
 using MegaCrit.Sts2.Core.Nodes.Screens.InspectScreens;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
+using MegaCrit.sts2.Core.Nodes.TopBar;
 
 namespace BrainFog.Game;
 
@@ -24,6 +25,7 @@ internal static class DifficultyRefresh
             if (NMapScreen.Instance is { } map && GodotObject.IsInstanceValid(map))
             {
                 MapFogController.Apply(map);
+                Patches.MapLegendTextBlurPatch.Refresh(map);
             }
 
             if (Engine.GetMainLoop() is not SceneTree tree || tree.Root == null)
@@ -57,6 +59,9 @@ internal static class DifficultyRefresh
                 break;
             case NInspectRelicScreen inspect:
                 Patches.RelicMasking.ApplyInspect(inspect);
+                break;
+            case NTopBarBossIcon bossIcon:
+                Patches.BossIconHidePatch.Refresh(bossIcon);
                 break;
             case NHealthBar bar:
                 bar.RefreshValues();

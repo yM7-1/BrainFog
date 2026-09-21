@@ -93,6 +93,11 @@ internal static class GlobalTextBlurSource
             return false; // panel option: HP/gold numbers stay readable
         }
 
+        if (IsReadableMapLegend(label))
+        {
+            return false; // panel option: map legend stays original (0.3.4)
+        }
+
         var modOwned = IsModOwned(label.Name);
         var types = new List<string>(8);
         var parent = label.GetParent();
@@ -153,6 +158,24 @@ internal static class GlobalTextBlurSource
         }
         label.SetMeta(TextBlurService.InputMeta, text);
         label.SetMeta(TextBlurService.OutputMeta, text);
+    }
+
+    /// <summary>True for map legend labels (header and entries) while the
+    /// "show all map routes" option is on (0.3.4).</summary>
+    private static bool IsReadableMapLegend(CanvasItem label)
+    {
+        if (!DifficultyRuntime.Current.ShowAllMapRoutes)
+        {
+            return false;
+        }
+        try
+        {
+            return label.GetPath().ToString().Contains("MapLegend", StringComparison.Ordinal);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static bool IsModOwned(StringName name) =>
