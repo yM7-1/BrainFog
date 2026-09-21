@@ -4,6 +4,7 @@
 > 游戏：STS2 v0.111.0；依赖：RitsuLib 0.6.2；仅单人。
 > 验证状态：`bash tools/check.sh` = Release 构建 + 全部单测 + 补丁目标审计 + **shader 语法校验**（headless Godot；无二进制时跳过，`STRICT=1` 强制）全绿。**游戏内行为待人工验收（见下）。**
 > **2026-09-21 用户改版：乱码比例统一**——所有文本（含此前分档）改由认知修改器「乱码百分比」滑块控制（0–100%，1% 步进，默认 60%）；血量/金币**默认实时**（数值随统一比例乱码），**快照模式**为面板选项（默认关）。下表各行中的旧比例仅作历史参考。
+> **2026-09-21 追加：遗物显示改为全场景（0.3.1）**——原「显示已拥有遗物」更名「**显示遗物**」，开启后恢复所有遗物显示（已拥有/奖励/商店/宝箱/检视/跑图历史；图鉴本就可见），悬停提示同步放开；配置键 `show_owned_relics` → `show_relics`（旧值自动沿用）。
 > **2026-09-21 六项认知规则（0.3.0，待验收）**——① 开局初始卡组揭示（好记性/坏记性，歪比巴卜除外）；② 感知模块「敌人模型可见」（默认关）；③ 坏记性 n 默认 2 + 新入组卡牌初始揭示；④ 「记忆消逝」战斗结束移除未揭示牌（默认开，歪比巴卜豁免，无保底）；⑤ 坏记性失忆提醒（最后机会的已揭示手牌变暗）；⑥ 「卡牌计数器」+ 右上角出牌计数排行榜（默认关，同名副本固定编号）。
 
 ## 1. 规格 → 代码 → 测试 映射
@@ -58,7 +59,7 @@
 | 1.7 认知修改器面板（2026-09-20，原"难度调整器"） | `Game/DifficultyPanel.cs` + `Game/DifficultyRuntime.cs`（user:// 配置持久化）+ `Core/Options/DifficultySettings.cs` | `DifficultySettingsTests` |
 | 1.7 选卡揭露 / 商店事件开关规则 | `Core/Options/SelectionRevealPlanner.cs`（随机槽位，确定性+盐值）+ `Core/Reveal/RevealRules.cs` + `Game/CardFogRenderer.cs`（槽位集合解析/刷新全场） | `SelectionRevealPlannerTests` + `RevealRulesTests` |
 | 1.7 同名揭露关闭 = 按副本记忆 | `Core/Reveal/InstanceIds.cs`/`DeckOrderBinding.cs`/**`CardIdentity.cs`**（战斗克隆体身份沿 `DeckVersion`/`CloneOf` 回溯本体） + `Game/CardInstanceRegistry.cs` + `Game/RevealPersistence.cs`（实例 ID + 牌序重绑） | `InstanceAndBindingTests` + `CardRevealTrackerTests` |
-| 1.7 实时状态/已拥有遗物/地图全路线（2026-09-20 第二批） | `Patches/HpSnapshotVisualPatch.cs`/`TopBarGoldSnapshotPatch.cs`/`PlayerHpBarHidePatch.cs`（实时）、`Patches/RelicHidePatch.cs`（RelicMasking 按拥有上下文）、`Game/MapFogController.cs`（RevealEverything）+ `Game/DifficultyRefresh.cs`（切换即时刷新） | `DifficultySettingsTests` |
+| 1.7 实时状态/地图全路线（2026-09-20 第二批） | `Patches/HpSnapshotVisualPatch.cs`/`TopBarGoldSnapshotPatch.cs`/`PlayerHpBarHidePatch.cs`（实时）、`Game/MapFogController.cs`（RevealEverything）+ `Game/DifficultyRefresh.cs`（切换即时刷新） | `DifficultySettingsTests` |
 | 1.7 可见敌人意图三档（2026-09-21，9.20 任务：不可见/仅第一回合/可见所有意图） | `Core/Options/IntentVisibility.cs` + `Game/IntentGate.cs`（模式短路）、`Game/DifficultyRefresh.cs`（即时刷新） | `DifficultySettingsTests` |
 | 1.7 卡牌本局全部揭示（2026-09-21） | `Core/Reveal/RevealRules.cs`（`RevealAllCards` 短路，全部上下文 FullFace）+ `Game/DifficultyPanel.cs` + `Game/DifficultyRuntime.cs`（`reveal_all_cards`） | `RevealRulesTests` |
 | 1.7 面板边缘缩进（2026-09-21） | `Game/DifficultyPanel.cs`（标题栏 ◀/▶ 缩进到较近边缘 + 边缘小按钮弹出）+ `Game/DifficultyRuntime.cs`（`docked`/`dock_side`/`dock_y` 持久化） | 编译期 |
@@ -71,7 +72,7 @@
 | 1.1 事件获得卡牌按获得场景（2026-09-21，闭合 §2.3） | `Patches/CardAcquireScopePatch.cs`（选择屏幕创建时打标：`NChooseACardSelectionScreen.ShowScreen`、`NSimpleCardSelectScreen.Create` 两个重载）+ `Game/CardAcquireScope.cs` + `Game/CardFogRenderer.cs`（命中标记 → 强制获得场景） | 补丁审计 |
 | 1.4 敌人意图保持可读（2026-09-20） | `Core/Text/GlobalTextBlurRules.cs`（`NIntent` 子树豁免，源头与兜底共用）、`Patches/HoverTipTextBlurPatch.cs`（意图悬停提示按标题识别豁免） | `GlobalTextBlurRulesTests` |
 | 1.4 前进按钮/火堆选项乱码（实机调整 2026-09-19 第二轮） | `Patches/RoomTextBlurPatch.cs`（默认 60%） | 补丁审计 NProceedButton/NRestSiteButton |
-| 1.4 遗物不可见 | `Patches/RelicHidePatch.cs`（NRelic + RelicReward + 检视黑雾） | 补丁审计 |
+| 1.4 遗物不可见 / 「显示遗物」恢复全部（0.3.1） | `Patches/RelicHidePatch.cs`（RelicMasking：NRelic 图标/轮廓、RelicReward 图标与标题、检视黑雾 + `ApplyRewardButton`）、`Patches/RelicHoverTipPatch.cs`（五处悬停按选项放开）、`Game/DifficultyRefresh.cs`（奖励图标/按钮/检视界面即时刷新）+ `Game/DifficultyRuntime.cs`（`show_relics`，旧键沿用） | `DifficultySettingsTests` + 补丁审计 |
 | 1.4 Boss 遗物三选一可见 | `EventTextBlurPatch` 对 `AncientEventModel` 豁免 | 补丁审计 |
 | 1.4 地图迷雾+画线禁用 | `Game/MapFogController.cs` + `Patches/MapFogPatch.cs` | 补丁审计 NMapScreen |
 | 1.4 事件 75% 模糊（同次启动内固定、每次启动随机，2026-09-20） | `Core/Text/EventTextBlurrer.cs` + `Core/Text/BlurSalt.cs` + `Patches/EventTextBlurPatch.cs` | `EventTextBlurrerTests` |
@@ -90,7 +91,7 @@
 | 1.1 开局初始卡组揭示（0.3.0 六项①） | `Game/InitialReveal.cs`（新局 `RunStarted` 且无存档时：好记性按定义、坏记性按副本揭示起始牌组）+ `Game/RevealPersistence.cs`（`OnInitialReveal` 批量写入 + 牌序刷新） | `CardRevealTrackerTests` |
 | 1.3 敌人模型可见开关（0.3.0 六项②，默认关） | `Game/EnemyVisualMask.cs`（选项短路 → `Restore`，默认保持呼吸方框）+ `Game/DifficultyRefresh.cs`（扫描 `NCreature` 即时切换）+ `Game/DifficultyRuntime.cs`（`enemy_models_visible`） | `DifficultySettingsTests` |
 | 1.7 坏记性：n 默认 2 + 新入组卡牌初始揭示（0.3.0 六项③） | `Core/Options/DifficultySettings.cs`（默认 2）+ `Patches/CardPileHandPatch.cs`（`CardPileDeckAddPatch` Deck 入组钩子）+ `Game/PlayCounterTracker.cs`（坏记性新卡揭示 + 编号） | `DifficultySettingsTests` |
-| 1.7 记忆消逝（0.3.0 六项④，默认开，歪比巴卜豁免，无保底） | `Core/Reveal/MemoryFadeRules.cs` + `Game/MemoryFade.cs`（战斗结算按模式判定未揭示并移除）+ `Patches/PlayerAfterCombatEndPatch.cs`（存档写入前执行）+ `Game/RevealPersistence.cs`（`OnCardsRemoved` 清理揭示/计数/编号） | `MemoryFadeRulesTests` + 补丁审计 `Player.AfterCombatEnd` |
+| 1.7 记忆消逝（0.3.0 六项④，默认开，歪比巴卜豁免，无保底；0.3.1 起走原版删卡动画） | `Core/Reveal/MemoryFadeRules.cs` + `Game/MemoryFade.cs`（战斗结算按模式判定未揭示，经 `CardPileCmd.RemoveFromDeck` 移除：原版动画/钩子）+ `Patches/PlayerAfterCombatEndPatch.cs`（存档写入前执行）+ `Game/RevealPersistence.cs`（`OnCardsRemoved` 清理揭示/计数/编号） | `MemoryFadeRulesTests` + 补丁审计 `Player.AfterCombatEnd` |
 | 1.7 坏记性失忆提醒（0.3.0 六项⑤） | `Core/Reveal/BadMemoryCounter.cs`（`WouldForgetOnLeave`）+ `Game/BadMemoryTracker.cs`（`ShouldDim` + 每帧合并刷新）+ `Game/CardFogRenderer.cs`（`BrainFogDim` 覆盖层：仅手牌、已揭示、最后机会） | `BadMemoryCounterTests` |
 | 1.7 卡牌计数器 + 出牌计数排行榜（0.3.0 六项⑥，默认关） | `Core/Reveal/CardNumberAllocator.cs`（稳定编号/不重排/格式）+ `Game/PlayCounterTracker.cs`（按副本计数、编号、榜单数据）+ `Game/PlayCounterPanel.cs`（右上角榜单、可收起、随语言）+ `Game/RevealPersistence.cs`（`PlayCounts`/`CardNumbers`/`CardNames`/`NextCardNumbers`） | `CardNumberAllocatorTests` |
 
@@ -106,7 +107,7 @@
 9. **图例**：地图图例保持可见（按 0.02 第 9 条"图例可见"），画线工具隐藏且右键绘制被拦截。
 10. **坏记性计数语义（实现定义 2026-09-21）**：按**副本**计数（实例 ID 随牌组绑定，SL 保留）；自然抽牌与效果回手都算"上手"；打出重置计数；离手未打出即 +1（含回合结束弃牌、战斗结束清手牌）；达到 n 时该副本变回未揭示并清零计数；计数随存档持久化。若"同一回合多次回手未打出"只应算 1 次，或战斗结束清手不算，需要调整。
 11. **事件名称修复**：`NEventLayout.SetTitle` 直接写 `_title.Text` 会绕过源头乱码，已用 `EventTitleBlurPatch` 重新路由；若后续版本改为 `SetTextAutoSize` 则补丁成为 no-op。
-12. **记忆消逝（实现定义 2026-09-21）**：只在战斗胜利结算（`Player.AfterCombatEnd`，存档写入前）移除；好记性按定义、坏记性按副本判定"未揭示"；**无保底**（卡组可能删空）；移除不播放原版移除动画、也不触发 `Hook.BeforeCardRemoved`（依赖该钩子的遗物不会感知）——如需完整走原版移除流程再调整。编号的 `NextCardNumbers` 不因移除回退（序号永久递增）。
+12. **记忆消逝（实现定义 2026-09-21）**：只在战斗胜利结算（`Player.AfterCombatEnd`，存档写入前）移除；好记性按定义、坏记性按副本判定"未揭示"；**无保底**（卡组可能删空）；移除走原版 `CardPileCmd.RemoveFromDeck`（历史记录 + `Hook.BeforeCardRemoved` + 卡片预览与 `NCardRemoveVfx` 删除动画；未揭示的牌预览为黑雾，不泄漏牌面）。移除的牌从牌组/存档/揭示与计数条目中清理；编号的 `NextCardNumbers` 不因移除回退（序号永久递增）。
 13. **失忆提醒**：仅坏记性模式、仅手牌、仅已揭示副本（"本回合不打出将失忆"即 `UnplayedDraws + 1 >= n`，含 n=1 时刚上手即变暗）；变暗为深色覆盖层（`BrainFogDim`），不含动画。
 14. **卡牌计数器（实现定义 2026-09-21）**：仅统计"本功能开启期间"的打牌（战斗内生成的无牌组副本不计数）；同名序号按副本固定（初始牌组按牌组顺序标定；移除后不重排、新卡往后续编）；榜单仅列出打出≥1次的副本，被记忆消逝移除的副本从榜单消失（计数/编号/名称条目同步清理）。
 15. **初始卡组揭示**：仅"新开一局"（`RunStarted` 且无存档数据）时执行；读档继续不重置；歪比巴卜模式不受影响（保持永不揭示）；名字显示仍受统一乱码比例影响。
@@ -126,19 +127,20 @@
 8. **顶栏（默认实时）**：受伤/加钱后 HP/金币数字即时变化，但**为乱码**（随统一百分比）；开启「血量/金币快照模式」后回到旧行为：数字不变、**HP 灰色并标注"上次休息时的状态"+提示文字**、休息后刷新、商店/事件扣钱后金币刷新、战斗内自己角色血条隐藏真实血量（数字与填充都隐藏，格挡仍可见）。
 9. **濒危**：把 HP 打到 <15% → 角色红边 + 状态栏"濒危：我感觉自己快死了"（战斗内外）。
 10. **战斗**：敌人=呼吸方框（呼吸节奏应跟随敌人原动画，悬停显示血条/能力但**不显示敌人名字**）；第 1 回合有意图、之后无；受击特效仍在；**伤害/治疗/格挡数字为乱码（60%，2026-09-21 调整）**；己方召唤物正常可见；战斗场景其余部分全可见（视野遮罩已移除）；**"战斗开始"横幅乱码**（60%）。
-11. **战斗外**（**2026-09-21：下列各文本乱码比例统一由面板滑块控制**）：遗物不可见（检视界面黑雾；宝箱/商店悬停无名称描述；遗物奖励行显示"未知遗物"）；Boss 遗物三选一：选项文字 90% 乱码（图标可见）；药水仅轮廓、名称与描述 50% 乱码且同一药水每次一致；地图仅当前/已走/下一层可见，画线按钮消失且右键无法画，**Boss 点显示"?"**（略小于原图标），**图例文字 70% 乱码**；事件文本 75% 乱码且每次进入一致；**先古之民（含建筑师）名称/描述/对话 90% 乱码（对话；名称描述 60%）、商人对话 90% 乱码**；标题界面与暂停菜单选项 75% 乱码（设置按钮可读）；**顶栏无阶段 Boss 图标（悬停描述同移除）**；**阶段横幅/前进按钮/火堆选项/所有提示介绍文字 60%**（源头乱码：结算"胜利/对建筑师造成…"、模式选择、角色选择、继续/主菜单按钮等）；标题 logo 与开场 logo 换为乱码文本；顶栏/地图 UI 描述 70% 乱码（设置/图鉴可读）；图鉴正常。
+11. **战斗外**（**2026-09-21：下列各文本乱码比例统一由面板滑块控制**）：遗物不可见（检视界面黑雾；宝箱/商店悬停无名称描述；遗物奖励行显示"未知遗物"；**开启「显示遗物」后全部恢复，0.3.1**）；Boss 遗物三选一：选项文字 90% 乱码（图标可见）；药水仅轮廓、名称与描述 50% 乱码且同一药水每次一致；地图仅当前/已走/下一层可见，画线按钮消失且右键无法画，**Boss 点显示"?"**（略小于原图标），**图例文字 70% 乱码**；事件文本 75% 乱码且每次进入一致；**先古之民（含建筑师）名称/描述/对话 90% 乱码（对话；名称描述 60%）、商人对话 90% 乱码**；标题界面与暂停菜单选项 75% 乱码（设置按钮可读）；**顶栏无阶段 Boss 图标（悬停描述同移除）**；**阶段横幅/前进按钮/火堆选项/所有提示介绍文字 60%**（源头乱码：结算"胜利/对建筑师造成…"、模式选择、角色选择、继续/主菜单按钮等）；标题 logo 与开场 logo 换为乱码文本；顶栏/地图 UI 描述 70% 乱码（设置/图鉴可读）；图鉴正常。
 12. **联机**：进入联机对局 → 日志提示 BrainFog 已禁用（本 mod 不做联机适配）。
 13. **异常自检**：若某功能未生效，日志搜索 `[BrainFog][` 前缀：`PatchGuard` 会记录首个失败点（补丁目标漂移的最小线索）。
 14. **认知修改器**（**主标题界面与对局内均可操作**；可拖动/收起/边缘缩进；中/英文随游戏语言）：
     - 文字：**「乱码百分比」滑块：0% → 全可读 / 100% → 全乱码（豁免除外），拖动即时重应用**；**「乱码模式」固定混乱（重进不变）/ 混乱混乱（重进重掷，默认）**
     - 认知/获得卡牌：卡牌奖励 5 档（不揭示/随机1-3张/奖励全部揭示）；商店/事件卡面开关
     - 认知/卡牌记忆：**通晓万物**（全揭示）/ **好记性**（打出后同名卡含获得界面一并揭示）/ **坏记性**（n 次上手未打出即变回未揭示；n 可调，默认 1）/ **歪比巴卜**（永不揭示）
-    - 感知：**血量/金币失忆模式**（默认关 = 实时+乱码；开启 = 灰显停留）；**血量数/金币数恢复正常显示**（默认关；开启后顶栏与自己的战斗血条数值可读）；显示已拥有遗物；显示地图所有路线；**可见敌人意图三档**
+    - 感知：**血量/金币失忆模式**（默认关 = 实时+乱码；开启 = 灰显停留）；**血量数/金币数恢复正常显示**（默认关；开启后顶栏与自己的战斗血条数值可读）；显示遗物（全部场景恢复，0.3.1）；显示地图所有路线；**可见敌人意图三档**
     - **「重置为默认」按钮**；全部设置跨重进保留
 15. **可见敌人意图三档**：不可见（默认）→ 战斗中无意图；仅第一回合可见 → 首回合有、之后无（含新入场敌人不显示）；可见所有意图 → 每回合持续可见；切换即时生效。意图数字与悬停提示**不被乱码**（保持可读，便于判断伤害）。
 16. **初始卡组揭示（0.3.0 六项①）**：新开一局 → 起始牌组（坏记性默认按副本）全部显示真牌面（卡面文字仍按统一比例乱码）；通晓万物本来就全可见；歪比巴卜仍全黑雾。
 17. **敌人模型可见（0.3.0 六项②）**：感知模块打开「敌人模型可见」→ 敌人立即显示真实模型（呼吸方框消失），关闭后恢复方框；敌人名字仍隐藏（独立规则）；自己与召唤物不受影响。
 18. **坏记性调整（0.3.0 六项③）**：默认 n=2（面板可调，重置为默认后为 2）；新获得的牌（奖励/商店/事件）入手时即为真牌面，之后每 2 次上手不打出会失忆。
-19. **记忆消逝（0.3.0 六项④，默认开）**：坏记性下失忆的牌、好记性下从未打出过的牌，在战斗结束后从卡组消失（打开牌组确认）；歪比巴卜模式整局不删牌；**无保底**（卡组可能被删空）。
+19. **记忆消逝（0.3.0 六项④，默认开；0.3.1 起带原版删卡动画）**：坏记性下失忆的牌、好记性下从未打出过的牌，在战斗结束后从卡组消失（打开牌组确认）；移除时播放原版删卡动画（黑雾卡预览 + 飞散特效）；歪比巴卜模式整局不删牌；**无保底**（卡组可能被删空）。
 20. **失忆提醒（0.3.0 六项⑤）**：坏记性下某张已揭示手牌处于「本回合不打出就失忆」的最后机会 → 牌面明显变暗；打出后恢复；离开手牌后变黑雾。
 21. **卡牌计数器（0.3.0 六项⑥，默认关）**：打开「卡牌计数器」→ 右上角出现「出牌计数」榜单（标题栏 ▾/▸ 收起/展开，状态持久化）；打出牌后榜单更新为「打击1 ×N」等（同名副本按加入顺序固定编号，移除后不重排）；关闭选项榜单消失。
+22. **显示遗物（0.3.1）**：感知开启「显示遗物」→ 库存/检视、遗物奖励行（图标 + 真实名称）、商店、宝箱、跑图历史的遗物全部可见，悬停显示真实名称与描述；关闭恢复全遮蔽；切换即时生效（含已打开的检视界面）。

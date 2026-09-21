@@ -10,7 +10,7 @@ namespace BrainFog.Patches;
 
 /// <summary>
 /// Relics are invisible (spec 0.01 3.1): focus hover tips must not reveal their
-/// name/description. Boss relic choices (Ancient event buttons) are unaffected.
+/// name/description. The "show relics" option keeps every real hover tip.
 /// </summary>
 [HarmonyPatch(typeof(NRelicBasicHolder), "OnFocus")]
 internal static class RelicBasicHolderHoverTipPatch
@@ -19,7 +19,7 @@ internal static class RelicBasicHolderHoverTipPatch
     private static void Postfix(NRelicBasicHolder __instance) =>
         Game.PatchGuard.Run("RelicTips.Basic", () =>
         {
-            if (!ModRuntime.Disabled)
+            if (!ModRuntime.Disabled && !Game.DifficultyRuntime.Current.ShowRelics)
             {
                 NHoverTipSet.Remove(__instance);
             }
@@ -33,8 +33,8 @@ internal static class RelicInventoryHolderHoverTipPatch
     private static void Postfix(NRelicInventoryHolder __instance) =>
         Game.PatchGuard.Run("RelicTips.Inventory", () =>
         {
-            // Owned-relic display enabled: keep the real hover tip.
-            if (!ModRuntime.Disabled && !Game.DifficultyRuntime.Current.ShowOwnedRelics)
+            // "Show relics" enabled: keep the real hover tip.
+            if (!ModRuntime.Disabled && !Game.DifficultyRuntime.Current.ShowRelics)
             {
                 NHoverTipSet.Remove(__instance);
             }
@@ -48,7 +48,7 @@ internal static class RelicRewardHoverTipPatch
     [HarmonyPrefix]
     private static bool Prefix(ref IEnumerable<IHoverTip> __result)
     {
-        if (ModRuntime.Disabled)
+        if (ModRuntime.Disabled || Game.DifficultyRuntime.Current.ShowRelics)
         {
             return true;
         }
@@ -66,7 +66,7 @@ internal static class TreasureRoomRelicHoverTipPatch
     private static void Postfix(NTreasureRoomRelicHolder __instance) =>
         Game.PatchGuard.Run("RelicTips.Treasure", () =>
         {
-            if (!ModRuntime.Disabled)
+            if (!ModRuntime.Disabled && !Game.DifficultyRuntime.Current.ShowRelics)
             {
                 NHoverTipSet.Remove(__instance);
             }
@@ -82,7 +82,7 @@ internal static class MerchantRelicHoverTipPatch
     private static void Postfix(NMerchantRelic __instance) =>
         Game.PatchGuard.Run("RelicTips.Merchant", () =>
         {
-            if (!ModRuntime.Disabled)
+            if (!ModRuntime.Disabled && !Game.DifficultyRuntime.Current.ShowRelics)
             {
                 NHoverTipSet.Remove(__instance);
             }

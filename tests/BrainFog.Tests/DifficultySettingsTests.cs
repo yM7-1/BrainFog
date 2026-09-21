@@ -19,7 +19,7 @@ public class DifficultySettingsTests
         Assert.False(settings.ReadableStatusNumbers);
         Assert.Equal(50, settings.TextBlurPercent);
         Assert.Equal(BlurSaltMode.PerLaunch, settings.SaltMode);
-        Assert.False(settings.ShowOwnedRelics);
+        Assert.False(settings.ShowRelics);
         Assert.False(settings.ShowAllMapRoutes);
         Assert.Equal(IntentVisibility.Hidden, settings.IntentMode);
         Assert.False(settings.EnemyModelsVisible);
@@ -40,7 +40,7 @@ public class DifficultySettingsTests
             ReadableStatusNumbers = true,
             TextBlurPercent = 99,
             SaltMode = BlurSaltMode.Fixed,
-            ShowOwnedRelics = true,
+            ShowRelics = true,
             ShowAllMapRoutes = true,
             IntentMode = IntentVisibility.All,
             EnemyModelsVisible = true,
@@ -58,7 +58,7 @@ public class DifficultySettingsTests
         Assert.False(settings.ReadableStatusNumbers);
         Assert.Equal(50, settings.TextBlurPercent);
         Assert.Equal(BlurSaltMode.PerLaunch, settings.SaltMode);
-        Assert.False(settings.ShowOwnedRelics);
+        Assert.False(settings.ShowRelics);
         Assert.False(settings.ShowAllMapRoutes);
         Assert.Equal(IntentVisibility.Hidden, settings.IntentMode);
         Assert.False(settings.EnemyModelsVisible);

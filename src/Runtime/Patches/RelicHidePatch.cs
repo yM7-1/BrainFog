@@ -1,5 +1,6 @@
 using Godot;
 using HarmonyLib;
+using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Nodes.Relics;
 using MegaCrit.Sts2.Core.Nodes.Rewards;
 using MegaCrit.Sts2.Core.Nodes.Screens.InspectScreens;
@@ -8,11 +9,18 @@ using MegaCrit.Sts2.Core.Rewards;
 namespace BrainFog.Patches;
 
 /// <summary>
-/// Relics are invisible by default; the difficulty option "show owned relics"
-/// keeps relics in the player's own inventory/inspect view visible.
+/// Relics are invisible by default (spec 0.01 3.1). The "show relics" option
+/// (user change 2026-09-21; formerly "show owned relics") restores every relic
+/// display: owned inventory/inspect, rewards, shops, chests and run history.
+/// The compendium is always visible (0.03 j).
 /// </summary>
 internal static class RelicMasking
 {
+    public const string RewardIconMeta = "BrainFogRelicIcon";
+    public const string RewardLabelMeta = "BrainFogRelicLabel";
+
+    private static bool ShowAll => Game.DifficultyRuntime.Current.ShowRelics;
+
     public static void Apply(NRelic relic)
     {
         if (ModRuntime.Disabled || !GodotObject.IsInstanceValid(relic) || IsCompendiumEntry(relic))
@@ -20,21 +28,88 @@ internal static class RelicMasking
             return;
         }
 
-        var show = Game.DifficultyRuntime.Current.ShowOwnedRelics && IsOwnedContext(relic);
+        var show = ShowAll;
         SetVisible(relic.Icon, show);
         SetVisible(relic.Outline, show);
     }
 
-    private static bool IsOwnedContext(NRelic relic)
+    /// <summary>Relic reward icons carry their own TextureRect (no NRelic).</summary>
+    public static void ApplyRewardIcon(TextureRect icon)
     {
-        for (var node = relic.GetParent(); node != null; node = node.GetParent())
+        if (ModRuntime.Disabled || !GodotObject.IsInstanceValid(icon))
         {
-            if (node is NRelicInventory)
-            {
-                return true;
-            }
+            return;
         }
-        return false;
+
+        icon.SetMeta(RewardIconMeta, true);
+        icon.Visible = ShowAll;
+    }
+
+    /// <summary>Reward rows print the relic title; while masked it becomes
+    /// "unknown relic", while shown the original title comes back.</summary>
+    public static void ApplyRewardLabel(MegaRichTextLabel label)
+    {
+        if (ModRuntime.Disabled || !GodotObject.IsInstanceValid(label))
+        {
+            return;
+        }
+
+        if (ShowAll)
+        {
+            if (label.HasMeta(RewardLabelMeta))
+            {
+                label.Text = label.GetMeta(RewardLabelMeta).AsString();
+                label.RemoveMeta(RewardLabelMeta);
+            }
+            return;
+        }
+
+        var unknown = Game.ModLocalization.UnknownRelic;
+        if (label.Text != unknown)
+        {
+            label.SetMeta(RewardLabelMeta, label.Text);
+        }
+        label.Text = unknown;
+    }
+
+    /// <summary>Relic reward button: icon plus title label.</summary>
+    public static void ApplyRewardButton(NRewardButton button)
+    {
+        if (button.Reward is RelicReward && button._label != null)
+        {
+            ApplyRewardLabel(button._label);
+        }
+    }
+
+    /// <summary>Inspect screen: fogged by default, fully restored when shown.</summary>
+    public static void ApplyInspect(NInspectRelicScreen screen)
+    {
+        if (ModRuntime.Disabled || !GodotObject.IsInstanceValid(screen))
+        {
+            return;
+        }
+
+        if (ShowAll)
+        {
+            if (screen._relicImage != null && GodotObject.IsInstanceValid(screen._relicImage))
+            {
+                screen._relicImage.SelfModulate = Colors.White;
+            }
+            Show(screen._nameLabel);
+            Show(screen._description);
+            Show(screen._flavor);
+            Show(screen._rarityLabel);
+            return;
+        }
+
+        if (screen._relicImage != null && GodotObject.IsInstanceValid(screen._relicImage))
+        {
+            screen._relicImage.SelfModulate = Colors.Black;
+        }
+        Hide(screen._nameLabel);
+        Hide(screen._description);
+        Hide(screen._flavor);
+        Hide(screen._rarityLabel);
     }
 
     private static bool IsCompendiumEntry(NRelic relic)
@@ -56,6 +131,10 @@ internal static class RelicMasking
             item.Visible = visible;
         }
     }
+
+    private static void Hide(CanvasItem? node) => SetVisible(node, false);
+
+    private static void Show(CanvasItem? node) => SetVisible(node, true);
 }
 
 [HarmonyPatch(typeof(NRelic), "Reload")]
@@ -70,13 +149,7 @@ internal static class RelicHidePatch
 internal static class RelicRewardHidePatch
 {
     [HarmonyPostfix]
-    private static void Postfix(TextureRect __result)
-    {
-        if (!ModRuntime.Disabled && __result != null && GodotObject.IsInstanceValid(__result))
-        {
-            __result.Visible = false;
-        }
-    }
+    private static void Postfix(TextureRect __result) => RelicMasking.ApplyRewardIcon(__result);
 }
 
 /// <summary>Relic reward rows print the relic title as their label; replace it
@@ -91,7 +164,7 @@ internal static class RelicRewardLabelPatch
         {
             if (!ModRuntime.Disabled && __instance.Reward is RelicReward && __instance._label != null)
             {
-                __instance._label.Text = Game.ModLocalization.UnknownRelic;
+                RelicMasking.ApplyRewardLabel(__instance._label);
             }
         }
         catch (Exception ex)
@@ -101,55 +174,11 @@ internal static class RelicRewardLabelPatch
     }
 }
 
-/// <summary>Relic inspect screen is fogged by default; "show owned relics"
+/// <summary>Relic inspect screen is fogged by default; "show relics"
 /// restores the real display.</summary>
 [HarmonyPatch(typeof(NInspectRelicScreen), "UpdateRelicDisplay")]
 internal static class InspectRelicFogPatch
 {
     [HarmonyPostfix]
-    private static void Postfix(NInspectRelicScreen __instance)
-    {
-        if (ModRuntime.Disabled)
-        {
-            return;
-        }
-
-        if (Game.DifficultyRuntime.Current.ShowOwnedRelics)
-        {
-            if (__instance._relicImage != null && GodotObject.IsInstanceValid(__instance._relicImage))
-            {
-                __instance._relicImage.SelfModulate = Colors.White;
-            }
-            Show(__instance._nameLabel);
-            Show(__instance._description);
-            Show(__instance._flavor);
-            Show(__instance._rarityLabel);
-            return;
-        }
-
-        if (__instance._relicImage != null && GodotObject.IsInstanceValid(__instance._relicImage))
-        {
-            __instance._relicImage.SelfModulate = Colors.Black;
-        }
-        Hide(__instance._nameLabel);
-        Hide(__instance._description);
-        Hide(__instance._flavor);
-        Hide(__instance._rarityLabel);
-    }
-
-    private static void Hide(CanvasItem? node)
-    {
-        if (node != null && GodotObject.IsInstanceValid(node))
-        {
-            node.Visible = false;
-        }
-    }
-
-    private static void Show(CanvasItem? node)
-    {
-        if (node != null && GodotObject.IsInstanceValid(node))
-        {
-            node.Visible = true;
-        }
-    }
+    private static void Postfix(NInspectRelicScreen __instance) => RelicMasking.ApplyInspect(__instance);
 }

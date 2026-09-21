@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using BrainFog.Core.Options;
 using BrainFog.Core.Reveal;
+using Godot;
+using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
@@ -12,7 +14,9 @@ namespace BrainFog.Game;
 /// "Memory fade" (user change 2026-09-21): at the end of every combat, cards
 /// that are still unrevealed are removed from the run deck. Runs on the win
 /// teardown (<see cref="Player.AfterCombatEnd"/>) so the removal is part of the
-/// save the game writes right after combat. Nonsense mode is exempt.
+/// save the game writes right after combat. Nonsense mode is exempt. Removal
+/// goes through the game's own CardPileCmd.RemoveFromDeck, so the original
+/// remove animation/VFX and the BeforeCardRemoved hooks fire.
 /// </summary>
 internal static class MemoryFade
 {
@@ -58,11 +62,32 @@ internal static class MemoryFade
             return;
         }
 
-        foreach (var card in removed)
+        RemoveFromDeck(player, removed, ids);
+    }
+
+    /// <summary>
+    /// The game's own removal flow (history entry, BeforeCardRemoved hooks,
+    /// card preview + NCardRemoveVfx animation, RemoveFromState). The hook
+    /// listeners used in the base game complete synchronously, so the deck is
+    /// updated before the post-combat save; if a listener ever yields, the
+    /// bookkeeping is deferred to the main thread once removal completed.
+    /// </summary>
+    private static void RemoveFromDeck(Player player, List<CardModel> cards, List<string> ids)
+    {
+        var task = CardPileCmd.RemoveFromDeck(cards, showPreview: true);
+        if (task.IsCompleted)
         {
-            RemoveFromDeck(player, card);
+            Finish(player, cards.Count, ids);
+            return;
         }
 
+        task.ContinueWith(_ =>
+            Callable.From(() => PatchGuard.Run("MemoryFade.Finish", () => Finish(player, cards.Count, ids)))
+                .CallDeferred());
+    }
+
+    private static void Finish(Player player, int count, List<string> ids)
+    {
         RevealPersistence.OnCardsRemoved(player, ids);
         PlayCounterTracker.OnCardsRemoved(ids);
         foreach (var id in ids)
@@ -70,15 +95,6 @@ internal static class MemoryFade
             ModRuntime.Tracker.HideInstance(id);
         }
 
-        Log.Info($"[BrainFog][MemoryFade] removed {removed.Count} unrevealed card(s) from the deck");
-    }
-
-    /// <summary>Same sequence the game's CardPileCmd.RemoveFromDeck performs,
-    /// without the preview VFX (the deck changes during combat teardown).</summary>
-    private static void RemoveFromDeck(Player player, CardModel card)
-    {
-        player.RunState.CurrentMapPointHistoryEntry?.GetEntry(player.NetId).CardsRemoved.Add(card.ToSerializable());
-        card.RemoveFromCurrentPile();
-        card.RemoveFromState();
+        Log.Info($"[BrainFog][MemoryFade] removed {count} unrevealed card(s) from the deck");
     }
 }

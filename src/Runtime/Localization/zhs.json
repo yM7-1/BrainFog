@@ -32,7 +32,7 @@
   "panel_counter_empty": "暂无出牌记录",
   "panel_amnesia_status": "血量/金币失忆模式",
   "panel_status_numbers": "血量数/金币数恢复正常显示",
-  "panel_owned_relics": "显示已拥有遗物",
+  "panel_relics": "显示遗物",
   "panel_map_routes": "显示地图所有路线",
   "panel_enemy_models": "敌人模型可见",
   "panel_intent_label": "可见敌人意图",
@@ -56,8 +56,8 @@
   "panel_hint_enemy_models": "开启后敌人显示真实模型（默认关闭：只有呼吸方框）",
   "panel_hint_amnesia_status": "开启后血量与金币停留在上次休息时（灰显标注）",
   "panel_hint_status_numbers": "开启后血量数与金币数不再乱码（实时/失忆模式不受影响）",
-  "panel_hint_owned_relics": "库存与检视中显示已拥有遗物",
   "panel_hint_map_routes": "地图显示全部节点与路线",
   "panel_hint_intent": "敌人意图：不可见 / 仅第一回合 / 每回合可见",
-  "panel_hint_reset": "把全部修改器选项恢复为默认值"
+  "panel_hint_reset": "把全部修改器选项恢复为默认值",
+  "panel_hint_relics": "恢复所有遗物的显示：已拥有/奖励/商店/宝箱/检视等（图鉴本就可见）"
 }

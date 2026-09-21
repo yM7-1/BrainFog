@@ -43,7 +43,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     private CheckButton _shopEvent = null!;
     private CheckButton _snapshotStatus = null!;
     private CheckButton _statusNumbers = null!;
-    private CheckButton _ownedRelics = null!;
+    private CheckButton _relics = null!;
     private CheckButton _mapRoutes = null!;
     private Label _sectionText = null!;
     private Label _blurLabel = null!;
@@ -301,10 +301,10 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _body.AddChild(_statusNumbers);
         BindHint(_statusNumbers, "panel_hint_status_numbers");
 
-        _ownedRelics = new CheckButton();
-        _ownedRelics.Toggled += OnOwnedRelicsToggled;
-        _body.AddChild(_ownedRelics);
-        BindHint(_ownedRelics, "panel_hint_owned_relics");
+        _relics = new CheckButton();
+        _relics.Toggled += OnRelicsToggled;
+        _body.AddChild(_relics);
+        BindHint(_relics, "panel_hint_relics");
 
         _mapRoutes = new CheckButton();
         _mapRoutes.Toggled += OnMapRoutesToggled;
@@ -412,7 +412,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         foreach (var control in new Control[]
                  {
                      _selectionLabel, _selection, _shopEvent,
-                     _snapshotStatus, _statusNumbers, _ownedRelics, _mapRoutes, _enemyModels, _tip,
+                     _snapshotStatus, _statusNumbers, _relics, _mapRoutes, _enemyModels, _tip,
                      _sectionText, _blurLabel, _saltLabel, _saltMode,
                      _memoryLabel, _memoryMode, _badNLabel, _badN, _memoryFade, _playCounter,
                      _intentLabel, _intentMode, _reset,
@@ -472,7 +472,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
 
         _snapshotStatus.Text = T("panel_amnesia_status", zh ? "血量/金币失忆模式" : "HP/gold amnesia mode");
         _statusNumbers.Text = T("panel_status_numbers", zh ? "血量数/金币数恢复正常显示" : "Readable HP/gold numbers");
-        _ownedRelics.Text = T("panel_owned_relics", zh ? "显示已拥有遗物" : "Show owned relics");
+        _relics.Text = T("panel_relics", zh ? "显示遗物" : "Show relics");
         _mapRoutes.Text = T("panel_map_routes", zh ? "显示地图所有路线" : "Show all map routes");
         _enemyModels.Text = T("panel_enemy_models", zh ? "敌人模型可见" : "Enemy models visible");
 
@@ -497,7 +497,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         foreach (var control in new Control[]
                  {
                      _title, _sectionText, _sectionCognition, _sectionPerception, _selectionLabel,
-                     _selection, _shopEvent, _snapshotStatus, _statusNumbers, _ownedRelics, _mapRoutes, _enemyModels,
+                     _selection, _shopEvent, _snapshotStatus, _statusNumbers, _relics, _mapRoutes, _enemyModels,
                      _tip, _dock, _tab, _blurLabel, _saltLabel, _saltMode,
                      _memoryLabel, _memoryMode, _badNLabel, _badN, _memoryFade, _playCounter,
                      _intentLabel, _intentMode, _reset,
@@ -649,7 +649,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             "panel_hint_amnesia_status" => zh ? "开启后血量与金币停留在上次休息时（灰显标注）" : "HP and gold stay at the values from your last rest (shown gray)",
             "panel_hint_status_numbers" => zh ? "开启后血量数与金币数不再乱码（实时/失忆模式不受影响）" : "HP and gold numbers are no longer garbled (live/amnesia mode unchanged)",
             "panel_hint_blur" => zh ? "所有文本的乱码程度（0% 完全可读，豁免项除外）" : "Garbling level for all text (0% readable, exemptions aside)",
-            "panel_hint_owned_relics" => zh ? "库存与检视中显示已拥有遗物" : "Show owned relics in inventory and inspect screens",
+            "panel_hint_relics" => zh ? "恢复所有遗物的显示：已拥有/奖励/商店/宝箱/检视等（图鉴本就可见）" : "Restore every relic display: owned, rewards, shops, chests, inspect (compendium already visible)",
             "panel_hint_map_routes" => zh ? "地图显示全部节点与路线" : "Show every map node and route",
             "panel_hint_intent" => zh ? "敌人意图：不可见 / 仅第一回合 / 每回合可见" : "Enemy intents: hidden / first round only / every round",
             "panel_hint_reset" => zh ? "把全部修改器选项恢复为默认值" : "Restore every modifier option to its default",
@@ -795,7 +795,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             _memoryFade.ButtonPressed = settings.MemoryFade;
             _playCounter.ButtonPressed = settings.PlayCounter;
             UpdateBadNVisibility();
-            _ownedRelics.ButtonPressed = settings.ShowOwnedRelics;
+            _relics.ButtonPressed = settings.ShowRelics;
             _mapRoutes.ButtonPressed = settings.ShowAllMapRoutes;
             _enemyModels.ButtonPressed = settings.EnemyModelsVisible;
             _intentMode.Selected = IntentVisibilityRules.ToIndex(settings.IntentMode);
@@ -978,13 +978,13 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         DifficultyRuntime.Save();
     }
 
-    private void OnOwnedRelicsToggled(bool pressed)
+    private void OnRelicsToggled(bool pressed)
     {
         if (_applying)
         {
             return;
         }
-        DifficultyRuntime.Current.ShowOwnedRelics = pressed;
+        DifficultyRuntime.Current.ShowRelics = pressed;
         DifficultyRuntime.NotifyChanged();
     }
 

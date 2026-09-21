@@ -77,7 +77,13 @@ internal static class DifficultyRuntime
                 Current.PlayCounter = config.GetValue(Section, "play_counter", false).AsBool();
                 Current.SnapshotStatus = config.GetValue(Section, "snapshot_status", false).AsBool();
                 Current.ReadableStatusNumbers = config.GetValue(Section, "readable_status_numbers", false).AsBool();
-                Current.ShowOwnedRelics = config.GetValue(Section, "show_owned_relics", false).AsBool();
+                // "show_relics" (2026-09-21) replaced "show_owned_relics"; the
+                // legacy value carries over so players who had it on keep relics
+                // visible (now in every context).
+                Current.ShowRelics = config.GetValue(
+                    Section,
+                    "show_relics",
+                    config.GetValue(Section, "show_owned_relics", false).AsBool()).AsBool();
                 Current.ShowAllMapRoutes = config.GetValue(Section, "show_map_routes", false).AsBool();
                 Current.IntentMode = IntentVisibilityRules.Parse(
                     config.GetValue(Section, "intent_visibility", "hidden").AsString());
@@ -120,7 +126,7 @@ internal static class DifficultyRuntime
             config.SetValue(Section, "play_counter", Current.PlayCounter);
             config.SetValue(Section, "snapshot_status", Current.SnapshotStatus);
             config.SetValue(Section, "readable_status_numbers", Current.ReadableStatusNumbers);
-            config.SetValue(Section, "show_owned_relics", Current.ShowOwnedRelics);
+            config.SetValue(Section, "show_relics", Current.ShowRelics);
             config.SetValue(Section, "show_map_routes", Current.ShowAllMapRoutes);
             config.SetValue(Section, "intent_visibility", IntentVisibilityRules.ToStorage(Current.IntentMode));
             config.SetValue(Section, "enemy_models_visible", Current.EnemyModelsVisible);

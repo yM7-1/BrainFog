@@ -56,8 +56,9 @@ public sealed class DifficultySettings
     /// all text; the display mode itself is still governed by SnapshotStatus).</summary>
     public bool ReadableStatusNumbers { get; set; }
 
-    /// <summary>Show relics the player already owns (inventory/inspect).</summary>
-    public bool ShowOwnedRelics { get; set; }
+    /// <summary>Show relics everywhere (user change 2026-09-21, was "show owned
+    /// relics"): owned inventory/inspect, rewards, shops, chests, run history.</summary>
+    public bool ShowRelics { get; set; }
 
     /// <summary>Show every map node and route instead of the fogged frontier.</summary>
     public bool ShowAllMapRoutes { get; set; }
@@ -86,7 +87,7 @@ public sealed class DifficultySettings
         PlayCounter = false;
         SnapshotStatus = false;
         ReadableStatusNumbers = false;
-        ShowOwnedRelics = false;
+        ShowRelics = false;
         ShowAllMapRoutes = false;
         IntentMode = IntentVisibility.Hidden;
         EnemyModelsVisible = false;

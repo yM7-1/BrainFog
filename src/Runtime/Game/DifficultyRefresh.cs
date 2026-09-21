@@ -1,6 +1,8 @@
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Relics;
+using MegaCrit.Sts2.Core.Nodes.Rewards;
+using MegaCrit.Sts2.Core.Nodes.Screens.InspectScreens;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 
 namespace BrainFog.Game;
@@ -37,6 +39,11 @@ internal static class DifficultyRefresh
         {
             return;
         }
+        if (node is TextureRect icon && icon.HasMeta(Patches.RelicMasking.RewardIconMeta))
+        {
+            Patches.RelicMasking.ApplyRewardIcon(icon);
+        }
+
         switch (node)
         {
             case NCreature creature:
@@ -44,6 +51,12 @@ internal static class DifficultyRefresh
                 break;
             case NRelic relic:
                 Patches.RelicMasking.Apply(relic);
+                break;
+            case NRewardButton reward:
+                Patches.RelicMasking.ApplyRewardButton(reward);
+                break;
+            case NInspectRelicScreen inspect:
+                Patches.RelicMasking.ApplyInspect(inspect);
                 break;
             case NHealthBar bar:
                 bar.RefreshValues();
