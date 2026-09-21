@@ -3,11 +3,13 @@
 大部分尖塔文字将被替换为乱码，可在内置修改器中使部分游戏内容恢复正常。
 
 ## 认知修改器
-主标题界面与对局内均可操作（可拖动/收起/缩进屏幕边缘，可一键重置为默认）：
+主标题界面与对局内均可操作（可拖动/收起/缩进屏幕边缘；「当前设置为默认」保存自己的默认，「重置为默认」一键恢复）：
 
 - **文字**：乱码百分比 0%–100% 自由调节；乱码模式：固定混乱（重进不变）/ 混乱混乱（每次重进重新随机）
 - **认知**：卡牌奖励揭示（不揭示 / 随机揭示1-3张 / 奖励全部揭示）；商店与事件卡面揭示开关；卡牌记忆四模式；记忆消逝开关；卡牌计数器
 - **感知**：血量/金币失忆模式；血量数/金币数恢复正常显示；显示遗物（全场景恢复：已拥有/奖励/商店/宝箱/检视/跑图历史）；显示地图所有路线；敌人模型可见；敌人意图（不可见 / 仅第一回合 / 全部可见）
+
+默认配置偏辅助：卡牌奖励全部揭示、商店/事件卡面揭示、血量/金币数值可读、遗物可见、地图全路线、敌人模型与敌人意图可见；可逐项恢复难度，并用「当前设置为默认」保存自己的默认。
 
 ## 卡牌记忆四模式
 
@@ -20,10 +22,10 @@
 
 ## 核心效果
 
-- **卡牌失认**：开局牌组视为记得；默认打过的牌才认得；奖励与选牌界面默认只显示稀有度
+- **卡牌失认**：开局牌组视为记得；默认打过的牌才认得；奖励与选牌界面默认全部揭示（可调回仅显示稀有度）
 - **文字失读**：事件、菜单、提示、卡面与对话全部乱码（图鉴与设置除外），乱码程度可调
-- **记忆失真**：血量与金币默认实时但同样是乱码；可切换失忆模式停留在「上次休息时」，或开启「血量数/金币数恢复正常显示」让数值可读
-- **世界模糊**：敌人只剩呼吸方框、名字隐藏（可开启「敌人模型可见」）；遗物不可见（可开启「显示遗物」全部恢复）、药水只剩轮廓、地图迷雾、Boss 信息隐藏；受击/治疗数字乱码
+- **记忆失真**：血量与金币默认实时且数值可读；可切换失忆模式停留在「上次休息时」，或关闭「血量数/金币数恢复正常显示」让数值重新乱码
+- **世界模糊**：敌人默认显示真实模型（可关闭恢复呼吸方框）、名字隐藏；遗物默认可见（可关闭「显示遗物」恢复遮蔽）、药水只剩轮廓、地图迷雾、Boss 信息隐藏；受击/治疗数字乱码
 
 依赖 STS2 v0.111.0 与 RitsuLib 0.6.2；仅单人；卸载即恢复原版。
 
@@ -37,11 +39,13 @@ Github链接：https://github.com/yM7-1/BrainFog
 Most text in the Spire is replaced with garbled static — use the built-in modifier to restore parts of the game.
 
 ## Cognition Modifier
-Available on the main menu and in-run (draggable, collapsible, dockable; one-click reset to defaults):
+Available on the main menu and in-run (draggable, collapsible, dockable; Set current as default saves your defaults, Reset to defaults restores them):
 
 - **Text**: unified blur percentage 0%–100%; blur mode: fixed chaos / re-rolled on every launch
 - **Cognition**: card reward reveal (none / random 1-3 / all); shop & event card faces on/off; four card-memory modes; memory fade; play counter
 - **Perception**: HP/gold amnesia mode; readable HP/gold numbers; show relics (all contexts: owned/rewards/shops/chests/inspect/history); show all map routes; visible enemy models; enemy intents (hidden / first round only / always)
+
+The default preset is lenient: all reward cards revealed, shop/event card faces revealed, readable HP/gold numbers, relics visible, all map routes, enemy models and intents visible. Tone the difficulty back up per option, or save your own defaults with Set current as default.
 
 ## Card memory modes
 
@@ -54,10 +58,10 @@ The starting deck counts as known (good/bad memory). **Memory fade** (on by defa
 
 ## Core effects
 
-- **Card agnosia**: the starting deck is remembered; by default only cards you have played are recognized; rewards/selection show rarity only
+- **Card agnosia**: the starting deck is remembered; by default only cards you have played are recognized; rewards/selection are fully revealed by default (can be set back to rarity only)
 - **Text alexia**: events, menus, prompts, card text and dialogue are garbled (compendium and settings stay readable); the level is adjustable
-- **Faulty memory**: HP and gold are live by default but garbled; switch on amnesia mode to freeze them at your last rest, or turn on readable HP/gold numbers
-- **Blurred world**: enemies are breathing boxes with hidden names (visible enemy models can be enabled); relics invisible (enable Show relics to restore them), potions outlined, map fogged, boss info hidden; damage/heal numbers garbled
+- **Faulty memory**: HP and gold are live and readable by default; switch on amnesia mode to freeze them at your last rest, or turn readable HP/gold numbers off to garble them again
+- **Blurred world**: enemies show their real models by default (turn visible enemy models off to restore the breathing boxes), names stay hidden; relics visible by default (turn Show relics off to mask them again), potions outlined, map fogged, boss info hidden; damage/heal numbers garbled
 
 Requires STS2 v0.111.0 + RitsuLib 0.6.2. Single-player only; uninstall restores everything.
 
@@ -68,20 +72,21 @@ GitHub: https://github.com/yM7-1/BrainFog
 脑▒尖塔 BrainFog
 ※※※尖塔＊▓§§替换为&码，░＊◇＊%改░中▓部#游◆内&@复正◆。
 ▓#░%#
-▒░＊◇面与对▓内均可操▒（可@＊/§◆/缩§屏§边%，◆一&重@%&※）：
-&字：§▓百分比 0%–100% 自◇▓◇；乱码▓式：#&◆乱（重#§#）/ 混#混乱（每░%※重新随#）
-认知：◆牌%%揭▓（§◇示 / 随机＊@1-3░ / 奖励全◇#示）；商＊#事件◆面＊#＊◆；卡@记忆四模式；%忆消#开关；#牌计数器
-感§：血量/金▓▓忆模&；血量▒/金#数恢&正※▓◇；◇示遗物（全◆◆恢复：&拥◆/奖励/░店/宝箱/@视/※◇▒▒）；#░地图所@#※；敌人模◆@◇；▒＊#@（不#◆ / ▒%一%＊ / ◇部§@）
-卡牌◇░░模＊
-&◇%▒：全＊卡%◇§可＊
-§记#：打▒/升级一▒即◆#记住，▓名卡%所▒＊◆/#%/&▒中※显示%牌面
-◇记性（默认）：§▓◇@§ n 次#◆░◆※◆记（n 默认 2、※调）；打※重置%◇；&获得的#先认@，＊§%忆▓※%@变▓提#
-歪比&▒：卡#◆不░%
-◆※&#视为§得（好▓※/#＊░）。记░◇＊（%关，默认开）：▒斗结束◇仍※＊示的&░从&░中移◇，并§%原░%卡动画（◆§巴§＊式#%影＊，▒保@）。%%▒▓器（开关，░#关）：%&※张&（同※&＊▓※※▒号，如「◆击1」）本局＊＊▓#▒，右@%░示可#起&排行榜。
-核心◆果
-卡◇失认：&#牌组＊为░▒；默▓打过@牌░认▓；奖&＊▓◇界※默认◇◇示稀※度
-@字失%：事%、菜单、提示、#◆◆#话＊部乱＊（＊鉴与◆%除◆），乱◆░▒可#
-记◆失真：血※与金币＊◆实时※同样@乱░；&%@失§模式停◇在「上%休息时」，＊开启「血※#/金&＊░@◆常@示」@数◆可◇
-世◆&糊：§人只剩◆※▒框、名字◆░（可░§「敌人模型※@」）；＊物不可◆（▓开§「#◆遗&」§░&◇）、░&只剩◆廓、地#迷雾、Boss @#＊＊；░击/治疗※字乱※
-░赖 STS2 v0.111.0 ▒ RitsuLib 0.6.2；@单人；&◇即#复原&。
-Github#▒：https://github.com/yM7-1/BrainFog
+▒░＊◇面与对▓内均可操▒（可@＊/§◆/缩§屏§边%；「◆前&置@%&」※&自§▓默认，「重置◇▓◇」一键▓复）：
+#&：◆码百#§ 0%–100% #由#节；乱码░%：※定混乱（#进不◆）/ 混%%乱（▓§◇进重新＊@）
+░知：卡牌◇#揭示（＊#示 / 随◆揭＊1-3# / ＊◆全@揭示）；商店与%件卡#揭示#关；卡牌记忆§模式；记▓▓逝开&；卡牌▒数#
+感知：&量/※▓◇◇模式；血量◆/◆币数&复◆常显░；显示遗@（全※◇▒▒：#░有/奖励/@#/※箱/检视/◆@◇▒）；＊#@图#◆▒%；敌%＊◇可§；@人意◇（░░见 / ＊&◇%▒ / 全＊可%）
+◇§配＊§辅#：卡▒奖励全▒揭◆、#店/事▓卡面%示、▒＊/◆#%&▒读、※物可%、地图◇路线、敌人§▓◇@§意#◆░；◆※◆恢复难※，并用「※前设%◇&认」保存#己的@＊。
+§%记▓※%@
+通▓万#：全部&▒直#◆见
+░%◆：※&/#级一§即永▓※#，＊░卡░◇＊%励/商店/事▒中也显◇真※＊
+坏记&（░认）：&░卡上◇ n 次§%出░%忘记（n 默◆ 2、§调）；§＊重#%数；＊▒得@%%▒▓，即将失░#手%&※暗&醒
+※&＊▓：※※▒不揭◆
+开局牌＊＊▓#▒（好@%/░记性）。#忆&逝（开关，默认◆）：战斗◇束时&#揭示＊牌░▒卡▓中移@，并░放▓版&＊▓◇（歪※巴卜◇◇不受※响，@保底）。%牌%数器（开关，#◆◆）：#录＊张牌（＊＊按加◆%序◆号，◆「░▒1」）本#打◆的次数，※上角显＊◆收起※排行@。
+核░&%
+@牌§认：开局◇组视%记得；默＊打过的※#认&；＊░@◆牌@面@认◆部◇示（◆&回§显示稀◆※）
+▒字失读：◆░、菜░、§示、卡面与※@＊部乱码（◆▓与§#◆外），&§░&◇░
+&忆失◆：血量#金币@#＊＊░数值可※；可切※░忆▒@停留&「◇次#息时」，&#▒「血量░/金币数▓复▒常显示」让@%░░▓%
+世界＊糊：@人◆＊◇▒▒实模型（＊关闭恢复呼吸◇＊）、#字隐#；§物默◇可见（▒▓▓「显%▓＊」恢复◆◆）、#@只※※＊、地图迷#、Boss #&隐◇；受击/§※§░乱#
+依赖 STS2 v0.111.0 与 RitsuLib 0.6.2；＊单&；卸载即恢复原版。
+Github链接：https://github.com/yM7-1/BrainFog
