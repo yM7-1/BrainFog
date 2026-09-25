@@ -10,7 +10,16 @@ namespace BrainFog;
 /// </summary>
 public static class ModRuntime
 {
-    public static bool Disabled { get; private set; }
+    private static bool _multiplayerDisabled;
+    private static bool _userDisabled;
+
+    /// <summary>True while the mod must not affect the game: a multiplayer
+    /// session (automatic) or the panel's "disable BrainFog" option (user).</summary>
+    public static bool Disabled => _multiplayerDisabled || _userDisabled;
+
+    /// <summary>True when the player turned the mod off in the modifier panel
+    /// (persisted in the mod's own config across launches).</summary>
+    public static bool UserDisabled => _userDisabled;
 
     /// <summary>Set BRAINFOG_DEBUG=1 to get state dumps in the game log.</summary>
     public static bool DebugEnabled { get; } =
@@ -21,12 +30,16 @@ public static class ModRuntime
 
     public static void EvaluateMultiplayer(bool isMultiplayer)
     {
-        Disabled = MultiplayerGuard.ShouldDisable(isMultiplayer);
-        if (Disabled)
+        _multiplayerDisabled = MultiplayerGuard.ShouldDisable(isMultiplayer);
+        if (_multiplayerDisabled)
         {
             Log.Info("[BrainFog] " + MultiplayerGuard.DisabledReason);
         }
     }
+
+    /// <summary>Panel option: player disables / re-enables the whole mod.
+    /// The caller applies and persists via <see cref="Game.DifficultyRuntime"/>.</summary>
+    public static void SetUserDisabled(bool disabled) => _userDisabled = disabled;
 
     public static void DumpState(string tag)
     {
@@ -36,7 +49,8 @@ public static class ModRuntime
         }
 
         var snapshot = Game.SnapshotDisplay.Snapshot;
-        Log.Info($"[BrainFog][State:{tag}] disabled={Disabled} revealed={Tracker.RevealedCount} " +
+        Log.Info($"[BrainFog][State:{tag}] disabled={Disabled} multiplayer={_multiplayerDisabled} userOff={_userDisabled} " +
+                 $"revealed={Tracker.RevealedCount} " +
                  $"hp={snapshot.Hp?.ToString() ?? "-"}/{snapshot.MaxHp?.ToString() ?? "-"} gold={snapshot.Gold?.ToString() ?? "-"}");
     }
 }

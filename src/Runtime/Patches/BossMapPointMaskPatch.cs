@@ -43,15 +43,15 @@ internal static class BossMapPointMaskPatch
     {
         try
         {
-            if (ModRuntime.Disabled || !GodotObject.IsInstanceValid(point))
+            if (!GodotObject.IsInstanceValid(point))
             {
                 return;
             }
 
             var question = point.GetNodeOrNull<Label>(QuestionNodeName);
-            if (Game.DifficultyRuntime.Current.ShowAllMapRoutes)
+            if (ModRuntime.Disabled || Game.DifficultyRuntime.Current.ShowAllMapRoutes)
             {
-                // Difficulty option: restore the real boss point.
+                // Mod off or difficulty option: restore the real boss point.
                 question?.SetVisible(false);
                 if (point._usesSpine)
                 {

@@ -15,6 +15,7 @@ internal static class DifficultyRuntime
     private const string Section = "difficulty";
     private const string DefaultsSection = "defaults";
     private const string UiSection = "ui";
+    private const string ModSection = "mod";
 
     public static DifficultySettings Current { get; } = new();
 
@@ -85,6 +86,10 @@ internal static class DifficultyRuntime
                 ReadInto(Current, config, Section, Defaults);
             }
             BlurSalt.PerLaunch = Current.SaltMode == BlurSaltMode.PerLaunch;
+
+            // "Disable BrainFog" option (0.3.7): persisted so the mod stays off
+            // across launches until the player turns it back on.
+            ModRuntime.SetUserDisabled(config.GetValue(ModSection, "disabled", false).AsBool());
 
             PanelCollapsed = config.GetValue(UiSection, "collapsed", false).AsBool();
             PanelDocked = config.GetValue(UiSection, "docked", false).AsBool();
@@ -157,6 +162,7 @@ internal static class DifficultyRuntime
             {
                 WriteInto(config, DefaultsSection, Defaults);
             }
+            config.SetValue(ModSection, "disabled", ModRuntime.UserDisabled);
             config.SetValue(UiSection, "collapsed", PanelCollapsed);
             config.SetValue(UiSection, "docked", PanelDocked);
             config.SetValue(UiSection, "dock_side", PanelDockSide);
@@ -213,6 +219,30 @@ internal static class DifficultyRuntime
         PanelPositionX = Math.Clamp(x, 0f, 1f);
         PanelPositionY = Math.Clamp(y, 0f, 1f);
         Save();
+    }
+
+    /// <summary>Panel option "disable BrainFog" (0.3.7): stops every mod effect
+    /// and reverts what is already on screen to the vanilla presentation (text,
+    /// cards, relics, enemy visuals, map, intents, status UI). Re-enabling
+    /// re-applies the current options. Persisted across launches.</summary>
+    public static void SetModDisabled(bool disabled)
+    {
+        if (ModRuntime.UserDisabled == disabled)
+        {
+            return;
+        }
+        ModRuntime.SetUserDisabled(disabled);
+        Save();
+        if (disabled)
+        {
+            TextBlurService.RestoreAll();
+        }
+        else
+        {
+            TextBlurService.ReapplyAllText(TextBlurPercent);
+        }
+        CardFogRenderer.RefreshAllLiveCards();
+        DifficultyRefresh.ApplyAll();
     }
 
     /// <summary>Applies a changed option: refresh the affected live UI and persist.</summary>

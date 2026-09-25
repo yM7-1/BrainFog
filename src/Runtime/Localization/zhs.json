@@ -5,6 +5,8 @@
   "hp_snapshot_tag": "上次休息时的状态",
   "hp_snapshot_hint": "该状态并非当前真实状态，请在火堆休息获得最新状态信息",
   "panel_title": "认知修改器",
+  "panel_mod_off": "关闭脑雾尖塔（本 mod 不再影响游戏）",
+  "panel_mod_off_note": "已关闭：本 mod 不再影响游戏；取消勾选即可恢复",
   "panel_section_text": "文字",
   "panel_section_cognition": "认知",
   "panel_section_perception": "感知",
@@ -56,6 +58,7 @@
   "panel_hint_map_routes": "地图显示全部节点与路线",
   "panel_hint_intent": "敌人意图：不可见 / 仅第一回合 / 每回合可见",
   "panel_hint_reset": "把全部修改器选项恢复为默认值",
+  "panel_hint_mod_off": "勾选后脑雾尖塔完全停止生效：所有乱码、遮蔽与记忆规则立即恢复原版，设置跨重进保留；取消勾选即可恢复",
   "panel_hint_save_default": "把当前修改器设置保存为默认：之后「重置为默认」将恢复这些值（跨重进保留）",
   "panel_hint_relics": "恢复所有遗物的显示：已拥有/奖励/商店/宝箱/检视等（图鉴本就可见）"
 }

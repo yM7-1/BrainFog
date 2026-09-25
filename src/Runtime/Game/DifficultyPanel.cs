@@ -27,6 +27,8 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     private static readonly Color AccentBright = new(1f, 0.90f, 0.60f);
     private static readonly Color SectionColor = new(0.66f, 0.70f, 0.78f);
     private static readonly Color HintColor = new(0.62f, 0.65f, 0.70f);
+    private static readonly Color ModOffColor = new(0.95f, 0.62f, 0.52f);
+    private static readonly Color ModOffBright = new(1f, 0.74f, 0.62f);
 
     private const float ClickThresholdPx = 8f;
     private const double LocalePollSeconds = 0.5;
@@ -63,6 +65,8 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     private Button _collapse = null!;
     private Button _dock = null!;
     private Button _tab = null!;
+    private CheckButton _modOff = null!;
+    private Label _modOffNote = null!;
 
     private string _currentHintKey = "panel_hint_default";
     private string _lastLocale = string.Empty;
@@ -93,10 +97,18 @@ internal sealed partial class DifficultyPanel : CanvasLayer
 
     public override void _Process(double delta)
     {
-        if (ModRuntime.Disabled)
+        if (ModRuntime.Disabled && !ModRuntime.UserDisabled)
         {
+            // Multiplayer guard: hidden entirely (cannot be re-enabled mid-run).
             Visible = false;
             return;
+        }
+        if (ModRuntime.Disabled)
+        {
+            // User kill switch: drop any queued blur re-apply so it cannot
+            // re-garble the screen while the mod is off.
+            _blurPending = false;
+            _blurDirty = false;
         }
         PollLocale(delta);
         if (_blurPending)
@@ -200,6 +212,31 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         root.AddThemeConstantOverride("separation", 8);
 
         root.AddChild(BuildHeader());
+
+        // Mod kill switch (0.3.7): when on, the mod stops affecting the game
+        // and this row is the only remaining control (so it can be turned back
+        // on). Kept outside the collapsible body on purpose.
+        _modOff = new CheckButton
+        {
+            Name = "BrainFogModOff",
+            FocusMode = Control.FocusModeEnum.None,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        _modOff.AddThemeColorOverride("font_color", ModOffColor);
+        _modOff.AddThemeColorOverride("font_hover_color", ModOffBright);
+        _modOff.Toggled += OnModOffToggled;
+        root.AddChild(_modOff);
+        BindHint(_modOff, "panel_hint_mod_off");
+
+        _modOffNote = new Label
+        {
+            Name = "BrainFogModOffNote",
+            Visible = false,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        _modOffNote.AddThemeFontSizeOverride("font_size", 13);
+        _modOffNote.AddThemeColorOverride("font_color", HintColor);
+        root.AddChild(_modOffNote);
 
         _body = new VBoxContainer { Name = "BrainFogBody" };
         _body.AddThemeConstantOverride("separation", 7);
@@ -422,6 +459,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
                      _sectionText, _blurLabel, _saltLabel, _saltMode,
                      _memoryLabel, _memoryMode, _badNLabel, _badN, _memoryFade,
                      _intentLabel, _intentMode, _saveDefault, _reset,
+                     _modOff, _modOffNote,
                  })
         {
             control.ApplyLocaleFontSubstitution(FontType.Regular, "font");
@@ -436,6 +474,8 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         var zh = ModLocalization.IsChinese;
 
         _title.Text = T("panel_title", zh ? "认知修改器" : "Cognition Modifier");
+        _modOff.Text = T("panel_mod_off", zh ? "关闭脑雾尖塔（本 mod 不再影响游戏）" : "Disable BrainFog (mod stops affecting the game)");
+        _modOffNote.Text = T("panel_mod_off_note", zh ? "已关闭：本 mod 不再影响游戏；取消勾选即可恢复" : "Off: the mod no longer affects the game; uncheck to re-enable");
         _sectionText.Text = T("panel_section_text", zh ? "文字" : "Text");
         _sectionCognition.Text = T("panel_section_cognition", zh ? "认知" : "Cognition");
         _sectionPerception.Text = T("panel_section_perception", zh ? "感知" : "Perception");
@@ -507,6 +547,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
                      _tip, _dock, _tab, _blurLabel, _saltLabel, _saltMode,
                      _memoryLabel, _memoryMode, _badNLabel, _badN, _memoryFade,
                      _intentLabel, _intentMode, _saveDefault, _reset,
+                     _modOff, _modOffNote,
                  })
         {
             control.ApplyLocaleFontSubstitution(FontType.Regular, "font");
@@ -659,6 +700,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             "panel_hint_intent" => zh ? "敌人意图：不可见 / 仅第一回合 / 每回合可见" : "Enemy intents: hidden / first round only / every round",
             "panel_hint_save_default" => zh ? "把当前修改器设置保存为默认：之后「重置为默认」将恢复这些值（跨重进保留）" : "Save the current modifier settings as your defaults: Reset to defaults will restore these (kept across launches)",
             "panel_hint_reset" => zh ? "把全部修改器选项恢复为默认值（你自己保存的默认，或出厂默认）" : "Restore every modifier option (your saved defaults, or the factory defaults)",
+            "panel_hint_mod_off" => zh ? "勾选后脑雾尖塔完全停止生效：所有乱码、遮蔽与记忆规则立即恢复原版，设置跨重进保留；取消勾选即可恢复" : "Check to stop BrainFog from affecting the game: all garbling, masking and memory rules revert to vanilla immediately (kept across launches); uncheck to re-enable",
             _ => zh ? "拖动标题栏可移动 · 修改即时生效" : "Drag the title bar to move · changes apply instantly",
         };
         return T(hintKey, fallback);
@@ -692,7 +734,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
 
     public override void _Input(InputEvent @event)
     {
-        if (!_dragging || ModRuntime.Disabled)
+        if (!_dragging || (ModRuntime.Disabled && !ModRuntime.UserDisabled))
         {
             return;
         }
@@ -805,8 +847,10 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             _enemyModels.ButtonPressed = settings.EnemyModelsVisible;
             _intentMode.Selected = IntentVisibilityRules.ToIndex(settings.IntentMode);
             UpdateBlurLabel();
-            _body.Visible = !DifficultyRuntime.PanelCollapsed;
-            _collapse.Text = DifficultyRuntime.PanelCollapsed ? "▸" : "▾";
+            _modOff.ButtonPressed = ModRuntime.UserDisabled;
+            _modOffNote.Visible = ModRuntime.UserDisabled;
+            _body.Visible = !DifficultyRuntime.PanelCollapsed && !ModRuntime.UserDisabled;
+            _collapse.Text = _body.Visible ? "▾" : "▸";
             UpdateDockVisuals();
         }
         finally
@@ -1023,10 +1067,24 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     {
         HideTip();
         var collapsed = _body.Visible;
-        _body.Visible = !collapsed;
-        _collapse.Text = collapsed ? "▸" : "▾";
+        _body.Visible = !collapsed && !ModRuntime.UserDisabled;
+        _collapse.Text = _body.Visible ? "▾" : "▸";
         ResizePanel();
         DifficultyRuntime.SetPanelCollapsed(collapsed);
+    }
+
+    /// <summary>Mod kill switch (0.3.7): stops every mod effect and restores
+    /// the vanilla presentation; the option row stays so it can be undone.</summary>
+    private void OnModOffToggled(bool pressed)
+    {
+        if (_applying)
+        {
+            return;
+        }
+        HideTip();
+        DifficultyRuntime.SetModDisabled(pressed);
+        ApplyFromSettings();
+        ResizePanel();
     }
 
     /// <summary>Docks the panel to the nearer screen edge (the edge tab

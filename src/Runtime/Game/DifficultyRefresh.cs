@@ -1,5 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.Events;
+using MegaCrit.Sts2.Core.Nodes.Potions;
 using MegaCrit.Sts2.Core.Nodes.Relics;
 using MegaCrit.Sts2.Core.Nodes.Rewards;
 using MegaCrit.Sts2.Core.Nodes.Screens.InspectScreens;
@@ -50,6 +52,13 @@ internal static class DifficultyRefresh
         {
             case NCreature creature:
                 EnemyVisualMask.Apply(creature);
+                if (ModRuntime.Disabled)
+                {
+                    LowHpHintDisplay.HideBorder(creature);
+                }
+                break;
+            case NCreatureStateDisplay nameplate:
+                Patches.EnemyNameMask.Apply(nameplate, null);
                 break;
             case NRelic relic:
                 Patches.RelicMasking.Apply(relic);
@@ -60,8 +69,43 @@ internal static class DifficultyRefresh
             case NInspectRelicScreen inspect:
                 Patches.RelicMasking.ApplyInspect(inspect);
                 break;
+            case NPotion potion:
+                Patches.PotionOutlines.Apply(potion);
+                break;
+            case NEventOptionButton option:
+                Patches.EventChoiceIcons.ApplyTo(option);
+                break;
             case NTopBarBossIcon bossIcon:
                 Patches.BossIconHidePatch.Refresh(bossIcon);
+                break;
+            case NTopBarHp topBarHp:
+                if (ModRuntime.Disabled)
+                {
+                    LowHpHintDisplay.HideLabel(topBarHp);
+                }
+                else
+                {
+                    // First re-attach after an earlier disabled launch (0.3.7):
+                    // seed the snapshot from the live player instead of a value
+                    // from a previous run.
+                    var hadHpBar = SnapshotDisplay.HpBar != null;
+                    SnapshotDisplay.AttachHpBar(topBarHp);
+                    if (!hadHpBar && topBarHp._player is { } hpPlayer)
+                    {
+                        SnapshotDisplay.InitHp(hpPlayer.Creature.CurrentHp, hpPlayer.Creature.MaxHp);
+                    }
+                }
+                break;
+            case NTopBarGold topBarGold:
+                if (!ModRuntime.Disabled)
+                {
+                    var hadGoldBar = SnapshotDisplay.GoldBarAttached;
+                    SnapshotDisplay.AttachGoldBar(topBarGold);
+                    if (!hadGoldBar && topBarGold._player is { } goldPlayer)
+                    {
+                        SnapshotDisplay.InitGold(goldPlayer.Gold);
+                    }
+                }
                 break;
             case NHealthBar bar:
                 bar.RefreshValues();
@@ -81,6 +125,13 @@ internal static class DifficultyRefresh
 
     private static void RefreshIntent(NIntent intent)
     {
+        if (ModRuntime.Disabled)
+        {
+            // Mod off: vanilla shows the intent the game decided to show.
+            intent.Visible = true;
+            return;
+        }
+
         switch (DifficultyRuntime.Current.IntentMode)
         {
             case Core.Options.IntentVisibility.All:

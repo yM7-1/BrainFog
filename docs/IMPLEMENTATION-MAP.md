@@ -9,6 +9,7 @@
 > **2026-09-21 默认值调整（0.3.2）**——多项感知恢复为默认开启：卡牌奖励**全部揭示**、商店/事件卡面揭示**开**、血量/金币数值**可读**、显示遗物**开**、地图全路线**开**、敌人模型可见**开**、敌人意图**全部可见**；已保存的旧配置保留玩家现值（重置为默认/删 settings.cfg 后应用新默认）。**同版新增「当前设置为默认」按钮**：把当前设置为重置目标（`defaults` 配置段，跨重进保留）。
 > **2026-09-21 追加：遗物显示改为全场景（0.3.1）**——原「显示已拥有遗物」更名「**显示遗物**」，开启后恢复所有遗物显示（已拥有/奖励/商店/宝箱/检视/跑图历史；图鉴本就可见），悬停提示同步放开；配置键 `show_owned_relics` → `show_relics`（旧值自动沿用）。
 > **2026-09-21 六项认知规则（0.3.0，待验收）**——① 开局初始卡组揭示（好记性/坏记性，歪比巴卜除外）；② 感知模块「敌人模型可见」（默认关）；③ 坏记性 n 默认 2 + 新入组卡牌初始揭示；④ 「记忆消逝」战斗结束移除未揭示牌（默认开，歪比巴卜豁免，无保底）；⑤ 坏记性失忆提醒（最后机会的已揭示手牌变暗）。
+> **2026-09-25 追加：Mod 关闭开关（0.3.7）**——认知修改器标题栏下方新增「关闭脑雾尖塔（本 mod 不再影响游戏）」勾选项：勾选后所有乱码/遮蔽/记忆规则即时恢复原版呈现，面板仅保留该开关与说明（可随时取消勾选恢复）；状态存于 `settings.cfg` 的 `[mod] disabled`，跨重进保留；联机自动禁用逻辑不变。
 
 ## 1. 规格 → 代码 → 测试 映射
 
@@ -97,6 +98,7 @@
 | 1.7 坏记性：n 默认 2 + 新入组卡牌初始揭示（0.3.0 六项③） | `Core/Options/DifficultySettings.cs`（默认 2）+ `Patches/CardPileHandPatch.cs`（`CardPileDeckAddPatch` Deck 入组钩子）+ `Game/BadMemoryTracker.cs`（坏记性新卡揭示） | `DifficultySettingsTests` |
 | 1.7 记忆消逝（0.3.0 六项④，默认开，歪比巴卜豁免，无保底；0.3.1 起走原版删卡动画） | `Core/Reveal/MemoryFadeRules.cs` + `Game/MemoryFade.cs`（战斗结算按模式判定未揭示，经 `CardPileCmd.RemoveFromDeck` 移除：原版动画/钩子）+ `Patches/PlayerAfterCombatEndPatch.cs`（存档写入前执行）+ `Game/RevealPersistence.cs`（`OnCardsRemoved` 清理揭示与坏记性计数） | `MemoryFadeRulesTests` + 补丁审计 `Player.AfterCombatEnd` |
 | 1.7 坏记性失忆提醒（0.3.0 六项⑤） | `Core/Reveal/BadMemoryCounter.cs`（`WouldForgetOnLeave`）+ `Game/BadMemoryTracker.cs`（`ShouldDim` + 每帧合并刷新）+ `Game/CardFogRenderer.cs`（`BrainFogDim` 覆盖层：仅手牌、已揭示、最后机会） | `BadMemoryCounterTests` |
+| 1.7 Mod 关闭开关（0.3.7） | `ModRuntime`（`Disabled` = 联机守卫 + `UserDisabled` 用户开关）+ `Game/DifficultyRuntime.cs`（`[mod] disabled` 持久化 + `SetModDisabled` 即时恢复/重应用）+ `Game/TextBlurService.cs`（`RestoreAll`）+ `Game/DifficultyRefresh.cs`/`CardFogRenderer`/`MapFogController`/`RelicMasking`/`EnemyVisualMask`/`EnemyNameMask`/`PotionOutlines`/`EventChoiceIcons`/`PlayerHpBarMask`/`BossMapPointMaskPatch`/`MapLegendTextBlurPatch`（关闭时走原版恢复路径）+ `Game/DifficultyPanel.cs`（开关行；关闭时仅保留开关与说明） | `MultiplayerGuardTests` + 补丁审计 |
 
 ## 2. 已知限制 / 近似（晨间重点核查）
 
@@ -145,3 +147,4 @@
 19. **记忆消逝（0.3.0 六项④，默认开；0.3.1 起带原版删卡动画）**：坏记性下失忆的牌、好记性下从未打出过的牌，在战斗结束后从卡组消失（打开牌组确认）；移除时播放原版删卡动画（黑雾卡预览 + 飞散特效）；歪比巴卜模式整局不删牌；**无保底**（卡组可能被删空）。
 20. **失忆提醒（0.3.0 六项⑤）**：坏记性下某张已揭示手牌处于「本回合不打出就失忆」的最后机会 → 牌面明显变暗；打出后恢复；离开手牌后变黑雾。
 21. **显示遗物（0.3.1；0.3.2 起默认开）**：默认库存/检视、遗物奖励行（图标 + 真实名称）、商店、宝箱、跑图历史的遗物全部可见，悬停显示真实名称与描述；关闭「显示遗物」→ 恢复全遮蔽；切换即时生效（含已打开的检视界面）。
+22. **关闭脑雾尖塔（0.3.7）**：勾选修改器顶部「关闭脑雾尖塔」→ 当前画面立刻恢复原版（乱码文本回原文、卡面/遗物/敌人/地图/意图/血条提示恢复原样），面板仅剩开关与说明；取消勾选 → 按当前设置重新生效；重进游戏仍保持关闭，直到取消勾选。

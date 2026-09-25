@@ -13,6 +13,10 @@ internal static class SnapshotDisplay
 
     public static MegaCrit.sts2.Core.Nodes.TopBar.NTopBarHp? HpBar => _hpBar;
 
+    /// <summary>True once the mod attached the top-bar gold node (mod-off
+    /// re-attach seeding, 0.3.7).</summary>
+    public static bool GoldBarAttached => _goldBar != null;
+
     private static MegaCrit.sts2.Core.Nodes.TopBar.NTopBarHp? _hpBar;
     private static MegaCrit.sts2.Core.Nodes.TopBar.NTopBarGold? _goldBar;
     private static bool _hpRefreshRequested;

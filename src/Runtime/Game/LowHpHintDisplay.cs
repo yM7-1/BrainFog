@@ -32,6 +32,34 @@ internal static class LowHpHintDisplay
         UpdateCreatureBorder(player, low);
     }
 
+    /// <summary>Hides the top-bar warning label (mod-off sweep, 0.3.7).</summary>
+    public static void HideLabel(NTopBarHp hpBar)
+    {
+        if (!GodotObject.IsInstanceValid(hpBar))
+        {
+            return;
+        }
+        var label = hpBar.GetNodeOrNull<Label>(HintLabelName);
+        if (label != null && GodotObject.IsInstanceValid(label))
+        {
+            label.Visible = false;
+        }
+    }
+
+    /// <summary>Hides the creature border (mod-off sweep, 0.3.7).</summary>
+    public static void HideBorder(NCreature creature)
+    {
+        if (!GodotObject.IsInstanceValid(creature))
+        {
+            return;
+        }
+        var border = creature.GetNodeOrNull<Panel>(BorderName);
+        if (border != null && GodotObject.IsInstanceValid(border))
+        {
+            border.Visible = false;
+        }
+    }
+
     private static void UpdateStatusLabel(Player player, bool low)
     {
         if (player.Creature == null)

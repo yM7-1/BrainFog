@@ -128,7 +128,7 @@ internal static class CardFogRenderer
 
     private static void RefreshLiveCardsCore(CardModel model)
     {
-        if (ModRuntime.Disabled || Engine.GetMainLoop() is not SceneTree tree || tree.Root == null)
+        if (Engine.GetMainLoop() is not SceneTree tree || tree.Root == null)
         {
             return;
         }
@@ -148,7 +148,7 @@ internal static class CardFogRenderer
 
     private static void RefreshAllLiveCardsCore()
     {
-        if (ModRuntime.Disabled || Engine.GetMainLoop() is not SceneTree tree || tree.Root == null)
+        if (Engine.GetMainLoop() is not SceneTree tree || tree.Root == null)
         {
             return;
         }

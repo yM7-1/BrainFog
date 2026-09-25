@@ -28,11 +28,11 @@ internal static class MapLegendTextBlurPatch
     {
         try
         {
-            if (ModRuntime.Disabled || label == null || !Godot.GodotObject.IsInstanceValid(label))
+            if (label == null || !Godot.GodotObject.IsInstanceValid(label))
             {
                 return;
             }
-            if (Game.DifficultyRuntime.Current.ShowAllMapRoutes)
+            if (ModRuntime.Disabled || Game.DifficultyRuntime.Current.ShowAllMapRoutes)
             {
                 Game.TextBlurService.Restore(label);
                 return;
@@ -50,7 +50,7 @@ internal static class MapLegendTextBlurPatch
     {
         try
         {
-            if (ModRuntime.Disabled || !Godot.GodotObject.IsInstanceValid(screen))
+            if (!Godot.GodotObject.IsInstanceValid(screen))
             {
                 return;
             }

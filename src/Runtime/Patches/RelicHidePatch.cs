@@ -19,11 +19,13 @@ internal static class RelicMasking
     public const string RewardIconMeta = "BrainFogRelicIcon";
     public const string RewardLabelMeta = "BrainFogRelicLabel";
 
-    private static bool ShowAll => Game.DifficultyRuntime.Current.ShowRelics;
+    // Mod off (user option 0.3.7 / multiplayer): no masking at all, so the
+    // regular "show" paths double as the restore path.
+    private static bool ShowAll => ModRuntime.Disabled || Game.DifficultyRuntime.Current.ShowRelics;
 
     public static void Apply(NRelic relic)
     {
-        if (ModRuntime.Disabled || !GodotObject.IsInstanceValid(relic) || IsCompendiumEntry(relic))
+        if (!GodotObject.IsInstanceValid(relic) || IsCompendiumEntry(relic))
         {
             return;
         }
@@ -36,7 +38,7 @@ internal static class RelicMasking
     /// <summary>Relic reward icons carry their own TextureRect (no NRelic).</summary>
     public static void ApplyRewardIcon(TextureRect icon)
     {
-        if (ModRuntime.Disabled || !GodotObject.IsInstanceValid(icon))
+        if (!GodotObject.IsInstanceValid(icon))
         {
             return;
         }
@@ -49,7 +51,7 @@ internal static class RelicMasking
     /// "unknown relic", while shown the original title comes back.</summary>
     public static void ApplyRewardLabel(MegaRichTextLabel label)
     {
-        if (ModRuntime.Disabled || !GodotObject.IsInstanceValid(label))
+        if (!GodotObject.IsInstanceValid(label))
         {
             return;
         }
@@ -84,7 +86,7 @@ internal static class RelicMasking
     /// <summary>Inspect screen: fogged by default, fully restored when shown.</summary>
     public static void ApplyInspect(NInspectRelicScreen screen)
     {
-        if (ModRuntime.Disabled || !GodotObject.IsInstanceValid(screen))
+        if (!GodotObject.IsInstanceValid(screen))
         {
             return;
         }
@@ -162,7 +164,7 @@ internal static class RelicRewardLabelPatch
     {
         try
         {
-            if (!ModRuntime.Disabled && __instance.Reward is RelicReward && __instance._label != null)
+            if (__instance.Reward is RelicReward && __instance._label != null)
             {
                 RelicMasking.ApplyRewardLabel(__instance._label);
             }

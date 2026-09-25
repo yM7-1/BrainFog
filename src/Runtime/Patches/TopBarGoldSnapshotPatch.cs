@@ -48,7 +48,7 @@ internal static class TopBarGoldSnapshotPatch
     /// <summary>Re-renders the gold label for the current display mode.</summary>
     internal static void Refresh(NTopBarGold bar)
     {
-        if (!Game.DifficultyRuntime.Current.SnapshotStatus)
+        if (ModRuntime.Disabled || !Game.DifficultyRuntime.Current.SnapshotStatus)
         {
             bar.UpdateGold();
             return;

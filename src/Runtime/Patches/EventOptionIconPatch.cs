@@ -30,10 +30,24 @@ internal static class NEventOptionButtonIconPatch
 
 internal static class EventChoiceIcons
 {
+    /// <summary>Marks a relic icon this mod hid (so the mod-off sweep can
+    /// restore exactly the icons the game showed).</summary>
+    public const string HiddenMeta = "BrainFogRelicIconHidden";
+
     public static void ApplyTo(NEventOptionButton button)
     {
+        if (!GodotObject.IsInstanceValid(button))
+        {
+            return;
+        }
+        if (button.GetNodeOrNull<TextureRect>("%RelicIcon") is not { } relicIcon)
+        {
+            return;
+        }
+
         if (ModRuntime.Disabled)
         {
+            Restore(relicIcon);
             return;
         }
 
@@ -42,9 +56,19 @@ internal static class EventChoiceIcons
             return; // ancient options keep the relic icon visible
         }
 
-        if (button.GetNodeOrNull<TextureRect>("%RelicIcon") is { } relicIcon)
+        if (relicIcon.Visible)
         {
+            relicIcon.SetMeta(HiddenMeta, true);
             relicIcon.Visible = false;
+        }
+    }
+
+    private static void Restore(TextureRect relicIcon)
+    {
+        if (relicIcon.HasMeta(HiddenMeta))
+        {
+            relicIcon.Visible = true;
+            relicIcon.RemoveMeta(HiddenMeta);
         }
     }
 }

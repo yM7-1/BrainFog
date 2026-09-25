@@ -132,6 +132,35 @@ internal static class TextBlurService
         }
     }
 
+    /// <summary>Restores every label that carries a stored original to vanilla
+    /// text (mod disabled, 0.3.7). Dedicated-patch contexts included: with the
+    /// mod off, their patches skip too, so nothing re-blurs them.</summary>
+    public static void RestoreAll() =>
+        PatchGuard.Run("TextBlur.RestoreAll", () =>
+        {
+            if (Engine.GetMainLoop() is not SceneTree tree || tree.Root == null)
+            {
+                return;
+            }
+            WalkRestore(tree.Root, 0);
+        });
+
+    private static void WalkRestore(Node node, int depth)
+    {
+        if (depth > 64)
+        {
+            return;
+        }
+        if (node is CanvasItem item && item.HasMeta(InputMeta))
+        {
+            Restore(item);
+        }
+        foreach (var child in node.GetChildren())
+        {
+            WalkRestore(child, depth + 1);
+        }
+    }
+
     /// <summary>Re-applies the blur ratio to every label that has a stored
     /// original (panel slider). Only the readable-status-number labels are
     /// restored to their original text (2026-09-21); everything else keeps its

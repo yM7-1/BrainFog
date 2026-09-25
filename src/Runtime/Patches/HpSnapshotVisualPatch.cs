@@ -37,14 +37,14 @@ internal static class HpSnapshotVisualPatch
     {
         try
         {
-            if (ModRuntime.Disabled || bar._hpLabel == null || !GodotObject.IsInstanceValid(bar._hpLabel))
+            if (bar._hpLabel == null || !GodotObject.IsInstanceValid(bar._hpLabel))
             {
                 return;
             }
 
-            if (!Game.DifficultyRuntime.Current.SnapshotStatus)
+            if (ModRuntime.Disabled || !Game.DifficultyRuntime.Current.SnapshotStatus)
             {
-                // Live display: no gray, no snapshot tag/hint.
+                // Live display (or mod off): no gray, no snapshot tag/hint.
                 bar._hpLabel.RemoveThemeColorOverride(ThemeConstants.Label.FontColor);
                 bar._hpLabel.RemoveThemeColorOverride(ThemeConstants.Label.FontOutlineColor);
                 SetVisible(bar, TagNodeName, false);
@@ -76,7 +76,7 @@ internal static class HpSnapshotVisualPatch
     /// <summary>Re-renders the HP label for the current display mode.</summary>
     internal static void Refresh(NTopBarHp bar)
     {
-        if (!Game.DifficultyRuntime.Current.SnapshotStatus)
+        if (ModRuntime.Disabled || !Game.DifficultyRuntime.Current.SnapshotStatus)
         {
             if (bar._player is { } player)
             {

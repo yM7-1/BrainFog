@@ -5,6 +5,8 @@
   "hp_snapshot_tag": "State at last rest",
   "hp_snapshot_hint": "Not your current HP. Rest at a campfire to refresh this.",
   "panel_title": "Cognition Modifier",
+  "panel_mod_off": "Disable BrainFog (mod stops affecting the game)",
+  "panel_mod_off_note": "Off: the mod no longer affects the game; uncheck to re-enable",
   "panel_section_text": "Text",
   "panel_section_cognition": "Cognition",
   "panel_section_perception": "Perception",
@@ -56,6 +58,7 @@
   "panel_hint_map_routes": "Show every map node and route",
   "panel_hint_intent": "Enemy intents: hidden / first round only / every round",
   "panel_hint_reset": "Restore every modifier option to its default",
+  "panel_hint_mod_off": "Check to stop BrainFog from affecting the game: all garbling, masking and memory rules revert to vanilla immediately (kept across launches); uncheck to re-enable",
   "panel_hint_save_default": "Save the current modifier settings as your defaults: Reset to defaults will restore these (kept across launches)",
   "panel_hint_relics": "Restore every relic display: owned, rewards, shops, chests, inspect (compendium already visible)"
 }

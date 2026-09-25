@@ -17,12 +17,13 @@ internal static class MapFogController
 
     private static void ApplyCore(NMapScreen screen)
     {
-        if (ModRuntime.Disabled || screen._mapPointDictionary is not { } points)
+        if (screen._mapPointDictionary is not { } points)
         {
             return;
         }
 
-        if (DifficultyRuntime.Current.ShowAllMapRoutes)
+        // Mod off: vanilla shows the whole act map, so reveal everything.
+        if (ModRuntime.Disabled || DifficultyRuntime.Current.ShowAllMapRoutes)
         {
             RevealEverything(screen, points);
             return;
