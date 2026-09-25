@@ -43,5 +43,6 @@
     新增版本号/本地化/补丁声明反向校验测试与 CardRevealTracker/SelectionRevealPlanner 边界测试；
     BRAINFOG_DEBUG dump 与 F9 覆盖层扩展
 - **待办与限制**：`docs/IMPLEMENTATION-MAP.md` §2（已知限制）与 §3（实机验收清单）；
+  联机适配评估已归档：`docs/research/04-multiplayer-feasibility.md`（暂不实施，维持联机自动禁用）；
   冻结规格：`docs/spec/SPEC-consolidated.md`；版本窗口与升级流程：`docs/UPGRADE.md`
 - **版本历史**：`CHANGELOG.md`（0.3.8 / 0.3.7 / 0.3.6 / 0.3.5 / 0.3.4 / 0.3.3 / 0.3.2 / 0.3.1 / 0.3.0 …）
