@@ -33,10 +33,15 @@ public static class ModRuntime
 
     public static void EvaluateMultiplayer(bool isMultiplayer)
     {
+        var wasDisabled = Disabled;
         _multiplayerDisabled = MultiplayerGuard.ShouldDisable(isMultiplayer);
         if (_multiplayerDisabled)
         {
             Log.Info("[BrainFog] " + MultiplayerGuard.DisabledReason);
+        }
+        if (wasDisabled != Disabled)
+        {
+            Game.DifficultyRuntime.ApplyDisabledTransition(Disabled);
         }
     }
 

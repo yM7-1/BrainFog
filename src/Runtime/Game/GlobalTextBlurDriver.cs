@@ -27,6 +27,43 @@ internal sealed partial class GlobalTextBlurDriver : Node
         "Vfx", "Particles", "Trail", "Spark", "Glow", "Smoke", "Flipbook",
     };
 
+    // Perf (0.3.8): the driver sweeps the whole tree every 0.2–0.4s, so the
+    // name-prefix check and the type-marker scan are cached per name/type
+    // instead of allocating a string per node per sweep.
+    private static readonly Dictionary<Type, bool> SkipTypeCache = new();
+    private static readonly Dictionary<StringName, bool> ModNameCache = new();
+
+    private static bool IsSkippedType(Type type)
+    {
+        if (SkipTypeCache.TryGetValue(type, out var skip))
+        {
+            return skip;
+        }
+        var typeName = type.Name;
+        skip = false;
+        foreach (var marker in SkipTypeMarkers)
+        {
+            if (typeName.Contains(marker, StringComparison.Ordinal))
+            {
+                skip = true;
+                break;
+            }
+        }
+        SkipTypeCache[type] = skip;
+        return skip;
+    }
+
+    private static bool IsModOwnedName(StringName name)
+    {
+        if (ModNameCache.TryGetValue(name, out var owned))
+        {
+            return owned;
+        }
+        owned = name.ToString().StartsWith("BrainFog", StringComparison.Ordinal);
+        ModNameCache[name] = owned;
+        return owned;
+    }
+
     private double _timer = BaseIntervalSeconds;
     private double _interval = BaseIntervalSeconds;
 
@@ -80,18 +117,14 @@ internal sealed partial class GlobalTextBlurDriver : Node
             return false;
         }
 
-        if (node.Name.ToString().StartsWith("BrainFog", StringComparison.Ordinal))
+        if (IsModOwnedName(node.Name))
         {
             return false;
         }
 
-        var typeName = node.GetType().Name;
-        foreach (var marker in SkipTypeMarkers)
+        if (IsSkippedType(node.GetType()))
         {
-            if (typeName.Contains(marker, StringComparison.Ordinal))
-            {
-                return false;
-            }
+            return false;
         }
 
         if (node is CanvasItem canvas && !canvas.IsVisibleInTree())
@@ -109,9 +142,10 @@ internal sealed partial class GlobalTextBlurDriver : Node
         }
 
         var changed = false;
-        foreach (var child in node.GetChildren())
+        var childCount = node.GetChildCount();
+        for (var i = 0; i < childCount; i++)
         {
-            changed |= Sweep(child, depth + 1);
+            changed |= Sweep(node.GetChild(i), depth + 1);
         }
         return changed;
     }

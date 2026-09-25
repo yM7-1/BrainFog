@@ -1,5 +1,6 @@
 using BrainFog.Core.Text;
 using Godot;
+using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 
@@ -23,6 +24,64 @@ internal static class GlobalTextBlurSource
 {
     private const int MaxAncestorHops = 24;
     private const string PendingHookMeta = "BrainFogPendingTreeEntered";
+
+    /// <summary>Re-blurs every catch-all context label from its current text
+    /// (mod re-enabled, 0.3.8). Labels created while the mod was disabled have
+    /// no stored original, so the metadata-based re-apply cannot see them.
+    /// Dedicated-patch contexts (cards, menus, hover tips, ...) stay with their
+    /// own patches, which run on the next game text write.</summary>
+    public static void ReBlurAll() =>
+        PatchGuard.Run("TextBlur.ReBlurAll", () =>
+        {
+            if (Engine.GetMainLoop() is not SceneTree tree || tree.Root == null)
+            {
+                return;
+            }
+            WalkReBlur(tree.Root, 0);
+        });
+
+    private static void WalkReBlur(Node node, int depth)
+    {
+        if (depth > 64)
+        {
+            return;
+        }
+        if (node.Name.ToString().StartsWith("BrainFog", StringComparison.Ordinal))
+        {
+            return; // mod-owned UI stays readable
+        }
+
+        if (node is MegaLabel or MegaRichTextLabel)
+        {
+            if (node is CanvasItem mega && ShouldBlur(mega))
+            {
+                var text = TextBlurService.Read(node);
+                if (!string.IsNullOrEmpty(text))
+                {
+                    // Route through the patched setter so auto-size/layout is
+                    // handled exactly like a normal game text write.
+                    switch (node)
+                    {
+                        case MegaLabel label:
+                            label.SetTextAutoSize(text);
+                            break;
+                        case MegaRichTextLabel rich:
+                            rich.SetTextAutoSize(text);
+                            break;
+                    }
+                }
+            }
+        }
+        else if (node is CanvasItem plain && (node is Label or RichTextLabel) && ShouldBlur(plain))
+        {
+            TextBlurService.BlurNode(plain, DifficultyRuntime.TextBlurPercent);
+        }
+
+        foreach (var child in node.GetChildren())
+        {
+            WalkReBlur(child, depth + 1);
+        }
+    }
 
     /// <summary>Rewrites the incoming text with its blurred form when the
     /// label's context is covered by the catch-all rule.</summary>

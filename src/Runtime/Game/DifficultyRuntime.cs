@@ -236,6 +236,14 @@ internal static class DifficultyRuntime
         }
         ModRuntime.SetUserDisabled(disabled);
         Save();
+        ApplyDisabledTransition(disabled);
+    }
+
+    /// <summary>Applies or reverts every mod effect after a Disabled change
+    /// (user kill switch or multiplayer guard, 0.3.8): vanilla presentation when
+    /// disabled, current options when re-enabled.</summary>
+    public static void ApplyDisabledTransition(bool disabled)
+    {
         if (disabled)
         {
             TextBlurService.RestoreAll();
@@ -243,6 +251,9 @@ internal static class DifficultyRuntime
         else
         {
             TextBlurService.ReapplyAllText(TextBlurPercent);
+            // Labels created while the mod was off have no stored original, so
+            // re-blur the catch-all contexts from their current text too.
+            GlobalTextBlurSource.ReBlurAll();
         }
         CardFogRenderer.RefreshAllLiveCards();
         DifficultyRefresh.ApplyAll();

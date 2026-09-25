@@ -136,4 +136,50 @@ public class CardRevealTrackerTests
         Assert.True(tracker.RevealByUpgrade("cards.BASH"));
         Assert.False(tracker.RevealByPlay("cards.BASH"));
     }
+
+    [Fact]
+    public void DefinitionAndInstanceKnowledge_AreIndependentScopes()
+    {
+        var tracker = new CardRevealTracker();
+        Assert.True(tracker.RevealByPlay("cards.STRIKE"));
+
+        Assert.Equal(CardKnowledge.Revealed, tracker.GetDefinitionKnowledge("cards.STRIKE"));
+        Assert.Equal(CardKnowledge.Unknown, tracker.GetDefinitionKnowledge("cards.BASH"));
+        Assert.Equal(CardKnowledge.Unknown, tracker.GetInstanceKnowledge("BrainFog.x"));
+
+        Assert.True(tracker.RevealInstanceByUpgrade("BrainFog.x"));
+        Assert.Equal(CardKnowledge.Revealed, tracker.GetInstanceKnowledge("BrainFog.x"));
+        Assert.Equal(CardKnowledge.Unknown, tracker.GetDefinitionKnowledge("BrainFog.x"));
+
+        Assert.Equal(CardKnowledge.Unknown, tracker.GetInstanceKnowledge(null));
+        Assert.Equal(CardKnowledge.Unknown, tracker.GetInstanceKnowledge(""));
+    }
+
+    [Fact]
+    public void HideInstance_ForgetsOneCopyOnly()
+    {
+        var tracker = new CardRevealTracker();
+        tracker.RevealByPlay("cards.STRIKE");
+        Assert.True(tracker.RevealInstanceByPlay("BrainFog.a"));
+
+        Assert.True(tracker.HideInstance("BrainFog.a"));
+        Assert.Equal(CardKnowledge.Unknown, tracker.GetInstanceKnowledge("BrainFog.a"));
+        Assert.Equal(CardKnowledge.Revealed, tracker.GetDefinitionKnowledge("cards.STRIKE"));
+        Assert.False(tracker.HideInstance("BrainFog.a"));
+    }
+
+    [Fact]
+    public void RevealedSnapshots_ExposeOnlyTheirScope()
+    {
+        var tracker = new CardRevealTracker();
+        tracker.RevealByPlay("cards.STRIKE");
+        tracker.RevealInstanceByPlay("BrainFog.a");
+        tracker.RevealInstanceByUpgrade("BrainFog.b");
+
+        Assert.Equal(new[] { "cards.STRIKE" }, tracker.RevealedKeys);
+        Assert.Equal(
+            new[] { "BrainFog.a", "BrainFog.b" },
+            tracker.RevealedInstanceIds.OrderBy(id => id, StringComparer.Ordinal));
+        Assert.Equal(3, tracker.RevealedCount);
+    }
 }

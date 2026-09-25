@@ -82,4 +82,44 @@ public class SelectionRevealPlannerTests
         Assert.Empty(SelectionRevealPlanner.ResolveRevealedIndexes(Array.Empty<string>(), SelectionRevealOption.All, 1));
         Assert.Empty(SelectionRevealPlanner.ResolveRevealedIndexes(Array.Empty<string>(), SelectionRevealOption.RandomTwo, 1));
     }
+
+    [Fact]
+    public void NullOffer_RevealsNothing()
+    {
+        Assert.Empty(SelectionRevealPlanner.ResolveRevealedIndexes(null!, SelectionRevealOption.RandomTwo, 1));
+        Assert.False(SelectionRevealPlanner.IsRevealed(null!, SelectionRevealOption.RandomOne, 1, 0));
+        Assert.False(SelectionRevealPlanner.IsRevealed(null!, SelectionRevealOption.All, 1, 0));
+    }
+
+    [Fact]
+    public void RandomOption_OnSmallOffer_ClampsToAvailable()
+    {
+        var one = new[] { "cards.STRIKE" };
+        Assert.Equal(new[] { 0 }, SelectionRevealPlanner.ResolveRevealedIndexes(one, SelectionRevealOption.RandomThree, 5));
+
+        var two = new[] { "cards.STRIKE", "cards.BASH" };
+        Assert.Equal(new[] { 0, 1 }, SelectionRevealPlanner.ResolveRevealedIndexes(two, SelectionRevealOption.RandomTwo, 5));
+    }
+
+    [Fact]
+    public void IsRevealed_NegativeIndex_OnlyForAllWithCards()
+    {
+        Assert.True(SelectionRevealPlanner.IsRevealed(Three, SelectionRevealOption.All, 0, -1));
+        Assert.False(SelectionRevealPlanner.IsRevealed(Three, SelectionRevealOption.RandomOne, 0, -1));
+        Assert.False(SelectionRevealPlanner.IsRevealed(Array.Empty<string>(), SelectionRevealOption.All, 0, -1));
+    }
+
+    [Fact]
+    public void IsRevealed_OutOfRangeIndex_IsFalse()
+    {
+        Assert.False(SelectionRevealPlanner.IsRevealed(Three, SelectionRevealOption.All, 0, 3));
+    }
+
+    [Fact]
+    public void DuplicateKeys_RevealDistinctSlots()
+    {
+        var duplicated = new[] { "cards.STRIKE", "cards.STRIKE" };
+        var revealed = SelectionRevealPlanner.ResolveRevealedIndexes(duplicated, SelectionRevealOption.RandomTwo, 9);
+        Assert.Equal(new[] { 0, 1 }, revealed);
+    }
 }
