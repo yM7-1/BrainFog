@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace BrainFog.Tests;
@@ -80,6 +81,7 @@ public class PatchTargetAuditTests
         {
             new MemberTarget("Initialize", Kind.Method),
             new MemberTarget("UpdateHealth", Kind.Method),
+            new MemberTarget("UpdateHpTween", Kind.Method),
             new MemberTarget("_player", Kind.Field),
             new MemberTarget("_hpLabel", Kind.Field),
         },
@@ -106,6 +108,7 @@ public class PatchTargetAuditTests
             new MemberTarget("_Ready", Kind.Method),
             new MemberTarget("RefreshVotes", Kind.Method),
             new MemberTarget("FlashConfirmation", Kind.Method),
+            new MemberTarget("OnFocus", Kind.Method),
         },
         ["MegaCrit.Sts2.Core.Entities.Cards.CardPile"] = new[]
         {
@@ -454,5 +457,137 @@ public class PatchTargetAuditTests
         }
 
         Assert.True(failures.Count == 0, "Missing patch targets: " + string.Join(", ", failures));
+    }
+
+    /// <summary>Reverse guard (0.3.8): every <c>[HarmonyPatch]</c> declaration in
+    /// the Runtime patch sources must be present in <see cref="PatchTargets"/>,
+    /// so a new patch cannot silently skip the game-symbol audit.</summary>
+    [Fact]
+    public void EveryHarmonyPatchDeclaration_IsAudited()
+    {
+        var patchesDir = Path.Combine(RepoRoot(), "src", "Runtime", "Patches");
+        Assert.True(Directory.Exists(patchesDir), $"patch sources not found at {patchesDir}");
+
+        var declared = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (var file in Directory.EnumerateFiles(patchesDir, "*.cs").OrderBy(f => f, StringComparer.Ordinal))
+        {
+            foreach (var target in ParseDeclaredTargets(File.ReadAllText(file)))
+            {
+                declared.Add(target);
+            }
+        }
+
+        Assert.NotEmpty(declared);
+
+        var audited = BuildAuditedSets();
+        var missing = declared
+            .Where(target =>
+            {
+                var split = target.LastIndexOf('.');
+                var type = target[..split];
+                var member = target[(split + 1)..];
+                return !audited.TryGetValue(type, out var members) || !members.Contains(member);
+            })
+            .ToList();
+
+        Assert.True(missing.Count == 0,
+            "Patch declarations missing from PatchTargets: " + string.Join(", ", missing));
+    }
+
+    private static string RepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "BrainFog.json")))
+        {
+            dir = dir.Parent;
+        }
+        Assert.True(dir != null, "repo root with BrainFog.json not found");
+        return dir!.FullName;
+    }
+
+    /// <summary>Short type name -> audited member names, merged across
+    /// namespaces (a short name collision is handled by checking all).</summary>
+    private static Dictionary<string, HashSet<string>> BuildAuditedSets()
+    {
+        var audited = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+        foreach (var (fullName, members) in PatchTargets)
+        {
+            var shortName = fullName[(fullName.LastIndexOf('.') + 1)..];
+            if (!audited.TryGetValue(shortName, out var set))
+            {
+                set = new HashSet<string>(StringComparer.Ordinal);
+                audited[shortName] = set;
+            }
+            foreach (var member in members)
+            {
+                set.Add(member.Name);
+            }
+        }
+        return audited;
+    }
+
+    private static readonly Regex PatchTokenRegex = new(
+        @"(?<class>\bclass\s+[A-Za-z_][\w]*)|\[HarmonyPatch\((?<args>[^\[\]]*)\)\]",
+        RegexOptions.Compiled);
+
+    private static readonly Regex TypeArgRegex = new(@"typeof\((?<type>[\w.]+)\)", RegexOptions.Compiled);
+
+    private static readonly Regex QuotedMemberRegex = new("\"(?<member>[^\"]+)\"", RegexOptions.Compiled);
+
+    private static readonly Regex NameofMemberRegex = new(
+        @"nameof\(\s*(?:[A-Za-z_][\w]*\.)?(?<member>[A-Za-z_][\w]*)\s*\)",
+        RegexOptions.Compiled);
+
+    private static List<string> ParseDeclaredTargets(string source)
+    {
+        var text = Regex.Replace(source, @"//[^\n]*", " ");
+        text = Regex.Replace(text, @"new\[\]\s*\{[^}]*\}", "new[]");
+        text = Regex.Replace(text, @"\s+", " ");
+
+        var targets = new List<string>();
+        string? pendingType = null;
+        string? classType = null;
+        foreach (Match match in PatchTokenRegex.Matches(text))
+        {
+            if (match.Groups["class"].Success)
+            {
+                classType = pendingType;
+                continue;
+            }
+
+            var args = match.Groups["args"].Value;
+            var member = ExtractMember(args);
+            var typeMatch = TypeArgRegex.Match(args);
+            if (typeMatch.Success)
+            {
+                var shortType = typeMatch.Groups["type"].Value.Split('.').Last();
+                if (member != null)
+                {
+                    targets.Add($"{shortType}.{member}");
+                }
+                else
+                {
+                    pendingType = shortType;
+                }
+                continue;
+            }
+
+            if (member != null && classType != null)
+            {
+                targets.Add($"{classType}.{member}");
+            }
+        }
+        return targets;
+    }
+
+    private static string? ExtractMember(string args)
+    {
+        var quoted = QuotedMemberRegex.Match(args);
+        if (quoted.Success)
+        {
+            return quoted.Groups["member"].Value;
+        }
+        var nameof = NameofMemberRegex.Match(args);
+        return nameof.Success ? nameof.Groups["member"].Value : null;
     }
 }

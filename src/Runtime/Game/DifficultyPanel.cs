@@ -850,6 +850,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             _modOff.ButtonPressed = ModRuntime.UserDisabled;
             _modOffNote.Visible = ModRuntime.UserDisabled;
             _body.Visible = !DifficultyRuntime.PanelCollapsed && !ModRuntime.UserDisabled;
+            _collapse.Disabled = ModRuntime.UserDisabled;
             _collapse.Text = _body.Visible ? "▾" : "▸";
             UpdateDockVisuals();
         }
@@ -1065,10 +1066,16 @@ internal sealed partial class DifficultyPanel : CanvasLayer
 
     private void ToggleCollapsed()
     {
+        if (ModRuntime.UserDisabled)
+        {
+            // Mod off: the body is hidden by the kill switch; clicking the title
+            // bar must not rewrite the persisted collapse state (0.3.8).
+            return;
+        }
         HideTip();
         var collapsed = _body.Visible;
-        _body.Visible = !collapsed && !ModRuntime.UserDisabled;
-        _collapse.Text = _body.Visible ? "▾" : "▸";
+        _body.Visible = !collapsed;
+        _collapse.Text = collapsed ? "▸" : "▾";
         ResizePanel();
         DifficultyRuntime.SetPanelCollapsed(collapsed);
     }
