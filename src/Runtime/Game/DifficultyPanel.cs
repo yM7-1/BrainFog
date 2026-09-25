@@ -1042,6 +1042,8 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     {
         _blurDirty = false;
         DifficultyRuntime.Save();
+        // Card faces without a stored original follow the slider too (0.3.9).
+        Game.CardFogRenderer.ReapplyTextOnAllLiveCards();
     }
 
     private void OnRelicsToggled(bool pressed)

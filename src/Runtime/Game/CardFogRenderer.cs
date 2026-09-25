@@ -146,6 +146,31 @@ internal static class CardFogRenderer
     public static void RefreshAllLiveCards() =>
         PatchGuard.Run("CardFog.RefreshAll", () => RefreshAllLiveCardsCore());
 
+    /// <summary>Re-blurs face text of live cards that never stored an original
+    /// (created while the mod was off; kill-switch re-enable, 0.3.9).</summary>
+    public static void ReapplyTextOnAllLiveCards() =>
+        PatchGuard.Run("CardFog.ReapplyTextAll", () =>
+        {
+            if (ModRuntime.Disabled || Engine.GetMainLoop() is not SceneTree tree || tree.Root == null)
+            {
+                return;
+            }
+
+            var labels = 0;
+            foreach (var node in tree.GetNodesInGroup(Patches.NCardGroupPatch.GroupName))
+            {
+                if (node is NCard card)
+                {
+                    labels += Patches.CardFaceTextBlur.ReapplyCardText(card);
+                }
+            }
+            if (labels > 0)
+            {
+                MegaCrit.Sts2.Core.Logging.Log.Info(
+                    $"[BrainFog][CardText] re-blurred {labels} label(s) on live cards");
+            }
+        });
+
     private static void RefreshAllLiveCardsCore()
     {
         if (Engine.GetMainLoop() is not SceneTree tree || tree.Root == null)

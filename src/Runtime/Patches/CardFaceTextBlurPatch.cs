@@ -87,6 +87,65 @@ internal static class CardFaceTextBlur
         }
     }
 
+    /// <summary>Re-blurs a live card's face text from its current text (0.3.9):
+    /// labels created while the mod was off carry no stored original, so the
+    /// metadata-based re-apply cannot see them and the kill-switch re-enable
+    /// left readable card text behind. Labels that already have a stored
+    /// original (blurred before or by the source patch) are skipped.
+    /// Returns how many labels were re-fed through the blur.</summary>
+    public static int ReapplyCardText(NCard card)
+    {
+        try
+        {
+            if (ModRuntime.Disabled || card == null || !GodotObject.IsInstanceValid(card)
+                || IsCompendiumCard(card))
+            {
+                return 0;
+            }
+
+            var changed = 0;
+            changed += ReapplyLabel(card._titleLabel) ? 1 : 0;
+            changed += ReapplyLabel(card._descriptionLabel) ? 1 : 0;
+            changed += ReapplyLabel(card._energyLabel) ? 1 : 0;
+            changed += ReapplyLabel(card._starLabel) ? 1 : 0;
+            changed += ReapplyLabel(card._typeLabel) ? 1 : 0;
+            changed += ReapplyLabel(card._enchantmentLabel) ? 1 : 0;
+            return changed;
+        }
+        catch (Exception ex)
+        {
+            Game.PatchGuard.Run("CardFaceBlur.Reapply", () => throw ex);
+            return 0;
+        }
+    }
+
+    /// <summary>Re-feeds one label without a stored original through the patched
+    /// setter so the source blur runs on its current text.</summary>
+    private static bool ReapplyLabel(CanvasItem? label)
+    {
+        if (label == null || !GodotObject.IsInstanceValid(label) || !label.IsInsideTree()
+            || label.HasMeta(Game.TextBlurService.InputMeta))
+        {
+            return false;
+        }
+        var text = Game.TextBlurService.Read(label);
+        if (string.IsNullOrEmpty(text))
+        {
+            return false;
+        }
+        switch (label)
+        {
+            case MegaLabel mega:
+                mega.SetTextAutoSize(text);
+                return true;
+            case MegaRichTextLabel rich:
+                rich.SetTextAutoSize(text);
+                return true;
+            default:
+                return false;
+        }
+    }
+
     /// <summary>Nearest NCard ancestor (at most 3 hops in card.tscn).</summary>
     private static NCard? FindCard(CanvasItem label)
     {

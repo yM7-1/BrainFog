@@ -3,7 +3,7 @@
   "name": "BrainFog",
   "author": "BrainFog",
   "description": "A disaster inside your own mind: cards are unrecognizable until played, every text dissolves into static, HP and gold are memories from your last rest, and enemies, relics and the act boss are reduced to outlines and question marks.",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "has_pck": false,
   "has_dll": true,
   "affects_gameplay": true,

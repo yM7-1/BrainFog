@@ -254,6 +254,9 @@ internal static class DifficultyRuntime
             // Labels created while the mod was off have no stored original, so
             // re-blur the catch-all contexts from their current text too.
             GlobalTextBlurSource.ReBlurAll();
+            // Card faces are a dedicated context: re-blur the live cards that
+            // never stored an original (0.3.9).
+            CardFogRenderer.ReapplyTextOnAllLiveCards();
         }
         CardFogRenderer.RefreshAllLiveCards();
         DifficultyRefresh.ApplyAll();
@@ -263,6 +266,9 @@ internal static class DifficultyRuntime
     public static void NotifyChanged()
     {
         CardFogRenderer.RefreshAllLiveCards();
+        // Heal card faces that never stored an original (0.3.9): a slider or
+        // option change must re-garble them too, not just the catch-all text.
+        CardFogRenderer.ReapplyTextOnAllLiveCards();
         DifficultyRefresh.ApplyAll();
         Save();
     }
