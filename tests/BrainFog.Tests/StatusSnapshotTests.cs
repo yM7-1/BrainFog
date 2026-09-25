@@ -79,4 +79,14 @@ public class StatusSnapshotTests
         Assert.Equal(90, snapshot.MaxHp);
         Assert.Equal(5, snapshot.Gold);
     }
+
+    [Theory]
+    [InlineData(false, false, true)]  // live mode: the Neow tween must run
+    [InlineData(false, true, false)]  // snapshot mode: keep the stale value
+    [InlineData(true, false, true)]   // mod off: vanilla
+    [InlineData(true, true, true)]    // mod off: vanilla
+    public void LiveHpUpdates_OnlySuppressedInSnapshotMode(bool modDisabled, bool snapshotStatus, bool expected)
+    {
+        Assert.Equal(expected, StatusDisplayRules.AllowsLiveHpUpdates(modDisabled, snapshotStatus));
+    }
 }

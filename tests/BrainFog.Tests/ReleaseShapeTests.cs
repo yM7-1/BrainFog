@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace BrainFog.Tests;
@@ -39,6 +40,34 @@ public class ReleaseShapeTests
         var deps = root.GetProperty("dependencies");
         Assert.Contains(deps.EnumerateArray(),
             d => d.GetProperty("id").GetString() == "STS2-RitsuLib");
+    }
+
+    [Fact]
+    public void Version_IsConsistentAcrossReleaseFiles()
+    {
+        var root = RepoRoot;
+
+        var manifest = JsonDocument
+            .Parse(File.ReadAllText(Path.Combine(root, "BrainFog.json")))
+            .RootElement.GetProperty("version").GetString();
+        var workshopManifest = JsonDocument
+            .Parse(File.ReadAllText(Path.Combine(root, "packaging", "workshop", "content", "BrainFog", "BrainFog.json")))
+            .RootElement.GetProperty("version").GetString();
+        var csprojMatch = Regex.Match(
+            File.ReadAllText(Path.Combine(root, "BrainFog.csproj")),
+            "<Version>([^<]+)</Version>");
+        var changelogMatch = Regex.Match(
+            File.ReadAllText(Path.Combine(root, "CHANGELOG.md")),
+            @"^##\s+(\d+\.\d+\.\d+)",
+            RegexOptions.Multiline);
+
+        Assert.True(csprojMatch.Success, "BrainFog.csproj <Version> not found");
+        Assert.True(changelogMatch.Success, "CHANGELOG.md top version heading not found");
+        Assert.False(string.IsNullOrWhiteSpace(manifest));
+
+        Assert.Equal(manifest, csprojMatch.Groups[1].Value);
+        Assert.Equal(manifest, workshopManifest);
+        Assert.Equal(manifest, changelogMatch.Groups[1].Value);
     }
 
     [Fact]

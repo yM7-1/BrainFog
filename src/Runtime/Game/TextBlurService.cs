@@ -120,9 +120,11 @@ internal static class TextBlurService
             }
 
             Write(node, original);
-            // The readable text becomes the current output, so a later re-apply
-            // (option off / ratio change) blurs it again from the same original.
-            node.SetMeta(OutputMeta, original);
+            // Drop the memoized blur output: it described the blurred text, and
+            // leaving it equal to the readable text made BlurNode treat the node
+            // as "already blurred" forever (map-legend toggle round-trip, 0.3.7).
+            // Reapply/ReapplyAllText read InputMeta, so re-blurring still works.
+            node.RemoveMeta(OutputMeta);
             return true;
         }
         catch (Exception ex)
