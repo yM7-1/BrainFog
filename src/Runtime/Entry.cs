@@ -72,8 +72,10 @@ public static class Entry
             var gameVersion = typeof(MegaCrit.Sts2.Core.Runs.RunManager).Assembly.GetName().Version?.ToString() ?? "unknown";
             var modVersion = typeof(Entry).Assembly.GetName().Version?.ToString(3) ?? "unknown";
             Log.Info($"[BrainFog] loaded (v{modVersion}) against game assembly {gameVersion}");
-            ModRuntime.DumpState("loaded");
+            // Load the persisted options first so the "loaded" dump reports the
+            // real values (the user kill switch lives in the config, 0.3.8).
             Game.DifficultyRuntime.Load();
+            ModRuntime.DumpState("loaded");
             TryAttachTextBlurDriver();
             TryAttachDifficultyPanel();
             TryAttachDebugOverlay();

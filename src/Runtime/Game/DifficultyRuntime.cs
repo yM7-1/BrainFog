@@ -25,6 +25,9 @@ internal static class DifficultyRuntime
     /// <summary>Unified blur ratio for every garbled text (0–100).</summary>
     public static int TextBlurPercent => DifficultySettings.ClampBlurPercent(Current.TextBlurPercent);
 
+    /// <summary>Config file path (BRAINFOG_DEBUG diagnostics).</summary>
+    public static string SettingsFilePath => SettingsPath;
+
     /// <summary>Per-launch salt so random selection reveals differ between runs.</summary>
     public static int RevealSalt { get; } = Random.Shared.Next();
 

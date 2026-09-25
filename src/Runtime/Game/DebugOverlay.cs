@@ -48,9 +48,13 @@ internal sealed partial class DebugOverlay : CanvasLayer
     private void UpdateText()
     {
         var snapshot = SnapshotDisplay.Snapshot;
+        var settings = DifficultyRuntime.Current;
         _label.Text =
             $"[BrainFog] F9 toggle\n" +
-            $"disabled={ModRuntime.Disabled} revealed={ModRuntime.Tracker.RevealedCount}\n" +
+            $"disabled={ModRuntime.Disabled} multiplayer={ModRuntime.MultiplayerDisabled} userOff={ModRuntime.UserDisabled}\n" +
+            $"blur={DifficultyRuntime.TextBlurPercent}% salt={settings.SaltMode} memory={settings.MemoryMode} n={settings.BadMemoryThreshold} fade={settings.MemoryFade}\n" +
+            $"snapshot={settings.SnapshotStatus} readable={settings.ReadableStatusNumbers} relics={settings.ShowRelics} routes={settings.ShowAllMapRoutes}\n" +
+            $"intent={settings.IntentMode} models={settings.EnemyModelsVisible} revealed={ModRuntime.Tracker.RevealedCount}\n" +
             $"hp={snapshot.Hp?.ToString() ?? "-"}/{snapshot.MaxHp?.ToString() ?? "-"} gold={snapshot.Gold?.ToString() ?? "-"}";
     }
 }

@@ -21,6 +21,9 @@ public static class ModRuntime
     /// (persisted in the mod's own config across launches).</summary>
     public static bool UserDisabled => _userDisabled;
 
+    /// <summary>True when the multiplayer guard disabled the mod for this run.</summary>
+    public static bool MultiplayerDisabled => _multiplayerDisabled;
+
     /// <summary>Set BRAINFOG_DEBUG=1 to get state dumps in the game log.</summary>
     public static bool DebugEnabled { get; } =
         System.Environment.GetEnvironmentVariable("BRAINFOG_DEBUG") == "1";
@@ -52,5 +55,11 @@ public static class ModRuntime
         Log.Info($"[BrainFog][State:{tag}] disabled={Disabled} multiplayer={_multiplayerDisabled} userOff={_userDisabled} " +
                  $"revealed={Tracker.RevealedCount} " +
                  $"hp={snapshot.Hp?.ToString() ?? "-"}/{snapshot.MaxHp?.ToString() ?? "-"} gold={snapshot.Gold?.ToString() ?? "-"}");
+        var settings = Game.DifficultyRuntime.Current;
+        Log.Info($"[BrainFog][Options] blur={Game.DifficultyRuntime.TextBlurPercent}% salt={settings.SaltMode} " +
+                 $"memory={settings.MemoryMode} n={settings.BadMemoryThreshold} fade={settings.MemoryFade} " +
+                 $"snapshot={settings.SnapshotStatus} readable={settings.ReadableStatusNumbers} " +
+                 $"relics={settings.ShowRelics} routes={settings.ShowAllMapRoutes} intent={settings.IntentMode} " +
+                 $"models={settings.EnemyModelsVisible} config={Game.DifficultyRuntime.SettingsFilePath}");
     }
 }

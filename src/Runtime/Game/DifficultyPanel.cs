@@ -690,7 +690,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             "panel_hint_memory_omniscient" => zh ? "通晓万物：全部卡牌全局揭示" : "Omniscience: every card is revealed everywhere",
             "panel_hint_memory_nonsense" => zh ? "歪比巴卜：卡牌永不揭示" : "Nonsense: cards are never revealed",
             "panel_hint_memory_fade" => zh ? "战斗结束时仍处于未揭示状态的卡牌会从卡组中移除（歪比巴卜模式不受影响）" : "Cards still unrevealed at the end of a combat are removed from the deck (nonsense mode exempt)",
-            "panel_hint_enemy_models" => zh ? "开启后敌人显示真实模型（默认关闭：只有呼吸方框）" : "Show real enemy models (default off: breathing boxes only)",
+            "panel_hint_enemy_models" => zh ? "开启后敌人显示真实模型（默认开启；关闭后只有呼吸方框）" : "Show real enemy models (on by default; off shows breathing boxes only)",
             "panel_hint_salt" => zh ? "固定混乱：乱码不随重进变化；混乱混乱：每次重进游戏重新随机" : "Fixed: garbling never changes; Chaos: re-rolled on every launch",
             "panel_hint_amnesia_status" => zh ? "开启后血量与金币停留在上次休息时（灰显标注）" : "HP and gold stay at the values from your last rest (shown gray)",
             "panel_hint_status_numbers" => zh ? "开启后血量数与金币数不再乱码（实时/失忆模式不受影响）" : "HP and gold numbers are no longer garbled (live/amnesia mode unchanged)",
