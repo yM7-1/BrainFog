@@ -4,7 +4,7 @@
 
 ## 认知修改器
 主标题界面与对局内均可操作（可拖动/收起/缩进屏幕边缘；「当前设置为默认」保存自己的默认，「重置为默认」一键恢复）：
-
+- **总开关**：「关闭脑雾尖塔」一键停用本 mod（不再影响游戏），取消勾选即恢复
 - **文字**：乱码百分比 0%–100% 自由调节；乱码模式：固定混乱（重进不变）/ 混乱混乱（每次重进重新随机）
 - **认知**：卡牌奖励揭示（不揭示 / 随机揭示1-3张 / 奖励全部揭示）；商店与事件卡面揭示开关；卡牌记忆四模式；记忆消逝开关
 - **感知**：血量/金币失忆模式；血量数/金币数恢复正常显示；显示遗物（全场景恢复：已拥有/奖励/商店/宝箱/检视/跑图历史）；显示地图所有路线（含阶段 Boss 图标与图例恢复；其悬停描述仍随乱码百分比）；敌人模型可见；敌人意图（不可见 / 仅第一回合 / 全部可见）
@@ -40,7 +40,7 @@ Most text in the Spire is replaced with garbled static — use the built-in modi
 
 ## Cognition Modifier
 Available on the main menu and in-run (draggable, collapsible, dockable; Set current as default saves your defaults, Reset to defaults restores them):
-
+- **Kill switch**: Disable BrainFog turns the whole mod off (no effect on the game); uncheck to re-enable it
 - **Text**: unified blur percentage 0%–100%; blur mode: fixed chaos / re-rolled on every launch
 - **Cognition**: card reward reveal (none / random 1-3 / all); shop & event card faces on/off; four card-memory modes; memory fade
 - **Perception**: HP/gold amnesia mode; readable HP/gold numbers; show relics (all contexts: owned/rewards/shops/chests/inspect/history); show all map routes (restores the act-boss icon and the legend; their hover descriptions still follow the text blur); visible enemy models; enemy intents (hidden / first round only / always)

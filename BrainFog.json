@@ -2,7 +2,7 @@
   "id": "BrainFog",
   "name": "BrainFog",
   "author": "BrainFog",
-  "description": "A disaster inside your own mind: cards are unrecognizable until played, every text dissolves into static, HP and gold are memories from your last rest, and enemies, relics and the act boss are reduced to outlines and question marks.",
+  "description": "A disaster inside your own mind: every text dissolves into static, cards are unrecognizable until played, and the Spire hides behind fog. The built-in cognition modifier tunes every effect — or turns the whole mod off.",
   "version": "0.3.9",
   "has_pck": false,
   "has_dll": true,
