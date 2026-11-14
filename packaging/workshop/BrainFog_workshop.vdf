@@ -9,6 +9,15 @@
 
 大部分尖塔文字将被替换为乱码，可在内置修改器中使部分游戏内容恢复正常。
 
+[h2]0.4.0 更新（2026-11-14）[/h2]
+[list]
+[*][b]同步 STS2 v0.113.0 测试版[/b]：支持 [b]Blitz（闪电）[/b] 与 [b]Dread（恐惧）[/b] 新模式；新角色「愚者」的卡牌走通用卡面/文字规则。
+[*][b]Blitz[/b]：没有幕地图与金币；地图迷雾和「显示地图所有路线」在该模式自动跳过，金币界面保持原版。
+[*][b]Dread[/b]：全飞升词缀、支配与诅咒照常生效；新获得的诅咒先认得，之后仍受记忆规则影响。
+[*][b]联机「只盲自己」[/b]：多人对局不再自动禁用。每个玩家只影响自己的卡牌与记忆；队友卡牌/召唤物保持原版；「记忆消逝」联机停用；好友联机无需安装同版本 BrainFog。
+[*]版本窗口：[b]v0.107.1 – v0.113.0[/b]。
+[/list]
+
 [h2]认知修改器[/h2]
 主标题界面与对局内均可操作（可拖动/收起/缩进屏幕边缘；「当前设置为默认」保存自己的默认，「重置为默认」一键恢复）：
 [list]
@@ -48,6 +57,14 @@ Github链接：https://github.com/yM7-1/BrainFog
 
 Most text in the Spire is replaced with garbled static — use the built-in modifier to restore parts of the game.
 
+[h2]0.4.0 Update (2026-11-14)[/h2]
+[list]
+[*]Synced with STS2 v0.113.0 beta: Blitz/Dread modes and The Fool (generic card rules).
+[*]Blitz skips map fog and map/gold options; Dread curses and dominions follow the usual memory rules.
+[*]Co-op is local-only: teammates stay vanilla, memory fade is disabled, and friends do not need the same BrainFog version.
+[*]Supported window: v0.107.1 – v0.113.0.
+[/list]
+
 [h2]Cognition Modifier[/h2]
 Available on the main menu and in-run (draggable, collapsible, dockable; Set current as default saves your defaults, Reset to defaults restores them):
 [list]
@@ -79,4 +96,7 @@ The starting deck counts as known (good/bad memory). [b]Memory fade[/b] (on by d
 
 Supports STS2 v0.107.1–v0.113.0 (stable/beta, including Blitz/Dread) + RitsuLib 0.6.2. Single-player fully supported; in co-op BrainFog only affects you; uninstall restores everything.
 
-GitHub: https://github.com/yM7-1/BrainFog
+GitHub: https://github.com/yM7-1/BrainFog"
+	"changenote"		"0.4.0（2026-11-14）：同步 STS2 v0.113.0 测试版；Blitz/Dread 模式适配；新角色愚者通用适配；联机「只盲自己」；记忆消逝联机停用；版本窗口 0.107.1–0.113.0。"
+	"visibility"		"0"
+}

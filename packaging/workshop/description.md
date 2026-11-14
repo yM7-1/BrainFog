@@ -2,6 +2,14 @@
 
 大部分尖塔文字将被替换为乱码，可在内置修改器中使部分游戏内容恢复正常。
 
+## 0.4.0 更新（2026-11-14）
+
+- **同步 STS2 v0.113.0 测试版**：支持 **Blitz（闪电）** 与 **Dread（恐惧）** 新模式；新角色「愚者」的卡牌走通用卡面/文字规则。
+- **Blitz**：没有幕地图与金币；地图迷雾和「显示地图所有路线」在该模式自动跳过，金币界面保持原版。
+- **Dread**：全飞升词缀、支配与诅咒照常生效；新获得的诅咒先认得，之后仍受记忆规则影响。
+- **联机「只盲自己」**：多人对局不再自动禁用。每个玩家只影响自己的卡牌与记忆；队友卡牌/召唤物保持原版；「记忆消逝」联机停用；好友联机无需安装同版本 BrainFog。
+- 版本窗口：**v0.107.1 – v0.113.0**。
+
 ## 认知修改器
 主标题界面与对局内均可操作（可拖动/收起/缩进屏幕边缘；「当前设置为默认」保存自己的默认，「重置为默认」一键恢复）：
 - **总开关**：「关闭脑雾尖塔」一键停用本 mod（不再影响游戏），取消勾选即恢复
@@ -37,6 +45,13 @@ Github链接：https://github.com/yM7-1/BrainFog
 # BrainFog
 
 Most text in the Spire is replaced with garbled static — use the built-in modifier to restore parts of the game.
+
+## 0.4.0 Update (2026-11-14)
+
+- Synced with STS2 v0.113.0 beta: Blitz/Dread modes and The Fool (generic card rules).
+- Blitz skips map fog and map/gold options; Dread curses and dominions follow the usual memory rules.
+- Co-op is local-only: teammates stay vanilla, memory fade is disabled, and friends do not need the same BrainFog version.
+- Supported window: v0.107.1 – v0.113.0.
 
 ## Cognition Modifier
 Available on the main menu and in-run (draggable, collapsible, dockable; Set current as default saves your defaults, Reset to defaults restores them):
