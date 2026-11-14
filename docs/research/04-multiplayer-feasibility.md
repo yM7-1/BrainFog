@@ -1,7 +1,9 @@
 # 联机模式适配可行性评估（研读笔记 04）
 
-> 状态：**评估完成，暂不实施**（2026-09-25 用户决定走方案 C：维持联机自动禁用；本文档留待将来需要时研读）。
-> 对象：Slay the Spire 2 **v0.111.0** 联机（合作）模式；BrainFog **v0.3.8**。
+> 状态：**方案 A 已实施（2026-11-14，v0.4.0）**——按本文 §3 的「纯本地只盲自己」落地：
+> per-player 揭示存档、owner 过滤、记忆消逝联机停用、`affects_gameplay:false`。
+> 本文其余部分保留为当时的评估依据与边界说明。
+> 对象：Slay the Spire 2 **v0.111.0** 联机（合作）模式；BrainFog **v0.3.8**（实施时已同步 0.113.0）。
 > 资料与简称（引用格式 `简称/文件:行`）：
 > - `BF/` = 本仓库 `src/`（BrainFog）
 > - `GAME/` = `.refs/sts2-v0.111.0/src/MegaCrit/sts2`（游戏反编译）
@@ -13,7 +15,8 @@
 | --- | --- | --- | --- | --- | --- |
 | **A 纯本地"只盲自己"** | 保留表现层，知识状态 per-player/本地化，联机禁用删卡，`affects_gameplay:false` | **可行** | 中 | 1~2 天量级（8~10 文件 + 测试） | 若将来要做，首选 |
 | **B 全员同款联机难度** | 保持 `affects_gameplay:true`，记忆状态全队一致，删卡走确定性 hook/官方通道 | 技术可行 | **高**（一次分叉=炸局，重连未实现） | 一周以上 + 联机实测 | 不建议 |
-| **C 维持现状**（已选） | 联机自动禁用；可低成本做守卫前移与文档 | 已实现 | 极低 | 小 | 当前路线 |
+| **C 维持现状**（原选择） | 联机自动禁用；可低成本做守卫前移与文档 | 已实现 | 极低 | 小 | 历史路线（0.3.x） |
+| **A 已实施（0.4.0）** | 纯本地只盲自己：per-player 存档、owner 过滤、联机停用记忆消逝、`affects_gameplay:false` | **已实施** | 中 | 已落地 | 当前路线 |
 
 关键前提：STS2 联机是**确定性锁步**——每个 peer 本地跑完整 `RunState/CombatState`，执行同一动作队列；host 只做排序、RNG 与 checksum 裁判，客机不写存档，**v0.111.0 断线重连未实现**。
 
@@ -68,6 +71,21 @@
 - 低成本可选项（未做）：守卫前移到进入联机大厅即禁用、面板提示"联机已禁用"。
 - 注意：当前 `BrainFog.json` 为 `affects_gameplay:true`，意味着**联机双方都要装同版本 BrainFog 才能连上**（连上后本 mod 又自动禁用）。若"好友联机不想装 mod"成为诉求，需要连同方案 A 一起把 `affects_gameplay` 改为 `false`，不能只改清单。
 
+## 5.1 方案 A 实施落点（2026-11-14，v0.4.0）
+
+- `RevealPersistence`：`RunSavedDataStore.For("BrainFog").RegisterPerPlayer<BrainFogRunData>("reveal_player")`；
+  单人旧 `reveal` 槽首次读档时迁移；所有读写按本地 `NetId`。
+- `LocalScope` / `ScopeRules`：`IsRemoteCard` 以 `Owner` + `LocalContext.IsMe` 判定；
+  打出/升级/入牌组/上手离手钩子先过滤队友牌。
+- `CardFogRenderer`：队友卡牌直接 `FullFace`（不遮），本地玩家仍按记忆规则遮。
+- `InitialReveal`：只遍历 `LocalContext.GetMe(state)` 的起始牌组。
+- `MemoryFade`：`MultiplayerGuard.MemoryFadeAllowed(false)`，联机不调用 `CardPileCmd.RemoveFromDeck`。
+- `EnemyVisualMask`：所有玩家宠物（含队友召唤物）可见，只遮真正敌人。
+- `BrainFog.json` / 工坊 manifest：`affects_gameplay: false`，非玩法 mod 不参与握手强校验。
+- 修改器：联机提示「只影响你自己；记忆消逝已停用」，记忆消逝选项置灰。
+
+仍未解决：客机本地数据只在本机（客机不写存档）；断线重连游戏侧未实现；全局文字乱码仍作用于本地看到的所有 UI。
+
 ## 6. 留待研读的问题（将来）
 
 1. `RevealPersistence` 的 per-player 槽在断线无人重连的现实下怎样保证客机体验（读档时记忆恢复）。
@@ -76,7 +94,6 @@
 4. 官方后续版本是否实现重连（当前 `NetError.RunInProgress` 注释明确未实现）——决定方案 B 的可行性上限。
 
 ## 7. 证据索引
-
 - 游戏：`GAME/Core/Multiplayer/Connection/HandshakeManager.cs:114-137`；`GAME/Core/Multiplayer/Game/ChecksumTracker.cs:87-214`；`GAME/Core/GameActions/Multiplayer/ActionQueueSynchronizer.cs:140-305`；`GAME/Core/GameActions/ActionExecutor.cs:123-179`；`GAME/Core/Commands/CardPileCmd.cs:53-89`；`GAME/Core/Combat/CombatManager.cs:1293-1363`；`GAME/Core/Multiplayer/Game/RestSiteSynchronizer.cs:105-218`；`GAME/Core/Models/Cards/Guilty.cs:45-56`；`GAME/Core/Entities/Multiplayer/NetError.cs:41-70`；`GAME/Core/Runs/RunManager.cs:1545-1556,1753-1759`。
 - RitsuLib：`RL/RunData/RunSavedDataStore.cs:53,64`；`RL/RunData/RunSavedDataRunSlot.cs:35-51`；`RL/RunData/RunSavedDataPlayerSlot.cs:116-133`；`RL/RunData/RunSavedDataLobby.cs:29-53`；`RL/Networking/Sidecar/RitsuLibSidecarEndpoints.cs`；`RL/Networking/ManagedActions/RitsuLibManagedNetActions.cs:102-301`；`RL/Networking/MessageExtensions/RitsuNetMessageTailExtensions.cs:36-366`。
 - BrainFog：`BF/Core/MultiplayerGuard.cs:9-11`；`BF/Patches/RunManagerMultiplayerGuardPatch.cs:11-18`；`BF/Game/RevealPersistence.cs:23,55-94`；`BF/Game/MemoryFade.cs:26-87`；`BF/Game/InitialReveal.cs:18-49`；`BF/Patches/CardPileHandPatch.cs:12-53`；`BF/Game/DifficultyRuntime.cs:245-260`。

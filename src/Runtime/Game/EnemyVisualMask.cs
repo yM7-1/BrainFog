@@ -1,5 +1,4 @@
 using Godot;
-using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 
 namespace BrainFog.Game;
@@ -31,8 +30,10 @@ internal static class EnemyVisualMask
             return;
         }
 
-        var isOwnPet = entity.PetOwner != null && LocalContext.IsMe(entity.PetOwner);
-        if (!Core.Reveal.MaskEligibility.ShouldMask(ModRuntime.Disabled, entity.IsPlayer, isOwnPet))
+        // Any player-owned pet (own or a teammate's) stays visible; only true
+        // enemies are masked.
+        var isPlayerPet = entity.PetOwner != null;
+        if (!Core.Reveal.MaskEligibility.ShouldMask(ModRuntime.Disabled, entity.IsPlayer, isPlayerPet))
         {
             Restore(node);
             return;

@@ -35,7 +35,10 @@ public class ReleaseShapeTests
         Assert.False(string.IsNullOrWhiteSpace(root.GetProperty("version").GetString()));
         Assert.False(string.IsNullOrWhiteSpace(root.GetProperty("min_game_version").GetString()));
         Assert.True(root.GetProperty("has_dll").GetBoolean());
-        Assert.True(root.GetProperty("affects_gameplay").GetBoolean());
+        // Since 0.4.0 BrainFog is a local presentation mod: co-op peers do not
+        // need it installed (plan A), so it must not gate the multiplayer
+        // handshake as a gameplay-relevant mod.
+        Assert.False(root.GetProperty("affects_gameplay").GetBoolean());
 
         var deps = root.GetProperty("dependencies");
         Assert.Contains(deps.EnumerateArray(),

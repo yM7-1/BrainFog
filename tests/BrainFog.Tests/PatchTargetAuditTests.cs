@@ -7,7 +7,7 @@ namespace BrainFog.Tests;
 /// <summary>
 /// Audits that the game assembly still contains every symbol BrainFog patches.
 /// Add new patch targets to <see cref="PatchTargets"/>; the test verifies them all.
-/// Target game versions: 0.107.1 (stable) and 0.111.0 (beta).
+/// Target game versions: 0.107.1 (stable) and 0.113.0 (beta).
 /// Point <c>STS2_DATA_DIR</c> at one game data directory, or list several with
 /// <c>STS2_AUDIT_DIRS</c> (colon-separated) to audit them all in one run.
 /// </summary>

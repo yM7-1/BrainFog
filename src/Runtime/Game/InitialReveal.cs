@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using BrainFog.Core.Options;
+using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace BrainFog.Game;
@@ -9,6 +10,9 @@ namespace BrainFog.Game;
 /// Good memory reveals the definitions for the run, bad memory reveals the
 /// copies (they can still be forgotten later); omniscience needs nothing and
 /// nonsense stays never-revealed.
+///
+/// Multiplayer (plan A): only the local player's starting deck is revealed;
+/// teammates keep the vanilla presentation and never enter the local tracker.
 /// </summary>
 internal static class InitialReveal
 {
@@ -17,34 +21,36 @@ internal static class InitialReveal
 
     private static void ApplyCore(RunState state)
     {
-        var mode = DifficultyRuntime.Current.MemoryMode;
-        foreach (var player in state.Players)
+        var player = LocalContext.GetMe(state);
+        if (player == null)
         {
-            var keys = new List<string>();
-            var ids = new List<string>();
-            foreach (var card in player.Deck.Cards)
-            {
-                if (mode == CardMemoryMode.BadMemory)
-                {
-                    var id = CardInstanceRegistry.GetOrCreateId(card);
-                    if (!string.IsNullOrEmpty(id) && ModRuntime.Tracker.RevealInstanceByPlay(id))
-                    {
-                        ids.Add(id);
-                    }
-                }
-                else if (mode == CardMemoryMode.GoodMemory)
-                {
-                    var key = RevealKeys.Of(card);
-                    if (ModRuntime.Tracker.RevealByPlay(key))
-                    {
-                        keys.Add(key);
-                    }
-                }
-            }
-
-            RevealPersistence.OnInitialReveal(player, keys, ids);
+            return;
         }
 
+        var mode = DifficultyRuntime.Current.MemoryMode;
+        var keys = new List<string>();
+        var ids = new List<string>();
+        foreach (var card in player.Deck.Cards)
+        {
+            if (mode == CardMemoryMode.BadMemory)
+            {
+                var id = CardInstanceRegistry.GetOrCreateId(card);
+                if (!string.IsNullOrEmpty(id) && ModRuntime.Tracker.RevealInstanceByPlay(id))
+                {
+                    ids.Add(id);
+                }
+            }
+            else if (mode == CardMemoryMode.GoodMemory)
+            {
+                var key = RevealKeys.Of(card);
+                if (ModRuntime.Tracker.RevealByPlay(key))
+                {
+                    keys.Add(key);
+                }
+            }
+        }
+
+        RevealPersistence.OnInitialReveal(player, keys, ids);
         CardFogRenderer.RefreshAllLiveCards();
     }
 }

@@ -60,5 +60,8 @@
   "panel_hint_reset": "Restore every modifier option (your saved defaults, or the factory defaults)",
   "panel_hint_mod_off": "Check to stop BrainFog from affecting the game: all garbling, masking and memory rules revert to vanilla immediately (kept across launches); uncheck to re-enable",
   "panel_hint_save_default": "Save the current modifier settings as your defaults: Reset to defaults will restore these (kept across launches)",
-  "panel_hint_relics": "Restore every relic display: owned, rewards, shops, chests, inspect (compendium already visible)"
+  "panel_hint_relics": "Restore every relic display: owned, rewards, shops, chests, inspect (compendium already visible)",
+  "panel_mode_multiplayer": "Multiplayer: BrainFog only affects you; memory fade is disabled.",
+  "panel_mode_blitz": "Blitz: no map or gold; map/gold options do not apply.",
+  "panel_mode_dread": "Dread: curses and dominions follow the usual memory rules."
 }

@@ -22,8 +22,9 @@ internal static class MapFogController
             return;
         }
 
-        // Mod off: vanilla shows the whole act map, so reveal everything.
-        if (ModRuntime.Disabled || DifficultyRuntime.Current.ShowAllMapRoutes)
+        // Mod off, the difficulty option, or Blitz (no act map: vanilla top-bar
+        // progress map only): reveal everything.
+        if (ModRuntime.Disabled || DifficultyRuntime.Current.ShowAllMapRoutes || RunModeContext.IsBlitz)
         {
             RevealEverything(screen, points);
             return;

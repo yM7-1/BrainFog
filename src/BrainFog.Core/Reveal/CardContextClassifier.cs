@@ -52,6 +52,9 @@ public static class CardContextClassifier
 /// </summary>
 public static class MaskEligibility
 {
-    public static bool ShouldMask(bool modDisabled, bool isPlayer, bool isOwnPet) =>
-        !modDisabled && !isPlayer && !isOwnPet;
+    /// <summary>Only enemy creatures are masked. Any player-owned pet (own or
+    /// a teammate's) and every player creature stays visible, so multiplayer
+    /// co-op allies are not accidentally hidden as "enemies".</summary>
+    public static bool ShouldMask(bool modDisabled, bool isPlayer, bool isPlayerPet) =>
+        !modDisabled && !isPlayer && !isPlayerPet;
 }

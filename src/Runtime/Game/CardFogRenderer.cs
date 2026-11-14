@@ -38,6 +38,12 @@ internal static class CardFogRenderer
             return CardVisualRule.FullFace;
         }
 
+        // Multiplayer plan A: teammates' cards stay at the vanilla presentation.
+        if (LocalScope.IsRemoteCard(model))
+        {
+            return CardVisualRule.FullFace;
+        }
+
         var context = ResolveContextCached(card, model);
         var settings = DifficultyRuntime.Current;
         var knowledge = settings.MemoryMode switch

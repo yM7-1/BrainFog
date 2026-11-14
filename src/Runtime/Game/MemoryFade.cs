@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using BrainFog.Core;
 using BrainFog.Core.Options;
 using BrainFog.Core.Reveal;
 using Godot;
@@ -25,7 +26,11 @@ internal static class MemoryFade
 
     private static void OnCombatEndedCore(Player player)
     {
-        if (ModRuntime.Disabled || !DifficultyRuntime.Current.MemoryFade)
+        if (ModRuntime.Disabled || !MultiplayerGuard.MemoryFadeAllowed(ModRuntime.IsMultiplayer))
+        {
+            return; // shared deck removal: single-player only (plan A)
+        }
+        if (!DifficultyRuntime.Current.MemoryFade)
         {
             return;
         }

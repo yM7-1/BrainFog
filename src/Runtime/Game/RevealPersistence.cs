@@ -1,5 +1,7 @@
 using BrainFog.Core.Reveal;
+using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.RunData;
@@ -10,17 +12,29 @@ namespace BrainFog.Game;
 /// Persists reveal knowledge with the run save (per-run memory). Definition
 /// reveals are plain keys; per-instance reveals (difficulty option) are rebound
 /// from the saved deck order on load.
+///
+/// Multiplayer (plan A, 2026-11-14): knowledge is stored in a per-player slot
+/// keyed by NetId. Remote players' cards never enter the local tracker, so
+/// there is no shared knowledge state to desync. Single-player saves are
+/// migrated from the old run-shared slot on first load.
 /// </summary>
 internal static class RevealPersistence
 {
-    private static RunSavedData<BrainFogRunData>? _slot;
+    private const string LegacySlotKey = "reveal";
+    private const string PlayerSlotKey = "reveal_player";
+
+    private static PlayerRunSavedData<BrainFogRunData>? _slot;
+    private static RunSavedData<BrainFogRunData>? _legacySlot;
     private static WeakReference<RunState>? _runStateRef;
+    private static Player? _localPlayer;
     private static readonly List<string> PendingDeckOrder = new();
     private static bool _refreshing;
 
     public static void Register()
     {
-        _slot ??= RunSavedDataStore.For("BrainFog").Register<BrainFogRunData>("reveal");
+        var store = RunSavedDataStore.For("BrainFog");
+        _slot ??= store.RegisterPerPlayer<BrainFogRunData>(PlayerSlotKey);
+        _legacySlot ??= store.Register<BrainFogRunData>(LegacySlotKey);
     }
 
     public static void OnRunStarted(RunState state) =>
@@ -29,58 +43,103 @@ internal static class RevealPersistence
     private static void OnRunStartedCore(RunState state)
     {
         _runStateRef = new WeakReference<RunState>(state);
+        _localPlayer = ResolveLocalPlayer(state);
+        RunModeContext.Set(state);
         PendingDeckOrder.Clear();
-        if (_slot != null && _slot.TryGet(state, out var data))
+
+        var data = LoadLocalData(state);
+        if (data != null)
         {
             ModRuntime.Tracker.Load(data.RevealedCards, data.RevealedInstances);
             PendingDeckOrder.AddRange(data.DeckOrderIds);
-            BindDeckFromSave(state, data);
+            BindDeckFromSave(data);
             BadMemoryTracker.OnRunLoaded(data.BadMemoryCounts);
         }
         else
         {
             ModRuntime.Tracker.Reset();
             BadMemoryTracker.OnRunLoaded(null);
+        }
+
+        // A freshly created per-player slot (RitsuLib lobby staging) is empty;
+        // its presence must not suppress the starting-deck reveal.
+        if (data == null || !data.InitialRevealApplied)
+        {
             InitialReveal.Apply(state);
         }
-        MegaCrit.Sts2.Core.Logging.Log.Info(
-            $"[BrainFog][Persistence] run started: revealed={ModRuntime.Tracker.RevealedCount} savedDeck={PendingDeckOrder.Count}");
+        Log.Info(
+            $"[BrainFog][Persistence] run started: multiplayer={ModRuntime.IsMultiplayer} " +
+            $"revealed={ModRuntime.Tracker.RevealedCount} savedDeck={PendingDeckOrder.Count}");
         ModRuntime.DumpState("run-started");
+    }
+
+    private static Player? ResolveLocalPlayer(RunState state)
+    {
+        var me = LocalContext.GetMe(state);
+        if (me != null)
+        {
+            return me;
+        }
+        // Single-player always has a player even if NetId was not assigned yet;
+        // multiplayer must fail closed rather than guess another player's data.
+        return ModRuntime.IsMultiplayer ? null : state.Players.FirstOrDefault();
+    }
+
+    /// <summary>Loads the local player's per-player slot; in single-player,
+    /// migrates an old run-shared slot from pre-0.4.0 saves.</summary>
+    private static BrainFogRunData? LoadLocalData(RunState state)
+    {
+        if (_localPlayer == null)
+        {
+            return null;
+        }
+
+        if (_slot != null && _slot.TryGet(state, _localPlayer.NetId, out var data))
+        {
+            return data;
+        }
+
+        if (ModRuntime.IsMultiplayer || _legacySlot == null || !_legacySlot.TryGet(state, out var legacy))
+        {
+            return null;
+        }
+
+        legacy.InitialRevealApplied = true; // pre-0.4.0 fresh runs already did this
+        _slot?.Set(state, _localPlayer.NetId, legacy);
+        Log.Info("[BrainFog][Persistence] migrated legacy single-player save to per-player slot");
+        return legacy;
     }
 
     /// <summary>Rebinds saved instance ids to the loaded deck immediately
     /// (save/load fix 2026-09-21). Rendering consults the registry right away,
     /// so lazy binding at reveal time was too late and every instance reveal
-    /// looked unknown after a reload.</summary>
-    private static void BindDeckFromSave(RunState state, BrainFogRunData data)
+    /// looked unknown after a reload. Only the local player's deck is bound.</summary>
+    private static void BindDeckFromSave(BrainFogRunData data)
     {
-        if (data.DeckOrderIds.Count == 0 || state.Players.Count == 0)
+        if (data.DeckOrderIds.Count == 0 || _localPlayer == null)
         {
             return;
         }
 
-        var bound = 0;
-        foreach (var player in state.Players)
+        var deck = _localPlayer.Deck.Cards;
+        if (deck.Count == 0)
         {
-            var deck = player.Deck.Cards;
-            if (deck.Count == 0)
-            {
-                continue;
-            }
+            return;
+        }
 
-            var keys = new List<string>(deck.Count);
-            foreach (var card in deck)
-            {
-                keys.Add(RevealKeys.Of(card));
-            }
+        var keys = new List<string>(deck.Count);
+        foreach (var card in deck)
+        {
+            keys.Add(RevealKeys.Of(card));
+        }
 
-            foreach (var binding in DeckRebinder.Align(keys, data.DeckOrderIds, data.DeckOrderKeys))
+        var bound = 0;
+        foreach (var binding in DeckRebinder.Align(keys, data.DeckOrderIds, data.DeckOrderKeys))
+        {
+            if (binding.DeckIndex >= 0 && binding.DeckIndex < deck.Count)
             {
-                if (binding.DeckIndex >= 0 && binding.DeckIndex < deck.Count)
-                {
-                    CardInstanceRegistry.Bind(deck[binding.DeckIndex], binding.InstanceId);
-                    bound++;
-                }
+                CardInstanceRegistry.Bind(deck[binding.DeckIndex], binding.InstanceId);
+                bound++;
             }
         }
 
@@ -96,7 +155,7 @@ internal static class RevealPersistence
     /// <summary>Rebinds an instance id from the saved deck order (index-aligned).</summary>
     public static bool TryBindFromSave(CardModel card)
     {
-        if (PendingDeckOrder.Count == 0 || card.Owner is not { } owner)
+        if (PendingDeckOrder.Count == 0 || card.Owner is not { } owner || LocalScope.IsRemoteCard(card))
         {
             return false;
         }
@@ -118,13 +177,20 @@ internal static class RevealPersistence
         }
         return false;
     }
-    /// <summary>Writes the current deck order (id per slot) into the run save.</summary>
+
+    /// <summary>Writes the local player's current deck order (id per slot) into
+    /// the per-player run save.</summary>
     public static void RefreshDeckOrder(Player owner) =>
         PatchGuard.Run("Persistence.RefreshDeckOrder", () => RefreshDeckOrderCore(owner));
 
     private static void RefreshDeckOrderCore(Player owner)
     {
-        if (_refreshing || _slot == null || owner.RunState is not RunState state || !IsCurrentRun(state))
+        if (_refreshing
+            || _slot == null
+            || _localPlayer == null
+            || !LocalContext.IsMe(owner)
+            || owner.RunState is not RunState state
+            || !IsCurrentRun(state))
         {
             return;
         }
@@ -140,13 +206,13 @@ internal static class RevealPersistence
                 keys.Add(RevealKeys.Of(card));
             }
 
-            if (_slot.TryGet(state, out var current)
+            if (_slot.TryGet(state, _localPlayer.NetId, out var current)
                 && ListEquals(current.DeckOrderIds, ids)
                 && ListEquals(current.DeckOrderKeys, keys))
             {
                 return; // nothing changed: avoid dirtying the run save
             }
-            _slot.Modify(state, data =>
+            _slot.Modify(_localPlayer, data =>
             {
                 data.DeckOrderIds = ids;
                 data.DeckOrderKeys = keys;
@@ -177,33 +243,40 @@ internal static class RevealPersistence
     private static bool IsCurrentRun(RunState state) =>
         _runStateRef != null && _runStateRef.TryGetTarget(out var current) && ReferenceEquals(current, state);
 
-    /// <summary>Adds a revealed card definition to the run save.</summary>
+    private static bool TryModifyLocal(Action<BrainFogRunData> mutate)
+    {
+        if (_slot == null
+            || _localPlayer == null
+            || _runStateRef == null
+            || !_runStateRef.TryGetTarget(out var state)
+            || !IsCurrentRun(state))
+        {
+            return false;
+        }
+        _slot.Modify(_localPlayer, mutate);
+        return true;
+    }
+
+    /// <summary>Adds a revealed card definition to the local player's save data.</summary>
     public static void OnRevealed(string definitionKey) =>
         PatchGuard.Run("Persistence.OnRevealed", () => OnRevealedCore(definitionKey));
 
-    private static void OnRevealedCore(string definitionKey)
-    {
-        if (_slot == null || _runStateRef == null || !_runStateRef.TryGetTarget(out var state))
-        {
-            return;
-        }
-
-        _slot.Modify(state, data =>
+    private static void OnRevealedCore(string definitionKey) =>
+        TryModifyLocal(data =>
         {
             if (!data.RevealedCards.Contains(definitionKey))
             {
                 data.RevealedCards.Add(definitionKey);
             }
         });
-    }
 
-    /// <summary>Adds a revealed card instance (and its deck order) to the run save.</summary>
+    /// <summary>Adds a revealed card instance (and its deck order) to the save.</summary>
     public static void OnInstanceRevealed(CardModel card, string instanceId) =>
         PatchGuard.Run("Persistence.OnInstanceRevealed", () => OnInstanceRevealedCore(card, instanceId));
 
     private static void OnInstanceRevealedCore(CardModel card, string instanceId)
     {
-        if (_slot == null || _runStateRef == null || !_runStateRef.TryGetTarget(out var state))
+        if (LocalScope.IsRemoteCard(card))
         {
             return;
         }
@@ -215,7 +288,7 @@ internal static class RevealPersistence
             RefreshDeckOrderCore(owner);
         }
 
-        _slot.Modify(state, data =>
+        TryModifyLocal(data =>
         {
             if (!data.RevealedInstances.Contains(instanceId))
             {
@@ -237,18 +310,15 @@ internal static class RevealPersistence
         IReadOnlyCollection<string> definitionKeys,
         IReadOnlyCollection<string> instanceIds)
     {
-        if (definitionKeys.Count == 0 && instanceIds.Count == 0)
-        {
-            return;
-        }
-        if (_slot == null || _runStateRef == null || !_runStateRef.TryGetTarget(out var state))
+        if (LocalScope.IsRemotePlayer(owner))
         {
             return;
         }
 
         RefreshDeckOrderCore(owner);
-        _slot.Modify(state, data =>
+        TryModifyLocal(data =>
         {
+            data.InitialRevealApplied = true;
             foreach (var key in definitionKeys)
             {
                 if (!data.RevealedCards.Contains(key))
@@ -273,7 +343,7 @@ internal static class RevealPersistence
 
     private static void OnCardsRemovedCore(Player owner, IReadOnlyCollection<string> instanceIds)
     {
-        if (_slot == null || _runStateRef == null || !_runStateRef.TryGetTarget(out var state))
+        if (LocalScope.IsRemotePlayer(owner))
         {
             return;
         }
@@ -284,7 +354,7 @@ internal static class RevealPersistence
             return;
         }
 
-        _slot.Modify(state, data =>
+        TryModifyLocal(data =>
         {
             foreach (var id in instanceIds)
             {
@@ -298,14 +368,8 @@ internal static class RevealPersistence
     public static void SetBadMemoryCounter(string instanceId, int count) =>
         PatchGuard.Run("Persistence.BadMemory", () => SetBadMemoryCounterCore(instanceId, count));
 
-    private static void SetBadMemoryCounterCore(string instanceId, int count)
-    {
-        if (_slot == null || _runStateRef == null || !_runStateRef.TryGetTarget(out var state))
-        {
-            return;
-        }
-
-        _slot.Modify(state, data =>
+    private static void SetBadMemoryCounterCore(string instanceId, int count) =>
+        TryModifyLocal(data =>
         {
             data.BadMemoryCounts ??= new Dictionary<string, int>();
             if (count <= 0)
@@ -317,23 +381,15 @@ internal static class RevealPersistence
                 data.BadMemoryCounts[instanceId] = count;
             }
         });
-    }
 
     /// <summary>"Bad memory": the copy reverted to unknown; drop it from the save.</summary>
     public static void OnInstanceHidden(string instanceId) =>
         PatchGuard.Run("Persistence.InstanceHidden", () => OnInstanceHiddenCore(instanceId));
 
-    private static void OnInstanceHiddenCore(string instanceId)
-    {
-        if (_slot == null || _runStateRef == null || !_runStateRef.TryGetTarget(out var state))
-        {
-            return;
-        }
-
-        _slot.Modify(state, data =>
+    private static void OnInstanceHiddenCore(string instanceId) =>
+        TryModifyLocal(data =>
         {
             data.RevealedInstances.Remove(instanceId);
             data.BadMemoryCounts?.Remove(instanceId);
         });
-    }
 }

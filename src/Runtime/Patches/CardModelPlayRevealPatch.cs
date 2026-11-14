@@ -24,7 +24,7 @@ internal static class CardModelPlayRevealPatch
     [HarmonyPrefix]
     private static void Prefix(CardModel __instance)
     {
-        if (!ModRuntime.Disabled)
+        if (!ModRuntime.Disabled && !Game.LocalScope.IsRemoteCard(__instance))
         {
             Game.BadMemoryTracker.OnPlayed(__instance);
         }
@@ -33,7 +33,7 @@ internal static class CardModelPlayRevealPatch
     [HarmonyPostfix]
     private static void Postfix(CardModel __instance)
     {
-        if (ModRuntime.Disabled)
+        if (ModRuntime.Disabled || Game.LocalScope.IsRemoteCard(__instance))
         {
             return;
         }

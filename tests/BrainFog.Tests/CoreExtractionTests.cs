@@ -97,8 +97,8 @@ public class MaskEligibilityTests
     [InlineData(false, true, false, false)]
     [InlineData(false, false, true, false)]
     [InlineData(true, false, false, false)]
-    public void ShouldMask_OnlyEnemyCreatures(bool disabled, bool isPlayer, bool isOwnPet, bool expected)
+    public void ShouldMask_OnlyEnemyCreatures(bool disabled, bool isPlayer, bool isPlayerPet, bool expected)
     {
-        Assert.Equal(expected, MaskEligibility.ShouldMask(disabled, isPlayer, isOwnPet));
+        Assert.Equal(expected, MaskEligibility.ShouldMask(disabled, isPlayer, isPlayerPet));
     }
 }

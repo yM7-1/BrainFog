@@ -67,6 +67,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
     private Button _tab = null!;
     private CheckButton _modOff = null!;
     private Label _modOffNote = null!;
+    private Label _modeNote = null!;
 
     private string _currentHintKey = "panel_hint_default";
     private string _lastLocale = string.Empty;
@@ -88,6 +89,8 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             Build();
             Localize();
             ApplyFromSettings();
+            RunModeContext.Refresh();
+            UpdateModeNote();
         }
         catch (Exception ex)
         {
@@ -97,12 +100,6 @@ internal sealed partial class DifficultyPanel : CanvasLayer
 
     public override void _Process(double delta)
     {
-        if (ModRuntime.Disabled && !ModRuntime.UserDisabled)
-        {
-            // Multiplayer guard: hidden entirely (cannot be re-enabled mid-run).
-            Visible = false;
-            return;
-        }
         if (ModRuntime.Disabled)
         {
             // User kill switch: drop any queued blur re-apply so it cannot
@@ -170,6 +167,8 @@ internal sealed partial class DifficultyPanel : CanvasLayer
             return;
         }
         _localeTimer = 0;
+        RunModeContext.Refresh();
+        UpdateModeNote();
         var locale = ModLocalization.CurrentLanguageCode;
         if (locale != _lastLocale)
         {
@@ -237,6 +236,17 @@ internal sealed partial class DifficultyPanel : CanvasLayer
         _modOffNote.AddThemeFontSizeOverride("font_size", 13);
         _modOffNote.AddThemeColorOverride("font_color", HintColor);
         root.AddChild(_modOffNote);
+
+        // Mode/multiplayer adaptation note (Blitz/Dread 0.113.0; co-op plan A).
+        _modeNote = new Label
+        {
+            Name = "BrainFogModeNote",
+            Visible = false,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        _modeNote.AddThemeFontSizeOverride("font_size", 12);
+        _modeNote.AddThemeColorOverride("font_color", Accent);
+        root.AddChild(_modeNote);
 
         _body = new VBoxContainer { Name = "BrainFogBody" };
         _body.AddThemeConstantOverride("separation", 7);
@@ -459,7 +469,7 @@ internal sealed partial class DifficultyPanel : CanvasLayer
                      _sectionText, _blurLabel, _saltLabel, _saltMode,
                      _memoryLabel, _memoryMode, _badNLabel, _badN, _memoryFade,
                      _intentLabel, _intentMode, _saveDefault, _reset,
-                     _modOff, _modOffNote,
+                     _modOff, _modOffNote, _modeNote,
                  })
         {
             control.ApplyLocaleFontSubstitution(FontType.Regular, "font");
@@ -547,11 +557,46 @@ internal sealed partial class DifficultyPanel : CanvasLayer
                      _tip, _dock, _tab, _blurLabel, _saltLabel, _saltMode,
                      _memoryLabel, _memoryMode, _badNLabel, _badN, _memoryFade,
                      _intentLabel, _intentMode, _saveDefault, _reset,
-                     _modOff, _modOffNote,
+                     _modOff, _modOffNote, _modeNote,
                  })
         {
             control.ApplyLocaleFontSubstitution(FontType.Regular, "font");
         }
+    }
+
+    /// <summary>One-line adaptation status for the active run: co-op scope,
+    /// Blitz (no map/gold) and Dread notes. Also disables options that cannot
+    /// apply in the current mode without changing their saved values.</summary>
+    private void UpdateModeNote()
+    {
+        var zh = ModLocalization.IsChinese;
+        var notes = new List<string>(3);
+        if (ModRuntime.IsMultiplayer)
+        {
+            notes.Add(T("panel_mode_multiplayer",
+                zh
+                    ? "多人联机：脑雾只影响你自己；记忆消逝已停用。"
+                    : "Multiplayer: BrainFog only affects you; memory fade is disabled."));
+        }
+        if (RunModeContext.IsBlitz)
+        {
+            notes.Add(T("panel_mode_blitz",
+                zh
+                    ? "闪电模式：没有地图与金币，相关选项不生效。"
+                    : "Blitz: no map or gold; map/gold options do not apply."));
+        }
+        else if (RunModeContext.IsDread)
+        {
+            notes.Add(T("panel_mode_dread",
+                zh
+                    ? "恐惧模式：诅咒与支配效果照常受记忆规则影响。"
+                    : "Dread: curses and dominions follow the usual memory rules."));
+        }
+
+        _modeNote.Text = string.Join("\n", notes);
+        _modeNote.Visible = notes.Count > 0;
+        _memoryFade.Disabled = ModRuntime.IsMultiplayer;
+        _mapRoutes.Disabled = RunModeContext.IsBlitz;
     }
 
     private Control BuildHeader()

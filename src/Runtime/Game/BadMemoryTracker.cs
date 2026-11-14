@@ -36,7 +36,7 @@ internal static class BadMemoryTracker
     public static void OnEnterHand(CardModel card) =>
         PatchGuard.Run("BadMemory.Enter", () =>
         {
-            if (!Active)
+            if (!Active || LocalScope.IsRemoteCard(card))
             {
                 return;
             }
@@ -49,7 +49,7 @@ internal static class BadMemoryTracker
     public static void OnCardAddedToDeck(CardModel card) =>
         PatchGuard.Run("BadMemory.DeckAdded", () =>
         {
-            if (!Active)
+            if (!Active || LocalScope.IsRemoteCard(card))
             {
                 return;
             }
@@ -65,7 +65,7 @@ internal static class BadMemoryTracker
     public static void OnPlayed(CardModel card) =>
         PatchGuard.Run("BadMemory.Played", () =>
         {
-            if (!Active)
+            if (!Active || LocalScope.IsRemoteCard(card))
             {
                 return;
             }
@@ -78,7 +78,7 @@ internal static class BadMemoryTracker
     public static void OnLeaveHand(CardModel card) =>
         PatchGuard.Run("BadMemory.Leave", () =>
         {
-            if (!Active)
+            if (!Active || LocalScope.IsRemoteCard(card))
             {
                 return;
             }
@@ -103,7 +103,7 @@ internal static class BadMemoryTracker
 
     private static bool ShouldDimCore(CardModel? card)
     {
-        if (!Active || card == null || card.Pile?.Type != PileType.Hand)
+        if (!Active || card == null || card.Pile?.Type != PileType.Hand || LocalScope.IsRemoteCard(card))
         {
             return false;
         }

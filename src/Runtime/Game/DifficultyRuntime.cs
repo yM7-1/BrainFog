@@ -240,8 +240,8 @@ internal static class DifficultyRuntime
     }
 
     /// <summary>Applies or reverts every mod effect after a Disabled change
-    /// (user kill switch or multiplayer guard, 0.3.8): vanilla presentation when
-    /// disabled, current options when re-enabled.</summary>
+    /// (user kill switch, 0.3.8): vanilla presentation when disabled, current
+    /// options when re-enabled. Multiplayer no longer toggles this path.</summary>
     public static void ApplyDisabledTransition(bool disabled)
     {
         if (disabled)

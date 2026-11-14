@@ -1,15 +1,16 @@
 # 实现映射与验收清单
 
 > 规格：`docs/spec/SPEC-consolidated.md`（v0.3，已冻结）
-> 游戏：STS2 v0.107.1–v0.111.0（正式服 + 测试服共用同一 DLL）；依赖：RitsuLib 0.6.2；仅单人。
-> 验证状态：`bash tools/check.sh` = Release 构建 + 全部单测 + 双版本补丁目标审计（installed 游戏与 0.107.1/0.111.0 引用程序集）全绿。**游戏内行为待人工验收（见下）。**
+> 游戏：STS2 v0.107.1–v0.113.0（正式服 + 测试服共用同一 DLL）；依赖：RitsuLib 0.6.2；单人完整，联机方案 A（只盲自己）。
+> 验证状态：`bash tools/check.sh` = Release 构建 + 全部单测 + 双版本补丁目标审计（installed 游戏与 0.107.1/0.113.0 引用程序集）全绿。**游戏内行为待人工验收（见下）。**
 > **2026-09-21 用户改版：乱码比例统一**——所有文本（含此前分档）改由认知修改器「乱码百分比」滑块控制（0–100%，1% 步进，默认 50%）；血量/金币**默认实时**（数值随统一比例乱码），**快照模式**为面板选项（默认关）。下表各行中的旧比例仅作历史参考。
 > **2026-09-21 追加：地图信息恢复（0.3.4）**——开启「显示地图所有路线」时，顶栏阶段 Boss 图标及其原版悬停描述（「本阶段最强的敌人……」）与地图图例文字一并恢复；关闭选项恢复遮蔽。
 > **2026-09-21 追加：地图画图恢复原版（0.3.3）**——画线/擦除按钮、右键绘制与画线快捷键不再被隐藏或拦截，也不纳入修改器选项；地图迷雾仅影响节点/路线可见性。
 > **2026-09-21 默认值调整（0.3.2）**——多项感知恢复为默认开启：卡牌奖励**全部揭示**、商店/事件卡面揭示**开**、血量/金币数值**可读**、显示遗物**开**、地图全路线**开**、敌人模型可见**开**、敌人意图**全部可见**；已保存的旧配置保留玩家现值（重置为默认/删 settings.cfg 后应用新默认）。**同版新增「当前设置为默认」按钮**：把当前设置为重置目标（`defaults` 配置段，跨重进保留）。
 > **2026-09-21 追加：遗物显示改为全场景（0.3.1）**——原「显示已拥有遗物」更名「**显示遗物**」，开启后恢复所有遗物显示（已拥有/奖励/商店/宝箱/检视/跑图历史；图鉴本就可见），悬停提示同步放开；配置键 `show_owned_relics` → `show_relics`（旧值自动沿用）。
 > **2026-09-21 六项认知规则（0.3.0，已实机验收）**——① 开局初始卡组揭示（好记性/坏记性，歪比巴卜除外）；② 感知模块「敌人模型可见」（默认关）；③ 坏记性 n 默认 2 + 新入组卡牌初始揭示；④ 「记忆消逝」战斗结束移除未揭示牌（默认开，歪比巴卜豁免，无保底）；⑤ 坏记性失忆提醒（最后机会的已揭示手牌变暗）。
-> **2026-09-25 追加：Mod 关闭开关（0.3.7）**——认知修改器标题栏下方新增「关闭脑雾尖塔（本 mod 不再影响游戏）」勾选项：勾选后所有乱码/遮蔽/记忆规则即时恢复原版呈现，面板仅保留该开关与说明（可随时取消勾选恢复）；状态存于 `settings.cfg` 的 `[mod] disabled`，跨重进保留；联机自动禁用逻辑不变。
+> **2026-09-25 追加：Mod 关闭开关（0.3.7）**——认知修改器标题栏下方新增「关闭脑雾尖塔（本 mod 不再影响游戏）」勾选项：勾选后所有乱码/遮蔽/记忆规则即时恢复原版呈现，面板仅保留该开关与说明（可随时取消勾选恢复）；状态存于 `settings.cfg` 的 `[mod] disabled`，跨重进保留；联机自 0.4.0 起不再自动禁用（见本表 1.5 / §2.14）。
+> **2026-11-14 追加：v0.113.0 测试版（0.4.0）**——版本窗口上移到 0.113.0；新增 Blitz（无地图/无金币）与 Dread（飞升词缀/支配/诅咒）模式适配；联机按方案 A「只盲自己」实施（per-player 揭示存档、owner 过滤、记忆消逝停用、`affects_gameplay:false`）。
 
 ## 1. 规格 → 代码 → 测试 映射
 
@@ -81,7 +82,8 @@
 | 1.4 Boss 遗物三选一可见 | `Patches/EventOptionIconPatch.cs`（`AncientChoiceRules.StaysVisible` 豁免，保留遗物图标） | 补丁审计 NEventOptionButton |
 | 1.4 地图迷雾（画线恢复原版 0.3.3） | `Game/MapFogController.cs`（节点/路线可见性 + Boss/起点特殊点）+ `Patches/MapFogPatch.cs`（Open/Recalculate 后应用；不再拦截画线/热键） | 补丁审计 NMapScreen |
 | 1.4 事件文本统一乱码（同次启动内固定、每次启动随机，2026-09-20） | `Core/Text/EventTextBlurrer.cs` + `Core/Text/BlurSalt.cs` + 源头 `Patches/GlobalTextBlurPatch.cs`（历史 `EventTextBlurPatch` 已并入） | `EventTextBlurrerTests` |
-| 1.5 仅单人守卫 | `Core/MultiplayerGuard.cs`、`ModRuntime`、`RunManagerMultiplayerGuardPatch` | `MultiplayerGuardTests` + 审计 |
+| 1.5 联机守卫 / 方案 A（0.4.0） | `Core/MultiplayerGuard.cs`、`Core/Reveal/ScopeRules.cs`、`Runtime/Game/LocalScope.cs`、`ModRuntime`、`RunManagerMultiplayerGuardPatch`、`RevealPersistence`（per-player 槽）、`CardFogRenderer`/`BadMemoryTracker`/钩子 owner 过滤、`MemoryFade` 联机停用 | `MultiplayerGuardTests`、`ScopeRulesTests` + 审计 |
+| 1.8 Blitz / Dread 模式适配（0.4.0） | `Core/Runs/RunModeRules.cs`（按 `GameMode` 名称识别，兼容 0.107.1 编译）+ `Runtime/Game/RunModeContext.cs` + `MapFogController`（Blitz 跳过地图迷雾）+ `DifficultyPanel`（模式提示；Blitz 禁用地图选项、联机禁用记忆消逝） | `RunModeRulesTests` + 编译期 |
 | 全局部件：异常边界 | `Game/PatchGuard.cs`（每 key 一次性 Error 日志），关键类入口与前缀补丁均包裹 | 编译期 |
 | 全局部件：新增文本字体 | `ApplyLocaleFontSubstitution`（濒危标签/加号标记，CJK 字体替换） | 编译期 |
 | 全局部件：调试观测 | `BRAINFOG_DEBUG=1` → `ModRuntime.DumpState`（加载/开局输出揭示数、快照值、禁用状态） | 编译期 |
@@ -98,7 +100,7 @@
 | 1.7 坏记性：n 默认 2 + 新入组卡牌初始揭示（0.3.0 六项③） | `Core/Options/DifficultySettings.cs`（默认 2）+ `Patches/CardPileHandPatch.cs`（`CardPileDeckAddPatch` Deck 入组钩子）+ `Game/BadMemoryTracker.cs`（坏记性新卡揭示） | `DifficultySettingsTests` |
 | 1.7 记忆消逝（0.3.0 六项④，默认开，歪比巴卜豁免，无保底；0.3.1 起走原版删卡动画） | `Core/Reveal/MemoryFadeRules.cs` + `Game/MemoryFade.cs`（战斗结算按模式判定未揭示，经 `CardPileCmd.RemoveFromDeck` 移除：原版动画/钩子）+ `Patches/PlayerAfterCombatEndPatch.cs`（存档写入前执行）+ `Game/RevealPersistence.cs`（`OnCardsRemoved` 清理揭示与坏记性计数） | `MemoryFadeRulesTests` + 补丁审计 `Player.AfterCombatEnd` |
 | 1.7 坏记性失忆提醒（0.3.0 六项⑤） | `Core/Reveal/BadMemoryCounter.cs`（`WouldForgetOnLeave`）+ `Game/BadMemoryTracker.cs`（`ShouldDim` + 每帧合并刷新）+ `Game/CardFogRenderer.cs`（`BrainFogDim` 覆盖层：仅手牌、已揭示、最后机会） | `BadMemoryCounterTests` |
-| 1.7 Mod 关闭开关（0.3.7） | `ModRuntime`（`Disabled` = 联机守卫 + `UserDisabled` 用户开关）+ `Game/DifficultyRuntime.cs`（`[mod] disabled` 持久化 + `SetModDisabled` 即时恢复/重应用）+ `Game/TextBlurService.cs`（`RestoreAll`）+ `Game/DifficultyRefresh.cs`/`CardFogRenderer`/`MapFogController`/`RelicMasking`/`EnemyVisualMask`/`EnemyNameMask`/`PotionOutlines`/`EventChoiceIcons`/`PlayerHpBarMask`/`BossMapPointMaskPatch`/`MapLegendTextBlurPatch`（关闭时走原版恢复路径）+ `Game/DifficultyPanel.cs`（开关行；关闭时仅保留开关与说明） | `MultiplayerGuardTests` + 补丁审计 |
+| 1.7 Mod 关闭开关（0.3.7） | `ModRuntime`（`Disabled` = 用户开关；联机不再禁用）+ `Game/DifficultyRuntime.cs`（`[mod] disabled` 持久化 + `SetModDisabled` 即时恢复/重应用）+ `Game/TextBlurService.cs`（`RestoreAll`）+ `Game/DifficultyRefresh.cs`/`CardFogRenderer`/`MapFogController`/`RelicMasking`/`EnemyVisualMask`/`EnemyNameMask`/`PotionOutlines`/`EventChoiceIcons`/`PlayerHpBarMask`/`BossMapPointMaskPatch`/`MapLegendTextBlurPatch`（关闭时走原版恢复路径）+ `Game/DifficultyPanel.cs`（开关行；关闭时仅保留开关与说明） | `MultiplayerGuardTests` + 补丁审计 |
 
 ## 2. 已知限制 / 近似（晨间重点核查）
 
@@ -115,7 +117,7 @@
 11. **记忆消逝（实现定义 2026-09-21）**：只在战斗胜利结算（`Player.AfterCombatEnd`，存档写入前）移除；好记性按定义、坏记性按副本判定"未揭示"；**无保底**（卡组可能删空）；移除走原版 `CardPileCmd.RemoveFromDeck`（历史记录 + `Hook.BeforeCardRemoved` + 卡片预览与 `NCardRemoveVfx` 删除动画；未揭示的牌预览为黑雾，不泄漏牌面）。移除的牌从牌组/存档/揭示与坏记性计数条目中清理。
 12. **失忆提醒**：仅坏记性模式、仅手牌、仅已揭示副本（"本回合不打出将失忆"即 `UnplayedDraws + 1 >= n`，含 n=1 时刚上手即变暗）；变暗为深色覆盖层（`BrainFogDim`），不含动画。
 13. **初始卡组揭示**：仅"新开一局"（`RunStarted` 且无存档数据）时执行；读档继续不重置；歪比巴卜模式不受影响（保持永不揭示）；名字显示仍受统一乱码比例影响。
-14. **联机适配（评估完成，暂不实施 2026-09-25）**：可行性评估见 `docs/research/04-multiplayer-feasibility.md`。结论：纯本地表现层（方案 A）可行、成本可控；共享状态类（尤其「记忆消逝」删卡）需全员同款同步，风险高（分叉即踢、重连未实现），不建议。当前维持联机自动禁用；注意 `affects_gameplay: true` 意味着联机双方必须安装同版本 BrainFog 才能连上。
+14. **联机适配（方案 A 已实施 2026-11-14）**：可行性评估见 `docs/research/04-multiplayer-feasibility.md`。当前策略：每个客户端只盲自己（本地卡牌/知识/记忆），队友卡牌与宠物保持原版；揭示数据存 RitsuLib per-player 槽；「记忆消逝」联机停用；`affects_gameplay: false`，好友无需安装同版本 BrainFog。已知边界：本地玩家看到的全局文字仍乱码；队友卡面文字同样按本地认知乱码；断线重连游戏侧仍未实现。
 
 ## 3. 晨间验收清单（约 10 分钟）
 
@@ -133,7 +135,7 @@
 9. **濒危**：把 HP 打到 <15% → 角色红边 + 状态栏"濒危：我感觉自己快死了"（战斗内外）。
 10. **战斗**：敌人默认显示真实模型（0.3.2 起；关闭「敌人模型可见」→ 呼吸方框，呼吸节奏跟随敌人原动画；悬停显示血条/能力但**不显示敌人名字**）；敌人意图默认全部可见（0.3.2 起；切「不可见/仅第一回合」复核屏蔽）；受击特效仍在；**伤害/治疗/格挡数字为乱码（随统一滑块）**；己方召唤物正常可见；战斗场景其余部分全可见（视野遮罩已移除）；**"战斗开始"横幅乱码**（随统一滑块）。
 11. **战斗外**（**2026-09-21：下列各文本乱码比例统一由面板滑块控制（默认 50%），括号中的旧分档仅历史参考**）：遗物默认可见（0.3.2 起，含检视/宝箱/商店/奖励行与悬停；**关闭「显示遗物」后**恢复遮蔽：检视界面黑雾、宝箱/商店悬停无名称描述、遗物奖励行显示"未知遗物"）；Boss 遗物三选一：选项文字随统一比例乱码（图标可见）；药水仅轮廓、名称与描述随统一比例乱码且同一药水每次一致；地图默认全部节点与路线可见（0.3.2 起；关闭「显示地图所有路线」后仅当前/已走/下一层可见），画线功能保持原版（0.3.3 起：按钮/右键/快捷键均可用），**Boss 点显示"?"**（略小于原图标；开启「显示地图所有路线」后恢复真实立绘与悬停），**图例文字默认随统一比例乱码**（开启「显示地图所有路线」后恢复原版可读，0.3.4；悬停描述始终随统一比例乱码，0.3.5）；事件文本随统一比例乱码且每次进入一致；**先古之民（含建筑师）名称/描述/对话随统一比例乱码、商人对话随统一比例乱码**；标题界面与暂停菜单选项随统一比例乱码（设置按钮可读）；**顶栏阶段 Boss 图标默认隐藏**（悬停描述同移除；开启「显示地图所有路线」后恢复图标，悬停描述跟随乱码百分比，0.3.5）；**阶段横幅/前进按钮/火堆选项/所有提示介绍文字随统一比例乱码**（源头乱码：结算"胜利/对建筑师造成…"、模式选择、角色选择、继续/主菜单按钮等）；**标题 logo 与开场 logo 保持原版**（LogoPatch 已删除）；顶栏/地图 UI 描述随统一比例乱码（设置/图鉴可读）；图鉴正常。
-12. **联机**：进入联机对局 → 日志提示 BrainFog 已禁用（本 mod 不做联机适配）。
+12. **联机（0.4.0 方案 A）**：进入联机对局 → 日志提示「多人联机：仅本地表现与本地牌记忆生效」；本地玩家卡牌/文字/敌人照常受脑雾影响；队友卡牌与宠物保持原版；打出/升级队友牌不进入本地揭示记录；「记忆消逝」不触发；退出后单人读档仍保留自己的揭示（per-player 槽）。
 13. **异常自检**：若某功能未生效，日志搜索 `[BrainFog][` 前缀：`PatchGuard` 会记录首个失败点（补丁目标漂移的最小线索）。
 14. **认知修改器**（**主标题界面与对局内均可操作**；可拖动/收起/边缘缩进；中/英文随游戏语言）：
     - 文字：**「乱码百分比」滑块：0% → 全可读 / 100% → 全乱码（豁免除外），拖动即时重应用**；**「乱码模式」固定混乱（重进不变）/ 混乱混乱（重进重掷，默认）**

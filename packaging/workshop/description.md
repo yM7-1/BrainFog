@@ -18,7 +18,7 @@
 - **坏记性**（默认）：每张卡上手 n 次未打出就会忘记（n 默认 2、可调）；打出重置计数；新获得的牌先认得，即将失忆的手牌会变暗提醒
 - **歪比巴卜**：卡牌永不揭示
 
-开局牌组视为记得（好记性/坏记性）。**记忆消逝**（开关，默认开）：战斗结束时仍未揭示的牌会从卡组中移除，并播放原版删卡动画（歪比巴卜模式不受影响，无保底）。
+开局牌组视为记得（好记性/坏记性）。**记忆消逝**（开关，默认开）：战斗结束时仍未揭示的牌会从卡组中移除，并播放原版删卡动画（歪比巴卜模式不受影响，无保底）。联机下该规则自动停用（会改写共享卡组状态），其余功能只影响你自己。
 
 ## 核心效果
 
@@ -27,7 +27,7 @@
 - **记忆失真**：血量与金币默认实时且数值可读；可切换失忆模式停留在「上次休息时」，或关闭「血量数/金币数恢复正常显示」让数值重新乱码
 - **世界模糊**：敌人默认显示真实模型（可关闭恢复呼吸方框）、名字隐藏；遗物默认可见（可关闭「显示遗物」恢复遮蔽）、药水只剩轮廓、地图迷雾、Boss 信息隐藏；受击/治疗数字乱码
 
-支持 STS2 v0.107.1–v0.111.0（正式服/测试服）与 RitsuLib 0.6.2；仅单人；卸载即恢复原版。
+支持 STS2 v0.107.1–v0.113.0（正式服/测试服，含 Blitz/Dread 新模式）与 RitsuLib 0.6.2；单人完整，联机只影响自己；卸载即恢复原版。
 
 Github链接：https://github.com/yM7-1/BrainFog
 
@@ -54,7 +54,7 @@ The default preset is lenient: all reward cards revealed, shop/event card faces 
 - **Bad memory** (default): a card is forgotten after n unplayed draws (n defaults to 2, adjustable); playing resets the counter; newly acquired cards start known, and a hand card about to be forgotten dims
 - **Nonsense**: cards are never revealed
 
-The starting deck counts as known (good/bad memory). **Memory fade** (on by default): cards still unrevealed at the end of a combat are removed from the deck with the original removal animation (nonsense mode exempt; no floor). 
+The starting deck counts as known (good/bad memory). **Memory fade** (on by default): cards still unrevealed at the end of a combat are removed from the deck with the original removal animation (nonsense mode exempt; no floor). In co-op this rule is automatically disabled (it would write shared deck state); everything else only affects you.
 
 ## Core effects
 
@@ -63,24 +63,6 @@ The starting deck counts as known (good/bad memory). **Memory fade** (on by defa
 - **Faulty memory**: HP and gold are live and readable by default; switch on amnesia mode to freeze them at your last rest, or turn readable HP/gold numbers off to garble them again
 - **Blurred world**: enemies show their real models by default (turn visible enemy models off to restore the breathing boxes), names stay hidden; relics visible by default (turn Show relics off to mask them again), potions outlined, map fogged, boss info hidden; damage/heal numbers garbled
 
-Supports STS2 v0.107.1–v0.111.0 (stable/beta) + RitsuLib 0.6.2. Single-player only; uninstall restores everything.
+Supports STS2 v0.107.1–v0.113.0 (stable/beta, including Blitz/Dread) + RitsuLib 0.6.2. Single-player fully supported; in co-op BrainFog only affects you; uninstall restores everything.
 
 GitHub: https://github.com/yM7-1/BrainFog
-
----
-
-脑▒尖塔 BrainFog
-※※※尖塔＊▓§§替换为&码，░＊◇＊%改░中▓部#游◆内&@复正◆。
-▓#░%#
-▒░＊◇面与对▓内均可操▒（可@＊/§◆/缩§屏§边%；「◆前&置@%&」※&自§▓默认，「重置◇▓◇」一键▓复）：
-#&：◆码百#§ 0%–100% #由#节；乱码░%：※定混乱（#进不◆）/ 混%%乱（▓§◇进重新＊@）
-░知：卡牌◇#揭示（＊#示 / 随◆揭＊1-3# / ＊◆全@揭示）；商店与%件卡#揭示#关；卡牌记忆§模式；记▓▓逝开&；卡牌▒数#
-感知：&量/※▓◇◇模式；血量◆/◆币数&复◆常显░；显示遗@（全※◇▒▒：#░有/奖励/@#/※箱/检视/◆@◇▒）；＊#@图#◆▒%（含%＊ Boss ◇标与图◇░░；§@随◆码%）；敌＊&◇%▒；敌＊意%（◇§见 / ＊§一#合 / ▒部可见）
-▒认◆#偏辅▓：卡牌%励▒＊◆#、%&/▒件※面揭%、血量/◇币数值可§、▓◇@§、地#◆░◆、※◆模型与※人意※可见；%◇&恢复难#，并用「@＊§%为▓※」%@自▓的#认。
-卡&▒忆#◆式
-░%◆※：&#卡牌§接可▓
-※#＊：░出/░◇＊%即永久记▒，同名卡◇所※＊励/商&/░件&░显示◇牌§
-%记░（%认）：每张◆§手 n §＊打#%会＊▒（n 默@ 2、%%）；▒▓重置计░；#获%&※先&得，※&＊▓※※▒会变◆提醒
-歪＊＊▓：#▒永@%░
-支持 STS2 v0.107.1–v0.111.0 # RitsuLib 0.6.2；仅&人；卸载即恢◆原版。
-Github◇接：https://github.com/yM7-1/BrainFog

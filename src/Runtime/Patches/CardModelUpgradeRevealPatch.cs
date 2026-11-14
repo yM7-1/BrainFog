@@ -23,9 +23,9 @@ internal static class CardModelUpgradeRevealPatch
             return;
         }
 
-        if (__instance.Pile == null)
+        if (__instance.Pile == null || Game.LocalScope.IsRemoteCard(__instance))
         {
-            return; // preview clone / not part of the run deck
+            return; // preview clone / not part of the run deck / teammate card
         }
 
         if (!RevealCore(__instance))

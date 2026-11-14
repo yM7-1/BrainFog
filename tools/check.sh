@@ -13,7 +13,7 @@ cd "$(dirname "$0")/.."
 
 REFS_DIR="${STS2_REFS_DIR:-$PWD/.refs/sts2-refs}"
 REF_MIN="$REFS_DIR/0.107.1"
-REF_BETA="$REFS_DIR/0.111.0"
+REF_BETA="$REFS_DIR/0.113.0"
 
 if [ ! -f "$REF_MIN/sts2.dll" ]; then
   echo "!! min-version reference assemblies missing at $REF_MIN" >&2

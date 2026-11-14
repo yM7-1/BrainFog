@@ -19,8 +19,9 @@ internal static class RelicMasking
     public const string RewardIconMeta = "BrainFogRelicIcon";
     public const string RewardLabelMeta = "BrainFogRelicLabel";
 
-    // Mod off (user option 0.3.7 / multiplayer): no masking at all, so the
-    // regular "show" paths double as the restore path.
+    // Mod off (user option 0.3.7): no masking at all, so the regular "show"
+    // paths double as the restore path. Multiplayer keeps normal masking for
+    // the local player only; relic UI is local, so no owner split is needed.
     private static bool ShowAll => ModRuntime.Disabled || Game.DifficultyRuntime.Current.ShowRelics;
 
     public static void Apply(NRelic relic)
